@@ -5,6 +5,7 @@
     <url>/2021/05/11/Tags-Testing-Article/</url>
     <content><![CDATA[<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;Hello World!&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
+<p><img src="https://raw.githubusercontent.com/xyq-material/blog/master/LeetCode/20210512131715.png" alt="逸"></p>
 ]]></content>
       <tags>
         <tag>Testing</tag>
