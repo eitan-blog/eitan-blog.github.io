@@ -17,10 +17,10 @@
   --btn-default-hover-bg: #fff;
   --btn-default-hover-color: #222;
   --btn-default-hover-border-color: #222;
-  --highlight-background: #f0f0f0;
-  --highlight-foreground: #444;
-  --highlight-gutter-background: #dedede;
-  --highlight-gutter-foreground: #555;
+  --highlight-background: #1d1f21;
+  --highlight-foreground: #c5c8c6;
+  --highlight-gutter-background: #2d2f31;
+  --highlight-gutter-foreground: #b4b7b5;
 }
 html {
   line-height: 1.15; /* 1 */
@@ -357,169 +357,81 @@ td {
   top: -5px;
   transform: rotate(45deg);
 }
-/**
- * prism.js tomorrow night eighties for JavaScript, CoffeeScript, CSS and HTML
- * Based on https://github.com/chriskempson/tomorrow-theme
- * @author Rose Pritchard
- */
+/* Tomorrow Night Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
 
-code[class*="language-"],
-pre[class*="language-"] {
-	color: #ccc;
-	background: none;
-	font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
-	font-size: 1em;
-	text-align: left;
-	white-space: pre;
-	word-spacing: normal;
-	word-break: normal;
-	word-wrap: normal;
-	line-height: 1.5;
-
-	-moz-tab-size: 4;
-	-o-tab-size: 4;
-	tab-size: 4;
-
-	-webkit-hyphens: none;
-	-moz-hyphens: none;
-	-ms-hyphens: none;
-	hyphens: none;
-
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+  color: #969896;
 }
 
-/* Code blocks */
-pre[class*="language-"] {
-	padding: 1em;
-	margin: .5em 0;
-	overflow: auto;
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+  color: #cc6666;
 }
 
-:not(pre) > code[class*="language-"],
-pre[class*="language-"] {
-	background: #2d2d2d;
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+  color: #de935f;
 }
 
-/* Inline code */
-:not(pre) > code[class*="language-"] {
-	padding: .1em;
-	border-radius: .3em;
-	white-space: normal;
+/* Tomorrow Yellow */
+.hljs-attribute {
+  color: #f0c674;
 }
 
-.token.comment,
-.token.block-comment,
-.token.prolog,
-.token.doctype,
-.token.cdata {
-	color: #999;
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+  color: #b5bd68;
 }
 
-.token.punctuation {
-	color: #ccc;
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+  color: #81a2be;
 }
 
-.token.tag,
-.token.attr-name,
-.token.namespace,
-.token.deleted {
-	color: #e2777a;
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+  color: #b294bb;
 }
 
-.token.function-name {
-	color: #6196cc;
+.hljs {
+  display: block;
+  overflow-x: auto;
+  background: #1d1f21;
+  color: #c5c8c6;
+  padding: 0.5em;
 }
 
-.token.boolean,
-.token.number,
-.token.function {
-	color: #f08d49;
+.hljs-emphasis {
+  font-style: italic;
 }
 
-.token.property,
-.token.class-name,
-.token.constant,
-.token.symbol {
-	color: #f8c555;
+.hljs-strong {
+  font-weight: bold;
 }
-
-.token.selector,
-.token.important,
-.token.atrule,
-.token.keyword,
-.token.builtin {
-	color: #cc99cd;
-}
-
-.token.string,
-.token.char,
-.token.attr-value,
-.token.regex,
-.token.variable {
-	color: #7ec699;
-}
-
-.token.operator,
-.token.entity,
-.token.url {
-	color: #67cdcc;
-}
-
-.token.important,
-.token.bold {
-	font-weight: bold;
-}
-.token.italic {
-	font-style: italic;
-}
-
-.token.entity {
-	cursor: help;
-}
-
-.token.inserted {
-	color: green;
-}
-
-pre[class*="language-"].line-numbers {
-	position: relative;
-	padding-left: 3.8em;
-	counter-reset: linenumber;
-}
-
-pre[class*="language-"].line-numbers > code {
-	position: relative;
-	white-space: inherit;
-}
-
-.line-numbers .line-numbers-rows {
-	position: absolute;
-	pointer-events: none;
-	top: 0;
-	font-size: 100%;
-	left: -3.8em;
-	width: 3em; /* works for line-numbers below 1000 lines */
-	letter-spacing: -1px;
-	border-right: 1px solid #999;
-
-	-webkit-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	user-select: none;
-
-}
-
-	.line-numbers-rows > span {
-		display: block;
-		counter-increment: linenumber;
-	}
-
-		.line-numbers-rows > span:before {
-			content: counter(linenumber);
-			color: #999;
-			display: block;
-			padding-right: 0.8em;
-			text-align: right;
-		}
 
 .highlight:hover .copy-btn,
 pre:hover .copy-btn {
@@ -2827,7 +2739,7 @@ mark.search-keyword {
   vertical-align: middle;
 }
 .links-of-author a::before {
-  background: #7445bb;
+  background: #f03bb5;
   display: inline-block;
   margin-right: 3px;
   transform: translateY(-2px);
