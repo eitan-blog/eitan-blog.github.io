@@ -32,4 +32,25 @@
 <p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
 ]]></content>
   </entry>
+  <entry>
+    <title>系统调用的大致过程</title>
+    <url>/2021/05/13/%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E7%9A%84%E5%A4%A7%E8%87%B4%E8%BF%87%E7%A8%8B/</url>
+    <content><![CDATA[<h2 id="名词解释"><a href="#名词解释" class="headerlink" title="名词解释"></a>名词解释</h2><h3 id="一、系统调用"><a href="#一、系统调用" class="headerlink" title="一、系统调用"></a>一、系统调用</h3><p>操作系统(operating system)内核中有一组实现系统功能的代码，系统调用就是对上述代码的调用。程序利用系统调用，向OS提出服务请求，由OS代为完成。</p>
+<h3 id="二、中断"><a href="#二、中断" class="headerlink" title="二、中断"></a>二、中断</h3><p>中断是一种使CPU中止正在执行的程序而转去处理特殊事件的操作，这些引起中断的事件称为中断源，它们可能是来自外设的输入输出请求，也可能是计算机的一些异常事故或其它内部原因。</p>
+<span id="more"></span>
+
+<h2 id="系统调用过程"><a href="#系统调用过程" class="headerlink" title="系统调用过程"></a>系统调用过程</h2><ol>
+<li>触发中断：硬件或软件发出中断请求（电信号），要求CPU暂停当前工作转手处理更重要的事情。</li>
+<li>查询中断向量表：通过中断传来的参数<code>int 0x80</code>，在 kernel 里的中断向量表中找到对应方法</li>
+<li>切换用户态到内核态：保护现场，切换用户态到内核态</li>
+<li>执行对应方法</li>
+</ol>
+]]></content>
+      <categories>
+        <category>linux</category>
+      </categories>
+      <tags>
+        <tag>system call</tag>
+      </tags>
+  </entry>
 </search>
