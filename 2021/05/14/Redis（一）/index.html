@@ -29,8 +29,9 @@
 <meta property="og:description" content="学习 Redis 需要掌握的常识">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210514115953.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210516120300.png">
 <meta property="article:published_time" content="2021-05-14T03:29:42.645Z">
-<meta property="article:modified_time" content="2021-05-14T11:17:05.026Z">
+<meta property="article:modified_time" content="2021-05-16T04:38:30.061Z">
 <meta property="article:author" content="Eitan">
 <meta property="article:tag" content="Redis">
 <meta name="twitter:card" content="summary">
@@ -148,7 +149,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E5%B8%B8%E8%AF%86"><span class="nav-number">1.</span> <span class="nav-text">基础常识</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A3%81%E9%81%93%E5%92%8C%E6%89%87%E5%8C%BA"><span class="nav-number">1.1.</span> <span class="nav-text">磁道和扇区</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E5%92%8C%E7%A3%81%E7%9B%98I-O%E9%80%9F%E5%BA%A6"><span class="nav-number">1.2.</span> <span class="nav-text">内存和磁盘I&#x2F;O速度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E6%95%B0"><span class="nav-number">1.3.</span> <span class="nav-text">操作数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">Redis介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis%E5%AE%89%E8%A3%85"><span class="nav-number">3.</span> <span class="nav-text">Redis安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BD%E8%B5%84%E6%BA%90%E5%8C%85"><span class="nav-number">3.1.</span> <span class="nav-text">下载资源包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E5%8E%8B"><span class="nav-number">3.2.</span> <span class="nav-text">解压</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E7%BC%96%E8%AF%91%E7%8E%AF%E5%A2%83"><span class="nav-number">3.3.</span> <span class="nav-text">安装编译环境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E4%B8%8E%E5%AE%89%E8%A3%85"><span class="nav-number">3.4.</span> <span class="nav-text">编译与安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E5%86%8C%E4%B8%BA%E6%9C%8D%E5%8A%A1"><span class="nav-number">3.5.</span> <span class="nav-text">注册为服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%8A%A5%E9%94%99%EF%BC%9APlease-take-a-look-at-the-provided-example-service-unit-files-in-this-directory-and-adapt-and-install-them-Sorry"><span class="nav-number">3.6.</span> <span class="nav-text">解决报错：Please take a look at the provided example service unit files in this directory, and adapt and install them. Sorry!</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#epoll-%E4%BB%8B%E7%BB%8D"><span class="nav-number">4.</span> <span class="nav-text">epoll 介绍</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E5%B8%B8%E8%AF%86"><span class="nav-number">1.</span> <span class="nav-text">基础常识</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A3%81%E9%81%93%E5%92%8C%E6%89%87%E5%8C%BA"><span class="nav-number">1.1.</span> <span class="nav-text">磁道和扇区</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E5%92%8C%E7%A3%81%E7%9B%98I-O%E9%80%9F%E5%BA%A6"><span class="nav-number">1.2.</span> <span class="nav-text">内存和磁盘I&#x2F;O速度</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E6%95%B0"><span class="nav-number">1.3.</span> <span class="nav-text">操作数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">Redis介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis%E5%AE%89%E8%A3%85"><span class="nav-number">3.</span> <span class="nav-text">Redis安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BD%E8%B5%84%E6%BA%90%E5%8C%85"><span class="nav-number">3.1.</span> <span class="nav-text">下载资源包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E5%8E%8B"><span class="nav-number">3.2.</span> <span class="nav-text">解压</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E7%BC%96%E8%AF%91%E7%8E%AF%E5%A2%83"><span class="nav-number">3.3.</span> <span class="nav-text">安装编译环境</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E4%B8%8E%E5%AE%89%E8%A3%85"><span class="nav-number">3.4.</span> <span class="nav-text">编译与安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E5%86%8C%E4%B8%BA%E6%9C%8D%E5%8A%A1"><span class="nav-number">3.5.</span> <span class="nav-text">注册为服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%8A%A5%E9%94%99"><span class="nav-number">3.6.</span> <span class="nav-text">解决报错</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#epoll-%E4%BB%8B%E7%BB%8D"><span class="nav-number">3.7.</span> <span class="nav-text">epoll 介绍</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis%E5%8E%9F%E7%90%86"><span class="nav-number">4.</span> <span class="nav-text">Redis原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis%E4%BD%BF%E7%94%A8"><span class="nav-number">5.</span> <span class="nav-text">Redis使用</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -254,10 +255,16 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2021-05-14 11:29:42 / 修改时间：19:17:05" itemprop="dateCreated datePublished" datetime="2021-05-14T11:29:42+08:00">2021-05-14</time>
+      <time title="创建时间：2021-05-14 11:29:42" itemprop="dateCreated datePublished" datetime="2021-05-14T11:29:42+08:00">2021-05-14</time>
     </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-05-16 12:38:30" itemprop="dateModified" datetime="2021-05-16T12:38:30+08:00">2021-05-16</time>
+      </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
         <i class="far fa-folder"></i>
@@ -276,7 +283,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>1.4k</span>
+      <span>1.5k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -312,12 +319,13 @@
 
 <h3 id="注册为服务"><a href="#注册为服务" class="headerlink" title="注册为服务"></a>注册为服务</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">vim /etc/profile</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 添加以下两行</span></span><br><span class="line">export REDIS_HOME=/opt/eitan/redis6</span><br><span class="line">export PATH=$PATH:$REDIS_HOME/bin</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 重新加载 profile</span></span><br><span class="line">source /etc/profile</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 保存退出后查看是否添加成功</span></span><br><span class="line">echo $PATH</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 注册为服务</span></span><br><span class="line">cd /root/soft/redis-6.2.3/utils</span><br><span class="line">./install_server.sh</span><br></pre></td></tr></table></figure>
 
-<h3 id="解决报错：Please-take-a-look-at-the-provided-example-service-unit-files-in-this-directory-and-adapt-and-install-them-Sorry"><a href="#解决报错：Please-take-a-look-at-the-provided-example-service-unit-files-in-this-directory-and-adapt-and-install-them-Sorry" class="headerlink" title="解决报错：Please take a look at the provided example service unit files in this directory, and adapt and install them. Sorry!"></a>解决报错：Please take a look at the provided example service unit files in this directory, and adapt and install them. Sorry!</h3><p>注释 <em>install_server.sh</em> 中以下部分</p>
+<h3 id="解决报错"><a href="#解决报错" class="headerlink" title="解决报错"></a>解决报错</h3><p>Please take a look at the provided example service unit files in this directory, and adapt and install them. Sorry!</p>
+<p>注释 <em>install_server.sh</em> 中以下部分</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">bail <span class="keyword">if</span> this system is managed by systemd</span></span><br><span class="line">_pid_1_exe=&quot;$(readlink -f /proc/1/exe)&quot;</span><br><span class="line">if [ &quot;$&#123;_pid_1_exe##*/&#125;&quot; = systemd ]</span><br><span class="line">then</span><br><span class="line">  echo &quot;This systems seems to use systemd.&quot;</span><br><span class="line">  echo &quot;Please take a look at the provided example service unit files in this directory, and adapt and install them. Sorry!&quot;</span><br><span class="line">  exit 1</span><br><span class="line">fi</span><br></pre></td></tr></table></figure>
 
-
-
-<h2 id="epoll-介绍"><a href="#epoll-介绍" class="headerlink" title="epoll 介绍"></a>epoll 介绍</h2>
+<h3 id="epoll-介绍"><a href="#epoll-介绍" class="headerlink" title="epoll 介绍"></a>epoll 介绍</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210516120300.png" alt="image-20210516120258026"></p>
+<h2 id="Redis原理"><a href="#Redis原理" class="headerlink" title="Redis原理"></a>Redis原理</h2><p>redis 是单进程、单线程来处理用户请求的。redis 每个连接的命令是“顺序”的，对不同连接的命令不是顺序的。</p>
+<h2 id="Redis使用"><a href="#Redis使用" class="headerlink" title="Redis使用"></a>Redis使用</h2>
     </div>
 
     
