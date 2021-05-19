@@ -21,25 +21,28 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;example.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Muse&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;right&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:true,&quot;bookmark&quot;:{&quot;enable&quot;:true,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:true,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;搜索...&quot;,&quot;empty&quot;:&quot;没有找到任何搜索结果：${query}&quot;,&quot;hits_time&quot;:&quot;找到 ${hits} 个搜索结果（用时 ${time} 毫秒）&quot;,&quot;hits&quot;:&quot;找到 ${hits} 个搜索结果&quot;},&quot;path&quot;:&quot;&#x2F;search.xml&quot;,&quot;localsearch&quot;:{&quot;enable&quot;:true,&quot;trigger&quot;:&quot;auto&quot;,&quot;top_n_per_article&quot;:1,&quot;unescape&quot;:false,&quot;preload&quot;:false}}</script>
-<meta name="description" content="blog用于记忆，大脑擅长思考">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Eitan&#39;s Blog">
-<meta property="og:url" content="http://example.com/archives/2021/05/index.html">
+<meta name="description" content="题目 给定一个有序数组 arr ，代表坐落在 X 轴上的点 给定一个正数K，代表绳子的长度 返回绳子最多压中几个点，即使绳子边缘处被盖住了也算盖住">
+<meta property="og:type" content="article">
+<meta property="og:title" content="线段点最多覆盖问题">
+<meta property="og:url" content="http://example.com/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E7%BA%BF%E6%AE%B5%E7%82%B9%E6%9C%80%E5%A4%9A%E8%A6%86%E7%9B%96/index.html">
 <meta property="og:site_name" content="Eitan&#39;s Blog">
-<meta property="og:description" content="blog用于记忆，大脑擅长思考">
+<meta property="og:description" content="题目 给定一个有序数组 arr ，代表坐落在 X 轴上的点 给定一个正数K，代表绳子的长度 返回绳子最多压中几个点，即使绳子边缘处被盖住了也算盖住">
 <meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-05-19T00:40:43.807Z">
+<meta property="article:modified_time" content="2021-05-19T00:43:21.494Z">
 <meta property="article:author" content="Eitan">
+<meta property="article:tag" content="algorithm">
 <meta name="twitter:card" content="summary">
 
 
-<link rel="canonical" href="http://example.com/archives/2021/05/">
+<link rel="canonical" href="http://example.com/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E7%BA%BF%E6%AE%B5%E7%82%B9%E6%9C%80%E5%A4%9A%E8%A6%86%E7%9B%96/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:false,&quot;lang&quot;:&quot;zh-CN&quot;,&quot;comments&quot;:&quot;&quot;,&quot;permalink&quot;:&quot;&quot;,&quot;path&quot;:&quot;archives&#x2F;2021&#x2F;05&#x2F;index.html&quot;,&quot;title&quot;:&quot;&quot;}</script>
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;zh-CN&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;example.com&#x2F;2021&#x2F;05&#x2F;19&#x2F;%E7%AE%97%E6%B3%95%E9%A2%98-%E7%BA%BF%E6%AE%B5%E7%82%B9%E6%9C%80%E5%A4%9A%E8%A6%86%E7%9B%96&#x2F;&quot;,&quot;path&quot;:&quot;2021&#x2F;05&#x2F;19&#x2F;算法题-线段点最多覆盖&#x2F;&quot;,&quot;title&quot;:&quot;线段点最多覆盖问题&quot;}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
-<title>归档 | Eitan's Blog</title><script src="/js/config.js"></script>
+<title>线段点最多覆盖问题 | Eitan's Blog</title><script src="/js/config.js"></script>
   
 
 
@@ -130,7 +133,7 @@
 
   <aside class="sidebar">
 
-    <div class="sidebar-inner sidebar-overview-active">
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
       <ul class="sidebar-nav">
         <li class="sidebar-nav-toc">
           文章目录
@@ -143,6 +146,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A2%98%E7%9B%AE"><span class="nav-number">1.</span> <span class="nav-text">题目</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%9D%E8%B7%AF"><span class="nav-number">2.</span> <span class="nav-text">思路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3"><span class="nav-number">3.</span> <span class="nav-text">解</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -214,232 +218,145 @@
 </noscript>
 
 
-    <div class="main-inner archive posts-collapse">
+    <div class="main-inner post posts-expand">
 
 
   
+
+
+<div class="post-block">
   
   
-  <div class="post-block">
-    <div class="post-content">
-      <div class="collection-title">
-        <span class="collection-header">嗯..! 目前共计 11 篇日志。 继续努力。</span>
-      </div>
 
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E7%BA%BF%E6%AE%B5%E7%82%B9%E6%9C%80%E5%A4%9A%E8%A6%86%E7%9B%96/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Eitan">
+      <meta itemprop="description" content="blog用于记忆，大脑擅长思考">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Eitan's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          线段点最多覆盖问题
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
       
-    <div class="collection-year">
-      <span class="collection-header">2021</span>
-    </div>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-      <div class="post-meta-container">
-        <time itemprop="dateCreated"
-              datetime="2021-05-19T08:44:38+08:00"
-              content="2021-05-19">
-          05-19
-        </time>
+      <time title="创建时间：2021-05-19 08:40:43 / 修改时间：08:43:21" itemprop="dateCreated datePublished" datetime="2021-05-19T08:40:43+08:00">2021-05-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/algorithm/" itemprop="url" rel="index"><span itemprop="name">algorithm</span></a>
+        </span>
+    </span>
+
+  
       </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>388</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>1 分钟</span>
+    </span>
+</div>
 
-      <div class="post-title">
-          <a class="post-title-link" href="/2021/05/19/Redis%EF%BC%88%E4%B8%89%EF%BC%89/" itemprop="url">
-            <span itemprop="name">Redis（三）</span>
-          </a>
-      </div>
+        </div>
+      </header>
 
-      
-    </header>
-  </article>
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><ol>
+<li>给定一个有序数组 arr ，代表坐落在 X 轴上的点</li>
+<li>给定一个正数K，代表绳子的长度</li>
+<li>返回绳子最多压中几个点，即使绳子边缘处被盖住了也算盖住</li>
+</ol>
+<span id="more"></span>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-      <div class="post-meta-container">
-        <time itemprop="dateCreated"
-              datetime="2021-05-19T08:40:43+08:00"
-              content="2021-05-19">
-          05-19
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E7%BA%BF%E6%AE%B5%E7%82%B9%E6%9C%80%E5%A4%9A%E8%A6%86%E7%9B%96/" itemprop="url">
-            <span itemprop="name">线段点最多覆盖问题</span>
-          </a>
-      </div>
-
-      
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-      <div class="post-meta-container">
-        <time itemprop="dateCreated"
-              datetime="2021-05-17T13:23:08+08:00"
-              content="2021-05-17">
-          05-17
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2021/05/17/Redis%EF%BC%88%E4%BA%8C%EF%BC%89/" itemprop="url">
-            <span itemprop="name">Redis（二）</span>
-          </a>
-      </div>
-
-      
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-      <div class="post-meta-container">
-        <time itemprop="dateCreated"
-              datetime="2021-05-17T08:58:27+08:00"
-              content="2021-05-17">
-          05-17
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2021/05/17/RocketMQ%EF%BC%88%E4%B8%80%EF%BC%89/" itemprop="url">
-            <span itemprop="name">RocketMQ（一）</span>
-          </a>
-      </div>
-
-      
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-      <div class="post-meta-container">
-        <time itemprop="dateCreated"
-              datetime="2021-05-14T11:29:42+08:00"
-              content="2021-05-14">
-          05-14
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2021/05/14/Redis%EF%BC%88%E4%B8%80%EF%BC%89/" itemprop="url">
-            <span itemprop="name">Redis（一）</span>
-          </a>
-      </div>
-
-      
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-      <div class="post-meta-container">
-        <time itemprop="dateCreated"
-              datetime="2021-05-14T09:12:43+08:00"
-              content="2021-05-14">
-          05-14
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2021/05/14/MySQL%E8%B0%83%E4%BC%98%EF%BC%88%E4%B8%80%EF%BC%89/" itemprop="url">
-            <span itemprop="name">MySQL调优（一）未完成</span>
-          </a>
-      </div>
-
-      
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-      <div class="post-meta-container">
-        <time itemprop="dateCreated"
-              datetime="2021-05-13T13:11:19+08:00"
-              content="2021-05-13">
-          05-13
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2021/05/13/HashMap%EF%BC%88%E4%B8%80%EF%BC%89/" itemprop="url">
-            <span itemprop="name">HashMap（一）</span>
-          </a>
-      </div>
-
-      
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-      <div class="post-meta-container">
-        <time itemprop="dateCreated"
-              datetime="2021-05-13T09:13:36+08:00"
-              content="2021-05-13">
-          05-13
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2021/05/13/%E5%B0%8F%E7%AA%A5JDK%E5%8A%A8%E6%80%81%E4%BB%A3%E7%90%86/" itemprop="url">
-            <span itemprop="name">自定义动态代理与JDK动态代理</span>
-          </a>
-      </div>
-
-      
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-      <div class="post-meta-container">
-        <time itemprop="dateCreated"
-              datetime="2021-05-13T08:18:00+08:00"
-              content="2021-05-13">
-          05-13
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2021/05/13/%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E7%9A%84%E5%A4%A7%E8%87%B4%E8%BF%87%E7%A8%8B/" itemprop="url">
-            <span itemprop="name">系统调用的大致过程</span>
-          </a>
-      </div>
-
-      
-    </header>
-  </article>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-      <div class="post-meta-container">
-        <time itemprop="dateCreated"
-              datetime="2021-05-11T16:55:30+08:00"
-              content="2021-05-11">
-          05-11
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2021/05/11/Tags-Testing-Article/" itemprop="url">
-            <span itemprop="name">Tags Testing Article</span>
-          </a>
-      </div>
-
-      
-    </header>
-  </article>
+<h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><ol>
+<li>采用左右指针，指针为数组下标</li>
+<li>右指针 - 左指针 = 当前覆盖点数</li>
+<li>右指针指向的值 - 左指针指向的值代表坐落在 X 轴上的点的跨度，要小于对于绳子长度</li>
+</ol>
+<h2 id="解"><a href="#解" class="headerlink" title="解"></a>解</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">mySolution</span><span class="params">(<span class="keyword">int</span>[] arr, <span class="keyword">int</span> l)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> left = <span class="number">0</span>, right = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">int</span> max = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (left &lt; arr.length) &#123;</span><br><span class="line">        <span class="keyword">while</span> (right &lt; arr.length &amp;&amp; arr[right] - arr[left] &lt;= l) &#123;</span><br><span class="line">            right++;</span><br><span class="line">        &#125;</span><br><span class="line">        max = Math.max(max, right - left++);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> max;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 
     </div>
-  </div>
-  
-  
-  
-  <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/archives/2021/05/page/2/">2</a><a class="extend next" rel="next" href="/archives/2021/05/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
-  </nav>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Eitan
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="http://example.com/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E7%BA%BF%E6%AE%B5%E7%82%B9%E6%9C%80%E5%A4%9A%E8%A6%86%E7%9B%96/" title="线段点最多覆盖问题">http://example.com/2021/05/19/算法题-线段点最多覆盖/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/algorithm/" rel="tag"><i class="fa fa-tag"></i> algorithm</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/05/17/Redis%EF%BC%88%E4%BA%8C%EF%BC%89/" rel="prev" title="Redis（二）">
+                  <i class="fa fa-chevron-left"></i> Redis（二）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/05/19/Redis%EF%BC%88%E4%B8%89%EF%BC%89/" rel="next" title="Redis（三）">
+                  Redis（三） <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
 <script src="/js/comments.js"></script>
 </div>
   </main>
