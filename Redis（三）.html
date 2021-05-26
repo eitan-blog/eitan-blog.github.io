@@ -21,25 +21,32 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;example.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Muse&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;right&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:true,&quot;bookmark&quot;:{&quot;enable&quot;:true,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:true,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;搜索...&quot;,&quot;empty&quot;:&quot;没有找到任何搜索结果：${query}&quot;,&quot;hits_time&quot;:&quot;找到 ${hits} 个搜索结果（用时 ${time} 毫秒）&quot;,&quot;hits&quot;:&quot;找到 ${hits} 个搜索结果&quot;},&quot;path&quot;:&quot;&#x2F;search.xml&quot;,&quot;localsearch&quot;:{&quot;enable&quot;:true,&quot;trigger&quot;:&quot;auto&quot;,&quot;top_n_per_article&quot;:1,&quot;unescape&quot;:false,&quot;preload&quot;:false}}</script>
-<meta name="description" content="blog用于记忆，大脑擅长思考">
+<meta name="description" content="Redis中AKF原理单机Redis问题 单点故障 容量有限 IO压力  Redis拆分 X轴：全量、镜像备份 Y轴：业务、功能拆分 Z轴：优先级、逻辑拆分  主从集群搭建方式 Redis主从复制原理弱一致性 1234REPLICAOF host portsummary: Make the server a replica of another instance, or promote it as">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Eitan&#39;s Blog">
-<meta property="og:url" content="http://example.com/archives/2021/page/2/index.html">
+<meta property="og:title" content="Redis（三）">
+<meta property="og:url" content="http://example.com/Redis%EF%BC%88%E4%B8%89%EF%BC%89.html">
 <meta property="og:site_name" content="Eitan&#39;s Blog">
-<meta property="og:description" content="blog用于记忆，大脑擅长思考">
+<meta property="og:description" content="Redis中AKF原理单机Redis问题 单点故障 容量有限 IO压力  Redis拆分 X轴：全量、镜像备份 Y轴：业务、功能拆分 Z轴：优先级、逻辑拆分  主从集群搭建方式 Redis主从复制原理弱一致性 1234REPLICAOF host portsummary: Make the server a replica of another instance, or promote it as">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210519092540.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210520091918.png">
+<meta property="article:published_time" content="2021-05-20T06:36:50.561Z">
+<meta property="article:modified_time" content="2021-05-20T06:35:23.513Z">
 <meta property="article:author" content="Eitan">
+<meta property="article:tag" content="Redis">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210519092540.png">
 
 
-<link rel="canonical" href="http://example.com/archives/2021/page/2/">
+<link rel="canonical" href="http://example.com/Redis%EF%BC%88%E4%B8%89%EF%BC%89">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:false,&quot;lang&quot;:&quot;zh-CN&quot;,&quot;comments&quot;:&quot;&quot;,&quot;permalink&quot;:&quot;&quot;,&quot;path&quot;:&quot;archives&#x2F;2021&#x2F;page&#x2F;2&#x2F;index.html&quot;,&quot;title&quot;:&quot;&quot;}</script>
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:false,&quot;lang&quot;:&quot;zh-CN&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;example.com&#x2F;Redis%EF%BC%88%E4%B8%89%EF%BC%89.html&quot;,&quot;path&quot;:&quot;Redis（三）.html&quot;,&quot;title&quot;:&quot;Redis（三）&quot;}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
-<title>归档 | Eitan's Blog</title><script src="/js/config.js"></script>
+<title>Redis（三） | Eitan's Blog
+</title><script src="/js/config.js"></script>
   
 
 
@@ -130,7 +137,7 @@
 
   <aside class="sidebar">
 
-    <div class="sidebar-inner sidebar-overview-active">
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
       <ul class="sidebar-nav">
         <li class="sidebar-nav-toc">
           文章目录
@@ -143,6 +150,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis%E4%B8%ADAKF%E5%8E%9F%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text">Redis中AKF原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%95%E6%9C%BARedis%E9%97%AE%E9%A2%98"><span class="nav-number">1.1.</span> <span class="nav-text">单机Redis问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Redis%E6%8B%86%E5%88%86"><span class="nav-number">1.2.</span> <span class="nav-text">Redis拆分</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BB%E4%BB%8E%E9%9B%86%E7%BE%A4%E6%90%AD%E5%BB%BA%E6%96%B9%E5%BC%8F"><span class="nav-number">1.3.</span> <span class="nav-text">主从集群搭建方式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%8E%9F%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text">Redis主从复制原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E9%85%8D%E7%BD%AE"><span class="nav-number">2.1.</span> <span class="nav-text">相关配置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis%E4%B8%AD%E7%9A%84sentinel"><span class="nav-number">3.</span> <span class="nav-text">Redis中的sentinel</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis%E4%B8%AD%E7%9A%84sharding"><span class="nav-number">4.</span> <span class="nav-text">Redis中的sharding</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E7%89%87%E7%AD%96%E7%95%A5"><span class="nav-number">4.1.</span> <span class="nav-text">分片策略</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Hash-%E5%8F%96%E6%A8%A1"><span class="nav-number">4.1.1.</span> <span class="nav-text">Hash + 取模</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Random"><span class="nav-number">4.1.2.</span> <span class="nav-text">Random</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ketama%EF%BC%9A%E4%B8%80%E8%87%B4%E6%80%A7hash%E7%AE%97%E6%B3%95"><span class="nav-number">4.1.3.</span> <span class="nav-text">ketama：一致性hash算法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Redis%E4%B8%AD%E4%BB%A3%E7%90%86%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="nav-number">4.2.</span> <span class="nav-text">Redis中代理的使用</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Twemproxy"><span class="nav-number">5.</span> <span class="nav-text">Twemproxy</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -158,7 +166,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">11</span>
+          <span class="site-state-item-count">9</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -171,7 +179,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-count">8</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -214,52 +222,74 @@
 </noscript>
 
 
-    <div class="main-inner archive posts-collapse">
+    <div class="main-inner page posts-expand">
+  
+  
 
 
-  
-  
-  
-  <div class="post-block">
-    <div class="post-content">
-      <div class="collection-title">
-        <span class="collection-header">嗯..! 目前共计 11 篇日志。 继续努力。</span>
-      </div>
+    
+    
+    
+    <div class="post-block" lang="zh-CN"><header class="post-header">
+
+<h1 class="post-title" itemprop="name headline">Redis（三）
+</h1>
+
+<div class="post-meta-container">
+</div>
+
+</header>
 
       
-    <div class="collection-year">
-      <span class="collection-header">2021</span>
-    </div>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-      <div class="post-meta-container">
-        <time itemprop="dateCreated"
-              datetime="2021-05-11T09:33:02+08:00"
-              content="2021-05-11">
-          05-11
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2021/05/11/hello-world/" itemprop="url">
-            <span itemprop="name">Hello World</span>
-          </a>
-      </div>
-
       
-    </header>
-  </article>
+      <div class="post-body">
+          <h2 id="Redis中AKF原理"><a href="#Redis中AKF原理" class="headerlink" title="Redis中AKF原理"></a>Redis中AKF原理</h2><h3 id="单机Redis问题"><a href="#单机Redis问题" class="headerlink" title="单机Redis问题"></a>单机Redis问题</h3><ol>
+<li>单点故障</li>
+<li>容量有限</li>
+<li>IO压力</li>
+</ol>
+<h3 id="Redis拆分"><a href="#Redis拆分" class="headerlink" title="Redis拆分"></a>Redis拆分</h3><ol>
+<li>X轴：全量、镜像备份</li>
+<li>Y轴：业务、功能拆分</li>
+<li>Z轴：优先级、逻辑拆分</li>
+</ol>
+<h3 id="主从集群搭建方式"><a href="#主从集群搭建方式" class="headerlink" title="主从集群搭建方式"></a>主从集群搭建方式</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210519092540.png" alt="image-20210519092539706"></p>
+<h2 id="Redis主从复制原理"><a href="#Redis主从复制原理" class="headerlink" title="Redis主从复制原理"></a>Redis主从复制原理</h2><p>弱一致性</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">REPLICAOF host port</span><br><span class="line">summary: Make the server a replica of another instance, or promote it as master.</span><br><span class="line">since: 5.0.0</span><br><span class="line">group: server</span><br></pre></td></tr></table></figure>
+
+<h3 id="相关配置"><a href="#相关配置" class="headerlink" title="相关配置"></a>相关配置</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 从在同步数据过程中是否提供数据查询</span></span><br><span class="line">replica-serve-stale-data yes</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 从是否只能读</span></span><br><span class="line">replica-read-only yes</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 数据同步是否让主先RDB到磁盘，或者直接内存通过网络传输</span></span><br><span class="line">repl-diskless-sync no</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 从disconnect并重启后可增量复制文件的大小，要同步数据超过该值就得全量复制</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> repl-backlog-size 1mb</span></span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 最小成功同步几个，如果填全同步成功则相当于同步阻塞的主从集群</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> min-replicas-to-write 3</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> min-replicas-max-lag 10</span></span><br></pre></td></tr></table></figure>
 
 
+
+<h2 id="Redis中的sentinel"><a href="#Redis中的sentinel" class="headerlink" title="Redis中的sentinel"></a>Redis中的sentinel</h2><p><a target="_blank" rel="noopener" href="http://www.redis.cn/topics/sentinel.html">中文官网对sentinel的介绍</a></p>
+<p>redis-sentinel 可以单独起一个进程，也可以使用 redis-server</p>
+<ol>
+<li>sentinel 监听主是怎么知道从的信息的：主中有存</li>
+<li>sentinel 监听主是怎么知道其他sentinel的信息的：发布订阅</li>
+</ol>
+<h2 id="Redis中的sharding"><a href="#Redis中的sharding" class="headerlink" title="Redis中的sharding"></a>Redis中的sharding</h2><h3 id="分片策略"><a href="#分片策略" class="headerlink" title="分片策略"></a>分片策略</h3><h4 id="Hash-取模"><a href="#Hash-取模" class="headerlink" title="Hash + 取模"></a>Hash + 取模</h4><ul>
+<li>弊端：取模的数必须固定，影响分布式下的扩展性</li>
+</ul>
+<h4 id="Random"><a href="#Random" class="headerlink" title="Random"></a>Random</h4><ul>
+<li><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210520091918.png" alt="image-20210520091915368"></li>
+</ul>
+<h4 id="ketama：一致性hash算法"><a href="#ketama：一致性hash算法" class="headerlink" title="ketama：一致性hash算法"></a>ketama：一致性hash算法</h4><ul>
+<li>原理是hash环</li>
+</ul>
+<h3 id="Redis中代理的使用"><a href="#Redis中代理的使用" class="headerlink" title="Redis中代理的使用"></a>Redis中代理的使用</h3><ul>
+<li>使用代理原因：每个 client 端都会对 Redis 参数多个连接，对 Redis 造成压力</li>
+</ul>
+<h2 id="Twemproxy"><a href="#Twemproxy" class="headerlink" title="Twemproxy"></a>Twemproxy</h2><p><a target="_blank" rel="noopener" href="https://github.com/twitter/twemproxy">https://github.com/twitter/twemproxy</a></p>
+
+      </div>
+      
+      
+      
     </div>
-  </div>
-  
-  
-  
-  <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/archives/2021/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/archives/2021/">1</a><span class="page-number current">2</span>
-  </nav>
+
+    
+    
+
 <script src="/js/comments.js"></script>
 </div>
   </main>
