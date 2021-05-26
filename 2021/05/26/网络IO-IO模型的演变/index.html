@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;example.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Muse&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;right&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:true,&quot;bookmark&quot;:{&quot;enable&quot;:true,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:true,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;搜索...&quot;,&quot;empty&quot;:&quot;没有找到任何搜索结果：${query}&quot;,&quot;hits_time&quot;:&quot;找到 ${hits} 个搜索结果（用时 ${time} 毫秒）&quot;,&quot;hits&quot;:&quot;找到 ${hits} 个搜索结果&quot;},&quot;path&quot;:&quot;&#x2F;search.xml&quot;,&quot;localsearch&quot;:{&quot;enable&quot;:true,&quot;trigger&quot;:&quot;auto&quot;,&quot;top_n_per_article&quot;:1,&quot;unescape&quot;:false,&quot;preload&quot;:false}}</script>
+<meta name="description" content="代码、资料来自于马士兵MAC课程。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="网络IO-IO模型的演变">
+<meta property="og:url" content="http://example.com/2021/05/26/%E7%BD%91%E7%BB%9CIO-IO%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%BC%94%E5%8F%98/index.html">
+<meta property="og:site_name" content="Eitan&#39;s Blog">
+<meta property="og:description" content="代码、资料来自于马士兵MAC课程。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-05-26T03:18:05.684Z">
+<meta property="article:modified_time" content="2021-05-26T09:58:13.556Z">
+<meta property="article:author" content="Eitan">
+<meta property="article:tag" content="io">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://example.com/2021/05/26/%E7%BD%91%E7%BB%9CIO-IO%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%BC%94%E5%8F%98/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;zh-CN&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;example.com&#x2F;2021&#x2F;05&#x2F;26&#x2F;%E7%BD%91%E7%BB%9CIO-IO%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%BC%94%E5%8F%98&#x2F;&quot;,&quot;path&quot;:&quot;2021&#x2F;05&#x2F;26&#x2F;网络IO-IO模型的演变&#x2F;&quot;,&quot;title&quot;:&quot;网络IO-IO模型的演变&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>网络IO-IO模型的演变 | Eitan's Blog</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Eitan's Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#BIO"><span class="nav-number">1.</span> <span class="nav-text">BIO</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#BIO-%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%AB%AF%E4%BB%A3%E7%A0%81"><span class="nav-number">1.1.</span> <span class="nav-text">BIO 服务器端代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E6%9F%A5%E7%9C%8Bjava%E6%89%80%E5%9C%A8%E4%BD%8D%E7%BD%AE"><span class="nav-number">1.2.</span> <span class="nav-text">如何查看java所在位置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8strace%E8%BF%BD%E8%B8%AA%E7%A8%8B%E5%BA%8F"><span class="nav-number">1.3.</span> <span class="nav-text">使用strace追踪程序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.4.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#NIO"><span class="nav-number">2.</span> <span class="nav-text">NIO</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#NIO-%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%AB%AF%E4%BB%A3%E7%A0%81"><span class="nav-number">2.1.</span> <span class="nav-text">NIO 服务器端代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8strace%E8%BF%BD%E8%B8%AA%E7%A8%8B%E5%BA%8F-1"><span class="nav-number">2.2.</span> <span class="nav-text">使用strace追踪程序</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A7%82%E5%AF%9F-out-%E6%96%87%E4%BB%B6%EF%BC%8C%E5%8F%AF%E4%BB%A5%E5%8F%91%E7%8E%B0%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8-accept-5-0x7f970c13bc70-28-1-EAGAIN-%E8%B5%84%E6%BA%90%E6%9A%82%E6%97%B6%E4%B8%8D%E5%8F%AF%E7%94%A8-%E5%B9%B6%E6%9C%AA%E5%8F%91%E7%94%9F%E9%98%BB%E5%A1%9E%EF%BC%8C%E5%BD%93%E6%97%A0%E6%9C%8D%E5%8A%A1%E7%AB%AF%E8%BF%9E%E6%8E%A5%E6%97%B6%E7%9B%B4%E6%8E%A5%E8%BF%94%E5%9B%9E-1"><span class="nav-number">2.2.1.</span> <span class="nav-text">观察 out 文件，可以发现系统调用 accept(5, 0x7f970c13bc70, [28])         &#x3D; -1 EAGAIN (资源暂时不可用) 并未发生阻塞，当无服务端连接时直接返回 -1</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%80%9A%E8%BF%87%E5%91%BD%E4%BB%A4-nc-localhost-9090-%E8%BF%9B%E8%A1%8C%E8%BF%9E%E6%8E%A5%EF%BC%8C%E5%86%8D%E6%AC%A1%E8%A7%82%E5%AF%9F-out-%E6%96%87%E4%BB%B6"><span class="nav-number">2.2.2.</span> <span class="nav-text">通过命令 nc localhost 9090 进行连接，再次观察 out 文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%BD%93%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%BE%93%E5%85%A5%E6%95%B0%E6%8D%AE12345%E6%97%B6%EF%BC%8C%E8%A7%82%E5%AF%9F-out-%E6%96%87%E4%BB%B6"><span class="nav-number">2.2.3.</span> <span class="nav-text">当客户端输入数据12345时，观察 out 文件</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93-1"><span class="nav-number">2.3.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Eitan"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Eitan</p>
+  <div class="site-description" itemprop="description">blog用于记忆，大脑擅长思考</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/eitan-blog" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;eitan-blog" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:eitan_blog@163.com" title="E-Mail → mailto:eitan_blog@163.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/yourname" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/05/26/%E7%BD%91%E7%BB%9CIO-IO%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%BC%94%E5%8F%98/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Eitan">
+      <meta itemprop="description" content="blog用于记忆，大脑擅长思考">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Eitan's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          网络IO-IO模型的演变
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2021-05-26 11:18:05 / 修改时间：17:58:13" itemprop="dateCreated datePublished" datetime="2021-05-26T11:18:05+08:00">2021-05-26</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/java/" itemprop="url" rel="index"><span itemprop="name">java</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/java/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>5.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>5 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>代码、资料来自于马士兵MAC课程。</p>
+<span id="more"></span>
+
+<h2 id="BIO"><a href="#BIO" class="headerlink" title="BIO"></a>BIO</h2><h3 id="BIO-服务器端代码"><a href="#BIO-服务器端代码" class="headerlink" title="BIO 服务器端代码"></a>BIO 服务器端代码</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">    ServerSocket server = <span class="keyword">new</span> ServerSocket(<span class="number">9090</span>, <span class="number">20</span>);</span><br><span class="line"></span><br><span class="line">    System.out.println(<span class="string">&quot;step1: new ServerSocket(9090) &quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        <span class="comment">//阻塞</span></span><br><span class="line">        Socket client = server.accept();  </span><br><span class="line">        System.out.println(<span class="string">&quot;step2:client\t&quot;</span> + client.getPort());</span><br><span class="line"></span><br><span class="line">        <span class="keyword">new</span> Thread(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line"></span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                InputStream in = <span class="keyword">null</span>;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    in = client.getInputStream();</span><br><span class="line">                    BufferedReader reader = <span class="keyword">new</span> BufferedReader(<span class="keyword">new</span> InputStreamReader(in));</span><br><span class="line">                    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">                        <span class="comment">//阻塞</span></span><br><span class="line">                        String dataline = reader.readLine(); </span><br><span class="line"></span><br><span class="line">                        <span class="keyword">if</span> (<span class="keyword">null</span> != dataline) &#123;</span><br><span class="line">                            System.out.println(dataline);</span><br><span class="line">                        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                            client.close();</span><br><span class="line">                            <span class="keyword">break</span>;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                    System.out.println(<span class="string">&quot;客户端断开&quot;</span>);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;).start();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="如何查看java所在位置"><a href="#如何查看java所在位置" class="headerlink" title="如何查看java所在位置"></a>如何查看java所在位置</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">whereis java</span><br><span class="line">java: /usr/bin/java /usr/lib/java /etc/java /usr/share/java /usr/share/man/man1/java.1.gz</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> -l 查看详细 -r 倒叙排序 -t 按时间排序</span></span><br><span class="line">ls -lrt /usr/bin/java</span><br><span class="line">lrwxrwxrwx. 1 root root 22 5月  25 11:11 /usr/bin/java -&gt; /etc/alternatives/java</span><br><span class="line"></span><br><span class="line">/etc/alternatives/java</span><br><span class="line">lrwxrwxrwx. 1 root root 73 5月  25 11:11 /etc/alternatives/java -&gt; /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.292.b10-1.el7_9.x86_64/jre/bin/java</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用strace追踪程序"><a href="#使用strace追踪程序" class="headerlink" title="使用strace追踪程序"></a>使用strace追踪程序</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> -ff 监听所有请求，使用 1.4 以前版本才能看到最早 BIO 的系统调用函数</span></span><br><span class="line">strace -ff -o out /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.292.b10-1.el7_9.x86_64/jre/bin/java SocketBIO</span><br></pre></td></tr></table></figure>
+
+<p>这时当前目录下就会生成对应文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">ll</span><br><span class="line">总用量 832</span><br><span class="line">-rw-r--r--. 1 root root  13685 5月  26 12:40 out.8696</span><br><span class="line">-rw-r--r--. 1 root root 195208 5月  26 12:40 out.8697</span><br><span class="line">-rw-r--r--. 1 root root  33347 5月  26 12:43 out.8698</span><br><span class="line">-rw-r--r--. 1 root root    975 5月  26 12:40 out.8699</span><br><span class="line">-rw-r--r--. 1 root root   1098 5月  26 12:40 out.8700</span><br><span class="line">-rw-r--r--. 1 root root   1019 5月  26 12:40 out.8701</span><br><span class="line">-rw-r--r--. 1 root root  12260 5月  26 12:43 out.8702</span><br><span class="line">-rw-r--r--. 1 root root   9956 5月  26 12:43 out.8703</span><br><span class="line">-rw-r--r--. 1 root root    974 5月  26 12:40 out.8704</span><br><span class="line">-rw-r--r--. 1 root root 545800 5月  26 12:43 out.8705</span><br><span class="line">-rw-r--r--. 1 root root   1175 5月  26 11:47 SocketBIO$1.class</span><br><span class="line">-rw-r--r--. 1 root root   1104 5月  26 11:47 SocketBIO.class</span><br><span class="line">-rw-r--r--. 1 root root   1505 5月  26 11:47 SocketBIO.java</span><br></pre></td></tr></table></figure>
+
+<p>之后便可以观察具体发生了哪些系统调用</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ol>
+<li>系统调用socket(…)=3</li>
+<li>系统调用bind(3, …8090…)绑定端口号</li>
+<li>系统调用listen(3,…)来监听此端口，此时 netstat -napt 才会显示对应的socket在监听8090端口</li>
+<li>主线程阻塞在系统调用accept(3,  处</li>
+<li>调用 nc 命令去连接，则主线程通过系统调用clone(…)抛出一个线程去接收信息，此时主线程再次循环阻塞在accept(3,  处，而子线程阻塞在 recv(fd, 处</li>
+</ol>
+<h2 id="NIO"><a href="#NIO" class="headerlink" title="NIO"></a>NIO</h2><h3 id="NIO-服务器端代码"><a href="#NIO-服务器端代码" class="headerlink" title="NIO 服务器端代码"></a>NIO 服务器端代码</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line"></span><br><span class="line">    LinkedList&lt;SocketChannel&gt; clients = <span class="keyword">new</span> LinkedList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 服务端开启监听：接受客户端</span></span><br><span class="line">    ServerSocketChannel ss = ServerSocketChannel.open();</span><br><span class="line">    ss.bind(<span class="keyword">new</span> InetSocketAddress(<span class="number">9090</span>));</span><br><span class="line">    <span class="comment">// 重点  OS  NONBLOCKING!!!  只让接受客户端时不阻塞</span></span><br><span class="line">    ss.configureBlocking(<span class="keyword">false</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        <span class="comment">// 接受客户端的连接</span></span><br><span class="line">        Thread.sleep(<span class="number">1000</span>);</span><br><span class="line">        <span class="comment">// 不会阻塞？  -1 NULL</span></span><br><span class="line">        SocketChannel client = ss.accept(); </span><br><span class="line">        <span class="comment">// accept  调用内核了：1，没有客户端连接进来，返回值？在BIO 的时候一直卡着，但是在NIO ，不卡着，返回-1，NULL</span></span><br><span class="line">        <span class="comment">// 如果来客户端的连接，accept 返回的是这个客户端的fd  5，client  object</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (client == <span class="keyword">null</span>) &#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;null.....&quot;</span>);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">//重点  socket（服务端的listen socket&lt;连接请求三次握手后，往我这里扔，我去通过accept得到连接的socket&gt;，连接socket&lt;连接后的数据读写使用的&gt; ）</span></span><br><span class="line">            client.configureBlocking(<span class="keyword">false</span>); </span><br><span class="line">            <span class="keyword">int</span> port = client.socket().getPort();</span><br><span class="line">            System.out.println(<span class="string">&quot;client..port: &quot;</span> + port);</span><br><span class="line">            clients.add(client);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//可以在堆里   堆外</span></span><br><span class="line">        ByteBuffer buffer = ByteBuffer.allocateDirect(<span class="number">4096</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//遍历已经链接进来的客户端能不能读写数据</span></span><br><span class="line">        <span class="keyword">for</span> (SocketChannel c : clients) &#123;</span><br><span class="line">            <span class="comment">// 不会阻塞，num 的返回值有 &gt;0  -1  0</span></span><br><span class="line">            <span class="keyword">int</span> num = c.read(buffer);  </span><br><span class="line">            <span class="keyword">if</span> (num &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                buffer.flip();</span><br><span class="line">                <span class="keyword">byte</span>[] aaa = <span class="keyword">new</span> <span class="keyword">byte</span>[buffer.limit()];</span><br><span class="line">                buffer.get(aaa);</span><br><span class="line"></span><br><span class="line">                String b = <span class="keyword">new</span> String(aaa);</span><br><span class="line">                System.out.println(c.socket().getPort() + <span class="string">&quot; : &quot;</span> + b);</span><br><span class="line">                buffer.clear();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用strace追踪程序-1"><a href="#使用strace追踪程序-1" class="headerlink" title="使用strace追踪程序"></a>使用strace追踪程序</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> -ff 监听所有请求，使用 1.4 以前版本才能看到最早 BIO 的系统调用函数</span></span><br><span class="line">strace -ff -o out java SocketNIO</span><br></pre></td></tr></table></figure>
+
+<h4 id="观察-out-文件，可以发现系统调用-accept-5-0x7f970c13bc70-28-1-EAGAIN-资源暂时不可用-并未发生阻塞，当无服务端连接时直接返回-1"><a href="#观察-out-文件，可以发现系统调用-accept-5-0x7f970c13bc70-28-1-EAGAIN-资源暂时不可用-并未发生阻塞，当无服务端连接时直接返回-1" class="headerlink" title="观察 out 文件，可以发现系统调用 accept(5, 0x7f970c13bc70, [28])         = -1 EAGAIN (资源暂时不可用) 并未发生阻塞，当无服务端连接时直接返回 -1"></a>观察 out 文件，可以发现系统调用 <em>accept(5, 0x7f970c13bc70, [28])         = -1 EAGAIN (资源暂时不可用)</em> 并未发生阻塞，当无服务端连接时直接返回 -1</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">tail out.9301</span><br><span class="line">mprotect(0x7f970c22d000, 4096, PROT_READ|PROT_WRITE) = 0</span><br><span class="line">futex(0x7f970c04c354, FUTEX_WAIT_BITSET_PRIVATE, 1, &#123;tv_sec=19890, tv_nsec=261222528&#125;, 0xffffffff) = -1 ETIMEDOUT (连接超时)</span><br><span class="line">futex(0x7f970c04c328, FUTEX_WAKE_PRIVATE, 1) = 0</span><br><span class="line">accept(5, 0x7f970c13bc70, [28])         = -1 EAGAIN (资源暂时不可用)</span><br><span class="line">write(1, &quot;null.....&quot;, 9)                = 9</span><br><span class="line">write(1, &quot;\n&quot;, 1)                       = 1</span><br><span class="line">futex(0x7f970c115954, FUTEX_WAKE_OP_PRIVATE, 1, 1, 0x7f970c115950, FUTEX_OP_SET&lt;&lt;28|0&lt;&lt;12|FUTEX_OP_CMP_GT&lt;&lt;24|0x1) = 1</span><br><span class="line">futex(0x7f970c115928, FUTEX_WAKE_PRIVATE, 1) = 0</span><br><span class="line">mprotect(0x7f970c22e000, 4096, PROT_READ|PROT_WRITE) = 0</span><br><span class="line">futex(0x7f970c04c354, FUTEX_WAIT_BITSET_PRIVATE, 1, &#123;tv_sec=19891, tv_nsec=272261757&#125;, 0xffffffff</span><br></pre></td></tr></table></figure>
+
+<h4 id="通过命令-nc-localhost-9090-进行连接，再次观察-out-文件"><a href="#通过命令-nc-localhost-9090-进行连接，再次观察-out-文件" class="headerlink" title="通过命令 nc localhost 9090 进行连接，再次观察 out 文件"></a>通过命令 <em>nc localhost 9090</em> 进行连接，再次观察 out 文件</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">tail out.9301</span><br><span class="line">write(1, &quot;null.....&quot;, 9)                = 9</span><br><span class="line">write(1, &quot;\n&quot;, 1)                       = 1</span><br><span class="line">read(6, 0x7f970c2c7a90, 4096)           = -1 EAGAIN (资源暂时不可用)</span><br><span class="line">futex(0x7f970c04c354, FUTEX_WAIT_BITSET_PRIVATE, 1, &#123;tv_sec=20045, tv_nsec=470392585&#125;, 0xffffffff) = -1 ETIMEDOUT (连接超时)</span><br><span class="line">futex(0x7f970c04c328, FUTEX_WAKE_PRIVATE, 1) = 0</span><br><span class="line">accept(5, 0x7f970c13e760, [28])         = -1 EAGAIN (资源暂时不可用)</span><br><span class="line">write(1, &quot;null.....&quot;, 9)                = 9</span><br><span class="line">write(1, &quot;\n&quot;, 1)                       = 1</span><br><span class="line">read(6, 0x7f970c2c8aa0, 4096)           = -1 EAGAIN (资源暂时不可用)</span><br><span class="line">futex(0x7f970c04c354, FUTEX_WAIT_BITSET_PRIVATE, 1, &#123;tv_sec=20046, tv_nsec=479021706&#125;, 0xffffffff</span><br></pre></td></tr></table></figure>
+
+<p>可以发现会调用 <em>read(6, 0x7f970c2c8aa0, 4096)           = -1 EAGAIN (资源暂时不可用)</em> 尝试获取客户端数据，当前没数据时不阻塞直接返回 -1</p>
+<h4 id="当客户端输入数据12345时，观察-out-文件"><a href="#当客户端输入数据12345时，观察-out-文件" class="headerlink" title="当客户端输入数据12345时，观察 out 文件"></a>当客户端输入数据<em>12345</em>时，观察 out 文件</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">tail out.9301</span><br><span class="line">read(6, 0x7f970c3f7de0, 4096)           = -1 EAGAIN (资源暂时不可用)</span><br><span class="line">futex(0x7f970c04c354, FUTEX_WAIT_BITSET_PRIVATE, 1, &#123;tv_sec=20350, tv_nsec=802512162&#125;, 0xffffffff) = -1 ETIMEDOUT (连接超时)</span><br><span class="line">futex(0x7f970c04c328, FUTEX_WAKE_PRIVATE, 1) = 0</span><br><span class="line">accept(5, 0x7f970c13bc70, [28])         = -1 EAGAIN (资源暂时不可用)</span><br><span class="line">write(1, &quot;null.....&quot;, 9)                = 9</span><br><span class="line">write(1, &quot;\n&quot;, 1)                       = 1</span><br><span class="line">read(6, &quot;12345\n&quot;, 4096)                = 6</span><br><span class="line">write(1, &quot;34706 : 12345\n&quot;, 14)         = 14</span><br><span class="line">write(1, &quot;\n&quot;, 1)                       = 1</span><br><span class="line">futex(0x7f970c04c354, FUTEX_WAIT_BITSET_PRIVATE, 1, &#123;tv_sec=20351, tv_nsec=812756397&#125;, 0xffffffff</span><br></pre></td></tr></table></figure>
+
+<p>可以发现 <em>read(6, “12345\n”, 4096)                = 6</em> 成功接收数据</p>
+<h3 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h3><ul>
+<li>对 <em>ServerSocketChannel</em> 设置 <em>configureBlocking</em> 为 false 时，系统调用 <em>accept(5, 0x7f970c13e760, [28])         = -1 EAGAIN (资源暂时不可用)</em> 将不会被阻塞，当前没有客户端连接时会直接返回 -1</li>
+<li>对 <em>SocketChannel</em> 设置 <em>configureBlocking</em> 为 false 时，系统调用  <em>read(6, 0x7f970c2c8aa0, 4096)           = -1 EAGAIN (资源暂时不可用)</em> 尝试获取客户端数据，当前没数据时不阻塞直接返回 -1</li>
+<li>NIO 在一个线程内，循环遍历询问是否有新的客户端连接，若有连接将其放进集合 clients 中，再遍历 client 查询这些客户端连接是否有传入数据，如果有则获取到对应数据，没有则返回 -1</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Eitan
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="http://example.com/2021/05/26/%E7%BD%91%E7%BB%9CIO-IO%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%BC%94%E5%8F%98/" title="网络IO-IO模型的演变">http://example.com/2021/05/26/网络IO-IO模型的演变/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/io/" rel="tag"><i class="fa fa-tag"></i> io</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/05/26/%E7%AE%97%E6%B3%95%E9%A2%98-%E5%AE%9E%E7%8E%B0LRU%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/" rel="prev" title="算法题-实现LRU缓存机制">
+                  <i class="fa fa-chevron-left"></i> 算法题-实现LRU缓存机制
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Eitan</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script><script src="/js/bookmark.js"></script>
+
+  
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
