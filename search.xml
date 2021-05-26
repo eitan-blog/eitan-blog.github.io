@@ -127,43 +127,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Tags Testing Article</title>
-    <url>/2021/05/11/Tags-Testing-Article/</url>
-    <content><![CDATA[<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;Hello World!&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><img src="https://raw.githubusercontent.com/xyq-material/blog/master/LeetCode/20210512131715.png" alt="逸"></p>
-]]></content>
-      <tags>
-        <tag>Testing</tag>
-        <tag>Another Tag</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>线段点最多覆盖问题</title>
-    <url>/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E7%BA%BF%E6%AE%B5%E7%82%B9%E6%9C%80%E5%A4%9A%E8%A6%86%E7%9B%96/</url>
-    <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><ol>
-<li>给定一个有序数组 arr ，代表坐落在 X 轴上的点</li>
-<li>给定一个正数K，代表绳子的长度</li>
-<li>返回绳子最多压中几个点，即使绳子边缘处被盖住了也算盖住</li>
-</ol>
-<span id="more"></span>
-
-<h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><ol>
-<li>采用左右指针，指针为数组下标</li>
-<li>右指针 - 左指针 = 当前覆盖点数</li>
-<li>右指针指向的值 - 左指针指向的值代表坐落在 X 轴上的点的跨度，要小于对于绳子长度</li>
-</ol>
-<h2 id="解"><a href="#解" class="headerlink" title="解"></a>解</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">mySolution</span><span class="params">(<span class="keyword">int</span>[] arr, <span class="keyword">int</span> l)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> left = <span class="number">0</span>, right = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">int</span> max = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (left &lt; arr.length) &#123;</span><br><span class="line">        <span class="keyword">while</span> (right &lt; arr.length &amp;&amp; arr[right] - arr[left] &lt;= l) &#123;</span><br><span class="line">            right++;</span><br><span class="line">        &#125;</span><br><span class="line">        max = Math.max(max, right - left++);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> max;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>algorithm</category>
-      </categories>
-      <tags>
-        <tag>algorithm</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Hello World</title>
     <url>/2021/05/11/hello-world/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
@@ -184,6 +147,18 @@
 ]]></content>
   </entry>
   <entry>
+    <title>Tags Testing Article</title>
+    <url>/2021/05/11/Tags-Testing-Article/</url>
+    <content><![CDATA[<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;Hello World!&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://raw.githubusercontent.com/xyq-material/blog/master/LeetCode/20210512131715.png" alt="逸"></p>
+]]></content>
+      <tags>
+        <tag>Testing</tag>
+        <tag>Another Tag</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>算法题-查询给定目录下的文件数量</title>
     <url>/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E6%9F%A5%E8%AF%A2%E7%BB%99%E5%AE%9A%E7%9B%AE%E5%BD%95%E4%B8%8B%E7%9A%84%E6%96%87%E4%BB%B6%E6%95%B0%E9%87%8F/</url>
     <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><ol>
@@ -195,6 +170,31 @@
 <h2 id="解答"><a href="#解答" class="headerlink" title="解答"></a>解答</h2><h3 id="栈"><a href="#栈" class="headerlink" title="栈"></a>栈</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">getFileNumber</span><span class="params">(String folderPath)</span> </span>&#123;</span><br><span class="line">    File root = <span class="keyword">new</span> File(folderPath);</span><br><span class="line">    <span class="keyword">if</span> (!root.isDirectory() &amp;&amp; !root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    Stack&lt;File&gt; stack = <span class="keyword">new</span> Stack&lt;&gt;();</span><br><span class="line">    stack.add(root);</span><br><span class="line">    <span class="keyword">int</span> files = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (!stack.isEmpty()) &#123;</span><br><span class="line">        File folder = stack.pop();</span><br><span class="line">        <span class="keyword">for</span> (File next : folder.listFiles()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (next.isFile()) &#123;</span><br><span class="line">                files++;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (next.isDirectory()) &#123;</span><br><span class="line">                stack.push(next);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> files;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <h3 id="递归"><a href="#递归" class="headerlink" title="递归"></a>递归</h3><figure class="highlight gradle"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> mySolution(String path) &#123;</span><br><span class="line">    <span class="keyword">int</span> fileNumber = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">File</span> <span class="keyword">file</span> = <span class="keyword">new</span> <span class="keyword">File</span>(path);</span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">file</span>.exists()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isDirectory()) &#123;</span><br><span class="line">        <span class="keyword">File</span>[] files = <span class="keyword">file</span>.listFiles();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">File</span> f : files) &#123;</span><br><span class="line">            fileNumber = fileNumber + mySolution(f.getPath());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fileNumber;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>algorithm</category>
+      </categories>
+      <tags>
+        <tag>algorithm</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>线段点最多覆盖问题</title>
+    <url>/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E7%BA%BF%E6%AE%B5%E7%82%B9%E6%9C%80%E5%A4%9A%E8%A6%86%E7%9B%96/</url>
+    <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><ol>
+<li>给定一个有序数组 arr ，代表坐落在 X 轴上的点</li>
+<li>给定一个正数K，代表绳子的长度</li>
+<li>返回绳子最多压中几个点，即使绳子边缘处被盖住了也算盖住</li>
+</ol>
+<span id="more"></span>
+
+<h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><ol>
+<li>采用左右指针，指针为数组下标</li>
+<li>右指针 - 左指针 = 当前覆盖点数</li>
+<li>右指针指向的值 - 左指针指向的值代表坐落在 X 轴上的点的跨度，要小于对于绳子长度</li>
+</ol>
+<h2 id="解"><a href="#解" class="headerlink" title="解"></a>解</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">mySolution</span><span class="params">(<span class="keyword">int</span>[] arr, <span class="keyword">int</span> l)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> left = <span class="number">0</span>, right = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">int</span> max = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (left &lt; arr.length) &#123;</span><br><span class="line">        <span class="keyword">while</span> (right &lt; arr.length &amp;&amp; arr[right] - arr[left] &lt;= l) &#123;</span><br><span class="line">            right++;</span><br><span class="line">        &#125;</span><br><span class="line">        max = Math.max(max, right - left++);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> max;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 ]]></content>
       <categories>
