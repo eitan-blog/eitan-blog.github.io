@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;example.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Muse&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;right&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:true,&quot;bookmark&quot;:{&quot;enable&quot;:true,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:true,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;搜索...&quot;,&quot;empty&quot;:&quot;没有找到任何搜索结果：${query}&quot;,&quot;hits_time&quot;:&quot;找到 ${hits} 个搜索结果（用时 ${time} 毫秒）&quot;,&quot;hits&quot;:&quot;找到 ${hits} 个搜索结果&quot;},&quot;path&quot;:&quot;&#x2F;search.xml&quot;,&quot;localsearch&quot;:{&quot;enable&quot;:true,&quot;trigger&quot;:&quot;auto&quot;,&quot;top_n_per_article&quot;:1,&quot;unescape&quot;:false,&quot;preload&quot;:false}}</script>
+<meta name="description" content="学习马士兵课程-内存与IO，通过 netstat、lsof、tcpdump 观察tcp连接时内核在每一步都就行了什么相应的操作。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="网络IO-tcp是怎么建立通信的">
+<meta property="og:url" content="http://example.com/2021/05/25/%E7%BD%91%E7%BB%9CIO-tcp%E6%98%AF%E6%80%8E%E4%B9%88%E5%BB%BA%E7%AB%8B%E9%80%9A%E4%BF%A1%E7%9A%84/index.html">
+<meta property="og:site_name" content="Eitan&#39;s Blog">
+<meta property="og:description" content="学习马士兵课程-内存与IO，通过 netstat、lsof、tcpdump 观察tcp连接时内核在每一步都就行了什么相应的操作。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-05-25T03:49:12.447Z">
+<meta property="article:modified_time" content="2021-05-26T02:47:44.622Z">
+<meta property="article:author" content="Eitan">
+<meta property="article:tag" content="io">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://example.com/2021/05/25/%E7%BD%91%E7%BB%9CIO-tcp%E6%98%AF%E6%80%8E%E4%B9%88%E5%BB%BA%E7%AB%8B%E9%80%9A%E4%BF%A1%E7%9A%84/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;zh-CN&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;example.com&#x2F;2021&#x2F;05&#x2F;25&#x2F;%E7%BD%91%E7%BB%9CIO-tcp%E6%98%AF%E6%80%8E%E4%B9%88%E5%BB%BA%E7%AB%8B%E9%80%9A%E4%BF%A1%E7%9A%84&#x2F;&quot;,&quot;path&quot;:&quot;2021&#x2F;05&#x2F;25&#x2F;网络IO-tcp是怎么建立通信的&#x2F;&quot;,&quot;title&quot;:&quot;网络IO-tcp是怎么建立通信的&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>网络IO-tcp是怎么建立通信的 | Eitan's Blog</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Eitan's Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B%E4%BB%A3%E7%A0%81"><span class="nav-number">1.</span> <span class="nav-text">案例代码</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%AB%AF"><span class="nav-number">1.1.</span> <span class="nav-text">服务器端</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF"><span class="nav-number">1.2.</span> <span class="nav-text">客户端</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9C%A8%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%AB%AF%E5%90%AF%E5%8A%A8%E4%BD%86%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%9C%AA%E8%BF%9E%E6%8E%A5%E6%97%B6"><span class="nav-number">2.</span> <span class="nav-text">在服务器端启动但客户端未连接时</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%AF%B7%E6%B1%82%E8%BF%9E%E6%8E%A5%E4%BD%86%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%AB%AF%E6%9C%AAaccept"><span class="nav-number">3.</span> <span class="nav-text">客户端请求连接但服务器端未accept</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BD%93%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%AB%AFaccept%E5%90%8E"><span class="nav-number">4.</span> <span class="nav-text">当服务器端accept后</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Eitan"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Eitan</p>
+  <div class="site-description" itemprop="description">blog用于记忆，大脑擅长思考</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/eitan-blog" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;eitan-blog" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:eitan_blog@163.com" title="E-Mail → mailto:eitan_blog@163.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/yourname" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/05/25/%E7%BD%91%E7%BB%9CIO-tcp%E6%98%AF%E6%80%8E%E4%B9%88%E5%BB%BA%E7%AB%8B%E9%80%9A%E4%BF%A1%E7%9A%84/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Eitan">
+      <meta itemprop="description" content="blog用于记忆，大脑擅长思考">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Eitan's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          网络IO-tcp是怎么建立通信的
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-05-25 11:49:12" itemprop="dateCreated datePublished" datetime="2021-05-25T11:49:12+08:00">2021-05-25</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-05-26 10:47:44" itemprop="dateModified" datetime="2021-05-26T10:47:44+08:00">2021-05-26</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/java/" itemprop="url" rel="index"><span itemprop="name">java</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/java/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>6.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>6 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>学习马士兵课程-内存与IO，通过 <em>netstat</em>、<em>lsof</em>、<em>tcpdump</em> 观察tcp连接时内核在每一步都就行了什么相应的操作。</p>
+<span id="more"></span>
+
+<h2 id="案例代码"><a href="#案例代码" class="headerlink" title="案例代码"></a>案例代码</h2><h3 id="服务器端"><a href="#服务器端" class="headerlink" title="服务器端"></a>服务器端</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span>: 马士兵教育</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@create</span>: 2020-05-17 05:34</span></span><br><span class="line"><span class="comment"> * BIO  多线程的方式</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SocketIOPropertites</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">//server socket listen property:</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> RECEIVE_BUFFER = <span class="number">10</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> SO_TIMEOUT = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">boolean</span> REUSE_ADDR = <span class="keyword">false</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> BACK_LOG = <span class="number">2</span>;</span><br><span class="line">    <span class="comment">//client socket listen property on server endpoint:</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">boolean</span> CLI_KEEPALIVE = <span class="keyword">false</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">boolean</span> CLI_OOB = <span class="keyword">false</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> CLI_REC_BUF = <span class="number">20</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">boolean</span> CLI_REUSE_ADDR = <span class="keyword">false</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> CLI_SEND_BUF = <span class="number">20</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">boolean</span> CLI_LINGER = <span class="keyword">true</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> CLI_LINGER_N = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">int</span> CLI_TIMEOUT = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">boolean</span> CLI_NO_DELAY = <span class="keyword">false</span>;</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">    StandardSocketOptions.TCP_NODELAY</span></span><br><span class="line"><span class="comment">    StandardSocketOptions.SO_KEEPALIVE</span></span><br><span class="line"><span class="comment">    StandardSocketOptions.SO_LINGER</span></span><br><span class="line"><span class="comment">    StandardSocketOptions.SO_RCVBUF</span></span><br><span class="line"><span class="comment">    StandardSocketOptions.SO_SNDBUF</span></span><br><span class="line"><span class="comment">    StandardSocketOptions.SO_REUSEADDR</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        ServerSocket server = <span class="keyword">null</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            server = <span class="keyword">new</span> ServerSocket();</span><br><span class="line">            server.bind(<span class="keyword">new</span> InetSocketAddress(<span class="number">9090</span>), BACK_LOG);</span><br><span class="line">            server.setReceiveBufferSize(RECEIVE_BUFFER);</span><br><span class="line">            server.setReuseAddress(REUSE_ADDR);</span><br><span class="line">            server.setSoTimeout(SO_TIMEOUT);</span><br><span class="line"></span><br><span class="line">        &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.println(<span class="string">&quot;server up use 9090!&quot;</span>);</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line"></span><br><span class="line">                System.in.read();  <span class="comment">//分水岭：</span></span><br><span class="line"></span><br><span class="line">                Socket client = server.accept();  <span class="comment">//阻塞的，没有 -1  一直卡着不动  accept(4,</span></span><br><span class="line">                System.out.println(<span class="string">&quot;client port: &quot;</span> + client.getPort());</span><br><span class="line"></span><br><span class="line">                client.setKeepAlive(CLI_KEEPALIVE);</span><br><span class="line">                client.setOOBInline(CLI_OOB);</span><br><span class="line">                client.setReceiveBufferSize(CLI_REC_BUF);</span><br><span class="line">                client.setReuseAddress(CLI_REUSE_ADDR);</span><br><span class="line">                client.setSendBufferSize(CLI_SEND_BUF);</span><br><span class="line">                client.setSoLinger(CLI_LINGER, CLI_LINGER_N);</span><br><span class="line">                client.setSoTimeout(CLI_TIMEOUT);</span><br><span class="line">                client.setTcpNoDelay(CLI_NO_DELAY);</span><br><span class="line"></span><br><span class="line">                <span class="comment">//client.read   //阻塞   没有  -1 0</span></span><br><span class="line">                <span class="keyword">new</span> Thread(</span><br><span class="line">                        () -&gt; &#123;</span><br><span class="line">                            <span class="keyword">try</span> &#123;</span><br><span class="line">                                InputStream in = client.getInputStream();</span><br><span class="line">                                BufferedReader reader = <span class="keyword">new</span> BufferedReader(<span class="keyword">new</span> InputStreamReader(in));</span><br><span class="line">                                <span class="keyword">char</span>[] data = <span class="keyword">new</span> <span class="keyword">char</span>[<span class="number">1024</span>];</span><br><span class="line">                                <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line"></span><br><span class="line">                                    <span class="keyword">int</span> num = reader.read(data);</span><br><span class="line"></span><br><span class="line">                                    <span class="keyword">if</span> (num &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                                        System.out.println(<span class="string">&quot;client read some data is :&quot;</span> + num + <span class="string">&quot; val :&quot;</span> + <span class="keyword">new</span> String(data, <span class="number">0</span>, num));</span><br><span class="line">                                    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (num == <span class="number">0</span>) &#123;</span><br><span class="line">                                        System.out.println(<span class="string">&quot;client readed nothing!&quot;</span>);</span><br><span class="line">                                        <span class="keyword">continue</span>;</span><br><span class="line">                                    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                                        System.out.println(<span class="string">&quot;client readed -1...&quot;</span>);</span><br><span class="line">                                        System.in.read();</span><br><span class="line">                                        client.close();</span><br><span class="line">                                        <span class="keyword">break</span>;</span><br><span class="line">                                    &#125;</span><br><span class="line">                                &#125;</span><br><span class="line"></span><br><span class="line">                            &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">                                e.printStackTrace();</span><br><span class="line">                            &#125;</span><br><span class="line"></span><br><span class="line">                        &#125;</span><br><span class="line">                ).start();</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                server.close();</span><br><span class="line">            &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="客户端"><a href="#客户端" class="headerlink" title="客户端"></a>客户端</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span>: 马士兵教育</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@create</span>: 2020-05-17 16:18</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SocketClient</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            Socket client = <span class="keyword">new</span> Socket(<span class="string">&quot;192.168.150.11&quot;</span>,<span class="number">9090</span>);</span><br><span class="line"></span><br><span class="line">            client.setSendBufferSize(<span class="number">20</span>);</span><br><span class="line">            client.setTcpNoDelay(<span class="keyword">true</span>);</span><br><span class="line">            OutputStream out = client.getOutputStream();</span><br><span class="line"></span><br><span class="line">            InputStream in = System.in;</span><br><span class="line">            BufferedReader reader = <span class="keyword">new</span> BufferedReader(<span class="keyword">new</span> InputStreamReader(in));</span><br><span class="line"></span><br><span class="line">            <span class="keyword">while</span>(<span class="keyword">true</span>)&#123;</span><br><span class="line">                String line = reader.readLine();</span><br><span class="line">                <span class="keyword">if</span>(line != <span class="keyword">null</span> )&#123;</span><br><span class="line">                    <span class="keyword">byte</span>[] bb = line.getBytes();</span><br><span class="line">                    <span class="keyword">for</span> (<span class="keyword">byte</span> b : bb) &#123;</span><br><span class="line">                        out.write(b);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="在服务器端启动但客户端未连接时"><a href="#在服务器端启动但客户端未连接时" class="headerlink" title="在服务器端启动但客户端未连接时"></a>在服务器端启动但客户端未连接时</h2><ul>
+<li><p>启动服务器端代码</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">javac SocketIOPropertites.java</span><br><span class="line">java SocketIOPropertites</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>此时客户端创建了 serverSocket 并绑定了端口9090，阻塞在 System.in.read() 处</p>
+</blockquote>
+</li>
+<li><p>netstat</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">-a 显示所有状态的socket  </span><br><span class="line">-n 不做名字解析，不加此参数，80端口会显示成http,127.0.0.1显示成localhost,uid为0显示成root等等    </span><br><span class="line">-e 显示更多信息如用户，inode</span><br><span class="line">-p 显示pid和程序名字</span><br><span class="line">-t 显示tcp链接</span><br><span class="line">-u 显示udp链接</span><br><span class="line">-x 显示unix套接字</span><br></pre></td></tr></table></figure>
+<p>通过 netstat 可以看出系统中多了一行监听9090端口的tcp连接</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">netstat -natp</span><br><span class="line">Active Internet connections (servers and established)</span><br><span class="line">Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    </span><br><span class="line">tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      7631/sshd           </span><br><span class="line">tcp        0      0 192.168.203.133:22      192.168.203.1:3137      ESTABLISHED 7846/sshd: root@pts </span><br><span class="line">tcp        0      0 192.168.203.133:22      192.168.203.1:7070      ESTABLISHED 15711/sshd: root@pt </span><br><span class="line">tcp        0     36 192.168.203.133:22      192.168.203.1:6022      ESTABLISHED 7942/sshd: root@pts </span><br><span class="line">tcp6       0      0 :::22                   :::*                    LISTEN      7631/sshd           </span><br><span class="line">tcp6       0      0 :::9090                 :::*                    LISTEN      15853/java</span><br></pre></td></tr></table></figure></li>
+<li><p>lsof</p>
+<p>通过 lsof 观察到运行java代码的进程出现了一个文件描述符处于Listen状态</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">lsof -p 15853</span><br><span class="line">COMMAND   PID USER   FD   TYPE             DEVICE  SIZE/OFF   NODE NAME</span><br><span class="line">...</span><br><span class="line">java    15853 root    6u  IPv6              53184       0t0    TCP *:websm (LISTEN)</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h2 id="客户端请求连接但服务器端未accept"><a href="#客户端请求连接但服务器端未accept" class="headerlink" title="客户端请求连接但服务器端未accept"></a>客户端请求连接但服务器端未accept</h2><ul>
+<li><p>启动客户端</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">javac SocketClient.java</span><br><span class="line">java SocketClient</span><br></pre></td></tr></table></figure></li>
+<li><p>解决异常<em>java.net.NoRouteToHostException: 没有到主机的路由</em></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 关闭防火墙</span></span><br><span class="line">systemctl stop firewalld.service</span><br></pre></td></tr></table></figure></li>
+<li><p>tcpdump</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">tcpdump -nn -i ens33 port 9090</span><br><span class="line">tcpdump: verbose output suppressed, use -v or -vv for full protocol decode</span><br><span class="line">listening on ens33, link-type EN10MB (Ethernet), capture size 262144 bytes</span><br><span class="line">15:00:49.829735 IP 192.168.203.132.37058 &gt; 192.168.203.133.9090: Flags [S], seq 493363808, win 29200, options [mss 1460,sackOK,TS val 14267030 ecr 0,nop,wscale 7], length 0</span><br><span class="line">15:00:49.829764 IP 192.168.203.133.9090 &gt; 192.168.203.132.37058: Flags [S.], seq 2693402151, ack 493363809, win 1152, options [mss 1460,sackOK,TS val 15102986 ecr 14267030,nop,wscale 0], length 0</span><br><span class="line">15:00:49.829979 IP 192.168.203.132.37058 &gt; 192.168.203.133.9090: Flags [.], ack 1, win 229, options [nop,nop,TS val 14267031 ecr 15102986], length 0</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>可以发现已经发生了三次握手</p>
+</blockquote>
+</li>
+<li><p>netstat</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">netstat -natp</span><br><span class="line">Active Internet connections (servers and established)</span><br><span class="line">Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    </span><br><span class="line">tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      7631/sshd           </span><br><span class="line">tcp        0      0 192.168.203.133:22      192.168.203.1:3137      ESTABLISHED 7846/sshd: root@pts </span><br><span class="line">tcp        0      0 192.168.203.133:22      192.168.203.1:7070      ESTABLISHED 15711/sshd: root@pt </span><br><span class="line">tcp        0     36 192.168.203.133:22      192.168.203.1:6022      ESTABLISHED 7942/sshd: root@pts </span><br><span class="line">tcp6       0      0 :::22                   :::*                    LISTEN      7631/sshd           </span><br><span class="line">tcp6       1      0 :::9090                 :::*                    LISTEN      16423/java          </span><br><span class="line">tcp6       0      0 192.168.203.133:9090    192.168.203.132:37058   ESTABLISHED -                   </span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>在内核层面已经建立起了socket连接，并且当客户端发出信息后，服务器端是已经被接受了，即使这个连接没有分配给任何一个进程</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="当服务器端accept后"><a href="#当服务器端accept后" class="headerlink" title="当服务器端accept后"></a>当服务器端accept后</h2><ul>
+<li><p>netstat</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">netstat -natp</span><br><span class="line">Active Internet connections (servers and established)</span><br><span class="line">Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    </span><br><span class="line">tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      7631/sshd           </span><br><span class="line">tcp        0      0 192.168.203.133:22      192.168.203.1:3137      ESTABLISHED 7846/sshd: root@pts </span><br><span class="line">tcp        0      0 192.168.203.133:22      192.168.203.1:7070      ESTABLISHED 15711/sshd: root@pt </span><br><span class="line">tcp        0     36 192.168.203.133:22      192.168.203.1:6022      ESTABLISHED 7942/sshd: root@pts </span><br><span class="line">tcp6       0      0 :::22                   :::*                    LISTEN      7631/sshd           </span><br><span class="line">tcp6       0      0 :::9090                 :::*                    LISTEN      16423/java          </span><br><span class="line">tcp6       0      0 192.168.203.133:9090    192.168.203.132:37058   ESTABLISHED 16423/java </span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>该连接已经分配给了对应进程</p>
+</blockquote>
+</li>
+<li><p>lsof</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">lsof -p 16423</span><br><span class="line">COMMAND   PID USER   FD   TYPE             DEVICE  SIZE/OFF   NODE NAME</span><br><span class="line">...</span><br><span class="line">java    16423 root    7u  IPv6              70977       0t0    TCP CentOS7.6:websm-&gt;192.168.203.132:37058 (ESTABLISHED)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>可以发现该进程已经被分配了文件描述符</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li>socket本质是一个四元组，通过 CIP_CPORT + SIP_SPORT 能确认唯一socket</li>
+<li>new ServerSocket() 在内核层面的操作就是开启了一个监听port的socket</li>
+<li>当两台服务器之间建立连接时并未将此socket分配给进程，即进程并未分配对应的文件描述符fd，但服务器之间已经可以就行信息传递</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Eitan
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="http://example.com/2021/05/25/%E7%BD%91%E7%BB%9CIO-tcp%E6%98%AF%E6%80%8E%E4%B9%88%E5%BB%BA%E7%AB%8B%E9%80%9A%E4%BF%A1%E7%9A%84/" title="网络IO-tcp是怎么建立通信的">http://example.com/2021/05/25/网络IO-tcp是怎么建立通信的/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/io/" rel="tag"><i class="fa fa-tag"></i> io</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E6%9F%A5%E8%AF%A2%E7%BB%99%E5%AE%9A%E7%9B%AE%E5%BD%95%E4%B8%8B%E7%9A%84%E6%96%87%E4%BB%B6%E6%95%B0%E9%87%8F/" rel="prev" title="算法题-查询给定目录下的文件数量">
+                  <i class="fa fa-chevron-left"></i> 算法题-查询给定目录下的文件数量
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Eitan</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script><script src="/js/bookmark.js"></script>
+
+  
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
