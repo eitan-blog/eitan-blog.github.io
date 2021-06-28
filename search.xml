@@ -127,6 +127,151 @@
       </tags>
   </entry>
   <entry>
+    <title>Spring中SPI的使用</title>
+    <url>/2021/06/25/Spring%E4%B8%ADSPI%E7%9A%84%E4%BD%BF%E7%94%A8/</url>
+    <content><![CDATA[<h3 id="什么是SPI"><a href="#什么是SPI" class="headerlink" title="什么是SPI"></a>什么是SPI</h3><p>SPI 全程叫 <strong>Service Provider Interface</strong> 服务提供接口，它可以通过一个指定的接口 / 抽象类，寻找到预先配置好的实现类（并创建实现类对象）。</p>
+<p>Spring 通过 <em>SpringFactoriesLoader</em> 读取放在 <em>META-INF</em> 目录下名为 <em>spring.factories</em> 的文件，获取文件中的权限定类名转化为实体对象。</p>
+<span id="more"></span>
+
+<h3 id="spring-factories"><a href="#spring-factories" class="headerlink" title="spring.factories"></a>spring.factories</h3><figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="meta">com.eitan.spring.spi.dao.DemoDao</span>=<span class="string">\</span></span><br><span class="line"><span class="string">  com.eitan.spring.spi.daoImpl.MysqlDemoDao,\</span></span><br><span class="line"><span class="string">  com.eitan.spring.spi.daoImpl.OracleDemoDao</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="接口和实现类"><a href="#接口和实现类" class="headerlink" title="接口和实现类"></a>接口和实现类</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">DemoDao</span> </span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MysqlDemoDao</span> <span class="keyword">implements</span> <span class="title">DemoDao</span> </span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">OracleDemoDao</span> <span class="keyword">implements</span> <span class="title">DemoDao</span> </span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="SpringApplication"><a href="#SpringApplication" class="headerlink" title="SpringApplication"></a>SpringApplication</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SpringApplication</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        List&lt;DemoDao&gt; demoDaoList = SpringFactoriesLoader.loadFactories(DemoDao.class, SpringApplication.class.getClassLoader());</span><br><span class="line">        demoDaoList.forEach(System.out::println);</span><br><span class="line"></span><br><span class="line">        List&lt;String&gt; factoryNames = SpringFactoriesLoader.loadFactoryNames(DemoDao.class, SpringApplication.class.getClassLoader());</span><br><span class="line">        factoryNames.forEach(System.out::println);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h3><figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.MysqlDemoDao@f2a0b8e</span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.OracleDemoDao@<span class="number">593634</span>ad</span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span><span class="selector-class">.MysqlDemoDao</span></span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.OracleDemoDao</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+      <tags>
+        <tag>spring</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Spring中三种后置处理器对比</title>
+    <url>/2021/06/24/Spring%E4%B8%AD%E4%B8%89%E7%A7%8D%E5%90%8E%E7%BD%AE%E5%A4%84%E7%90%86%E5%99%A8%E5%AF%B9%E6%AF%94/</url>
+    <content><![CDATA[<table>
+<thead>
+<tr>
+<th></th>
+<th>BeanPostProcessor</th>
+<th>BeanFactoryPostProcessor</th>
+<th>BeanDefinitionRegistryPostProcessor</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>处理目标</td>
+<td>bean 实例</td>
+<td>BeanDefinition</td>
+<td>BeanDefinition、.class 文件等</td>
+</tr>
+<tr>
+<td>执行时机</td>
+<td>bena 的初始化阶段前后（已创建出 bean 对象）</td>
+<td>BeanDefinition解析完毕并注册进 BeanFactory 之后（此时 bean 未实例化）</td>
+<td>配置文件、配置类已解析完毕并注册进 BeanFactory，但还未被 BeanFactoryPostProcessor 处理</td>
+</tr>
+<tr>
+<td>可操作空间</td>
+<td>对 bean 的属性赋值、创建代理对象等</td>
+<td>给 BeanDefinition 中增删属性，移除 BeanDefinition 等</td>
+<td>向 BeanFactory 中注册新的 BeanDefinition 和 BeanFactoryPostProcessor</td>
+</tr>
+</tbody></table>
+<span id="more"></span>
+
+<h3 id="BeanPostProcessor"><a href="#BeanPostProcessor" class="headerlink" title="BeanPostProcessor"></a>BeanPostProcessor</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">BeanPostProcessor</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">   <span class="meta">@Nullable</span></span><br><span class="line">   <span class="function"><span class="keyword">default</span> Object <span class="title">postProcessBeforeInitialization</span><span class="params">(Object bean, String beanName)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> bean;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="meta">@Nullable</span></span><br><span class="line">   <span class="function"><span class="keyword">default</span> Object <span class="title">postProcessAfterInitialization</span><span class="params">(Object bean, String beanName)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> bean;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>入参中的 <em>bean</em> 为根据 <em>BeanDefinition</em> 生成的 bean</p>
+<p>出参中的 <em>bean</em>，如果不为 null 则会替换掉 BeanFactory 中传入的 <em>bean</em></p>
+<p>如果该 bean，是通过 <em>factoryBean</em> 生成的，则不会执行 <em>postProcesserBeforeInitialization</em> 方法</p>
+</blockquote>
+<h3 id="BeanFactoryPostProcessor"><a href="#BeanFactoryPostProcessor" class="headerlink" title="BeanFactoryPostProcessor"></a>BeanFactoryPostProcessor</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">BeanFactoryPostProcessor</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Modify the application context&#x27;s internal bean factory after its standard</span></span><br><span class="line"><span class="comment">	 * initialization. All bean definitions will have been loaded, but no beans</span></span><br><span class="line"><span class="comment">	 * will have been instantiated yet. This allows for overriding or adding</span></span><br><span class="line"><span class="comment">	 * properties even to eager-initializing beans.</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@param</span> beanFactory the bean factory used by the application context</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@throws</span> org.springframework.beans.BeansException in case of errors</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">postProcessBeanFactory</span><span class="params">(ConfigurableListableBeanFactory beanFactory)</span> <span class="keyword">throws</span> BeansException</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>通过入参 <em>beanfactory</em> 就可以获取到对应的 <em>beanDefinition</em></p>
+</blockquote>
+<h3 id="BeanDefinitionRegistryPostProcessor"><a href="#BeanDefinitionRegistryPostProcessor" class="headerlink" title="BeanDefinitionRegistryPostProcessor"></a>BeanDefinitionRegistryPostProcessor</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">BeanDefinitionRegistryPostProcessor</span> <span class="keyword">extends</span> <span class="title">BeanFactoryPostProcessor</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Modify the application context&#x27;s internal bean definition registry after its</span></span><br><span class="line"><span class="comment">	 * standard initialization. All regular bean definitions will have been loaded,</span></span><br><span class="line"><span class="comment">	 * but no beans will have been instantiated yet. This allows for adding further</span></span><br><span class="line"><span class="comment">	 * bean definitions before the next post-processing phase kicks in.</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@param</span> registry the bean definition registry used by the application context</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@throws</span> org.springframework.beans.BeansException in case of errors</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">postProcessBeanDefinitionRegistry</span><span class="params">(BeanDefinitionRegistry registry)</span> <span class="keyword">throws</span> BeansException</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>通过 <em>BeanDefinitionRegistry</em> 的 <em>registerBeanDefinition</em> 方法就可以向容器中注入 <em>beanDefinition</em></p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+      <tags>
+        <tag>spring</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Spring中事件广播原理</title>
+    <url>/2021/06/25/Spring%E4%B8%AD%E4%BA%8B%E4%BB%B6%E5%B9%BF%E6%92%AD%E5%8E%9F%E7%90%86/</url>
+    <content><![CDATA[<h2 id="SpringFramework-的事件模型"><a href="#SpringFramework-的事件模型" class="headerlink" title="SpringFramework 的事件模型"></a>SpringFramework 的事件模型</h2><ul>
+<li>ApplicationEventPublisher：事件发布器，是用来接受事件，并交给事件广播器处理</li>
+<li>ApplicationEventMulticaster：事件广播器，拿到事件发布器的事件，并广播给监听器</li>
+</ul>
+<blockquote>
+<p><em>ApplicationContext</em> 接口继承了 <em>ApplicationEventPublisher</em> ，拥有事件发布的功能；<em>ApplicationContext</em> 的第一个抽象实现类 <em>AbstractApplicationContext</em> 组合了一个 <em>ApplicationEventMulticaster</em> ，拥有事件广播的能力。综合来看，<em>ApplicationContext</em> 的落地实现就已经能够完成事件驱动模型中的 “观察者” 身份了</p>
+</blockquote>
+<span id="more"></span>
+
+
+
+<h2 id="publishEvent"><a href="#publishEvent" class="headerlink" title="publishEvent()"></a>publishEvent()</h2><p>该方法的实现在 <em>AbstractApplicationContext</em> 中</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">publishEvent</span><span class="params">(Object event, <span class="meta">@Nullable</span> ResolvableType eventType)</span> </span>&#123;</span><br><span class="line">    Assert.notNull(event, <span class="string">&quot;Event must not be null&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Decorate event as an ApplicationEvent if necessary</span></span><br><span class="line">    <span class="comment">// 这里要给普通的对象封装为PayloadApplicationEvent</span></span><br><span class="line">    ApplicationEvent applicationEvent;</span><br><span class="line">    <span class="keyword">if</span> (event <span class="keyword">instanceof</span> ApplicationEvent) &#123;</span><br><span class="line">        applicationEvent = (ApplicationEvent) event;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        applicationEvent = <span class="keyword">new</span> PayloadApplicationEvent&lt;&gt;(<span class="keyword">this</span>, event);</span><br><span class="line">        <span class="keyword">if</span> (eventType == <span class="keyword">null</span>) &#123;</span><br><span class="line">            eventType = ((PayloadApplicationEvent&lt;?&gt;) applicationEvent).getResolvableType();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Multicast right now if possible - or lazily once the multicaster is initialized</span></span><br><span class="line">    <span class="comment">// 添加事件广播（earlyApplicationEvents太过于复杂，会考虑后续加餐内容解释）</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.earlyApplicationEvents != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">this</span>.earlyApplicationEvents.add(applicationEvent);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        getApplicationEventMulticaster().multicastEvent(applicationEvent, eventType);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Publish event via parent context as well...</span></span><br><span class="line">    <span class="comment">// 通知父容器发布事件</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.parent != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span>.parent <span class="keyword">instanceof</span> AbstractApplicationContext) &#123;</span><br><span class="line">            ((AbstractApplicationContext) <span class="keyword">this</span>.parent).publishEvent(event, eventType);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">this</span>.parent.publishEvent(event);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>广播事件的行为可以分为三部分：</p>
+<ol>
+<li>适配 payload 类型的 <em>ApplicationEvent</em>，即如果入参不是 <em>Event</em> 的子类则包装成 <em>PayloadApplicationEvent</em></li>
+<li>在本容器中广播事件</li>
+<li>通知父容器发布事件（正好知道了为什么子容器的事件会广播到父容器）</li>
+</ol>
+</blockquote>
+<h2 id="multicastEvent"><a href="#multicastEvent" class="headerlink" title="multicastEvent()"></a>multicastEvent()</h2><p>该方法位于 <em>ApplicationEventMulticaster</em> 的唯一落地实现类 <em>SimpleApplicationEventMulticaster</em> 中：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">multicastEvent</span><span class="params">(<span class="keyword">final</span> ApplicationEvent event, <span class="meta">@Nullable</span> ResolvableType eventType)</span> </span>&#123;</span><br><span class="line">    ResolvableType type = (eventType != <span class="keyword">null</span> ? eventType : resolveDefaultEventType(event));</span><br><span class="line">    Executor executor = getTaskExecutor();</span><br><span class="line">    <span class="keyword">for</span> (ApplicationListener&lt;?&gt; listener : getApplicationListeners(event, type)) &#123;</span><br><span class="line">        <span class="keyword">if</span> (executor != <span class="keyword">null</span>) &#123;</span><br><span class="line">            executor.execute(() -&gt; invokeListener(listener, event));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            invokeListener(listener, event);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>ResolvableType type = (eventType != null ? eventType : resolveDefaultEventType(event))：包装 <em>ApplicationEvent</em> 的具体类型，目的是可以更方便的获取对象和类的一些信息（父类、接口、泛型等）</li>
+<li>getApplicationListeners(event, type)：获取该事件对应的 <em>Listeners</em></li>
+<li>invokeListener(listener, event)：调用 <em>doInvokeListener(listener, event)</em> 方法，最终调用 <em>Listener</em> 的 <em>onApplicationEvent(E event)</em> 方法实现监听器方法的调用</li>
+</ul>
+<h2 id="getApplicationListeners-event-type"><a href="#getApplicationListeners-event-type" class="headerlink" title="getApplicationListeners(event, type)"></a>getApplicationListeners(event, type)</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">protected</span> Collection&lt;ApplicationListener&lt;?&gt;&gt; getApplicationListeners(</span><br><span class="line">			ApplicationEvent event, ResolvableType eventType) &#123;</span><br><span class="line"></span><br><span class="line">		Object source = event.getSource();</span><br><span class="line">		Class&lt;?&gt; sourceType = (source != <span class="keyword">null</span> ? source.getClass() : <span class="keyword">null</span>);</span><br><span class="line">		ListenerCacheKey cacheKey = <span class="keyword">new</span> ListenerCacheKey(eventType, sourceType);</span><br><span class="line"></span><br><span class="line">		<span class="comment">// Potential new retriever to populate</span></span><br><span class="line">		CachedListenerRetriever newRetriever = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// Quick check for existing entry on ConcurrentHashMap</span></span><br><span class="line">		CachedListenerRetriever existingRetriever = <span class="keyword">this</span>.retrieverCache.get(cacheKey);</span><br><span class="line">		<span class="keyword">if</span> (existingRetriever == <span class="keyword">null</span>) &#123;</span><br><span class="line">			<span class="comment">// Caching a new ListenerRetriever if possible</span></span><br><span class="line">			<span class="keyword">if</span> (<span class="keyword">this</span>.beanClassLoader == <span class="keyword">null</span> ||</span><br><span class="line">					(ClassUtils.isCacheSafe(event.getClass(), <span class="keyword">this</span>.beanClassLoader) &amp;&amp;</span><br><span class="line">							(sourceType == <span class="keyword">null</span> || ClassUtils.isCacheSafe(sourceType, <span class="keyword">this</span>.beanClassLoader)))) &#123;</span><br><span class="line">				newRetriever = <span class="keyword">new</span> CachedListenerRetriever();</span><br><span class="line">				existingRetriever = <span class="keyword">this</span>.retrieverCache.putIfAbsent(cacheKey, newRetriever);</span><br><span class="line">				<span class="keyword">if</span> (existingRetriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">					newRetriever = <span class="keyword">null</span>;  <span class="comment">// no need to populate it in retrieveApplicationListeners</span></span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (existingRetriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">			Collection&lt;ApplicationListener&lt;?&gt;&gt; result = existingRetriever.getApplicationListeners();</span><br><span class="line">			<span class="keyword">if</span> (result != <span class="keyword">null</span>) &#123;</span><br><span class="line">				<span class="keyword">return</span> result;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">// If result is null, the existing retriever is not fully populated yet by another thread.</span></span><br><span class="line">			<span class="comment">// Proceed like caching wasn&#x27;t possible for this current local attempt.</span></span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> retrieveApplicationListeners(eventType, sourceType, newRetriever);</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<ul>
+<li>先从 <em>retrieverCache</em> 中获取，如果能获取到则直接返回</li>
+<li>获取不到则调用 <em>retrieveApplicationListeners(eventType, sourceType, newRetriever)</em> ，并将结果放入 <em>retrieverCache</em> 中</li>
+</ul>
+</blockquote>
+<h2 id="retrieveApplicationListeners-eventType-sourceType-newRetriever"><a href="#retrieveApplicationListeners-eventType-sourceType-newRetriever" class="headerlink" title="retrieveApplicationListeners(eventType, sourceType, newRetriever)"></a>retrieveApplicationListeners(eventType, sourceType, newRetriever)</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> Collection&lt;ApplicationListener&lt;?&gt;&gt; retrieveApplicationListeners(</span><br><span class="line">		ResolvableType eventType, <span class="meta">@Nullable</span> Class&lt;?&gt; sourceType, <span class="meta">@Nullable</span> CachedListenerRetriever retriever) &#123;</span><br><span class="line"></span><br><span class="line">	List&lt;ApplicationListener&lt;?&gt;&gt; allListeners = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">	Set&lt;ApplicationListener&lt;?&gt;&gt; filteredListeners = (retriever != <span class="keyword">null</span> ? <span class="keyword">new</span> LinkedHashSet&lt;&gt;() : <span class="keyword">null</span>);</span><br><span class="line">	Set&lt;String&gt; filteredListenerBeans = (retriever != <span class="keyword">null</span> ? <span class="keyword">new</span> LinkedHashSet&lt;&gt;() : <span class="keyword">null</span>);</span><br><span class="line"></span><br><span class="line">	Set&lt;ApplicationListener&lt;?&gt;&gt; listeners;</span><br><span class="line">	Set&lt;String&gt; listenerBeans;</span><br><span class="line">	<span class="keyword">synchronized</span> (<span class="keyword">this</span>.defaultRetriever) &#123;</span><br><span class="line">		listeners = <span class="keyword">new</span> LinkedHashSet&lt;&gt;(<span class="keyword">this</span>.defaultRetriever.applicationListeners);</span><br><span class="line">		listenerBeans = <span class="keyword">new</span> LinkedHashSet&lt;&gt;(<span class="keyword">this</span>.defaultRetriever.applicationListenerBeans);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Add programmatically registered listeners, including ones coming</span></span><br><span class="line">	<span class="comment">// from ApplicationListenerDetector (singleton beans and inner beans).</span></span><br><span class="line">	<span class="keyword">for</span> (ApplicationListener&lt;?&gt; listener : listeners) &#123;</span><br><span class="line">		<span class="keyword">if</span> (supportsEvent(listener, eventType, sourceType)) &#123;</span><br><span class="line">			<span class="keyword">if</span> (retriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">				filteredListeners.add(listener);</span><br><span class="line">			&#125;</span><br><span class="line">			allListeners.add(listener);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Add listeners by bean name, potentially overlapping with programmatically</span></span><br><span class="line">	<span class="comment">// registered listeners above - but here potentially with additional metadata.</span></span><br><span class="line">	<span class="keyword">if</span> (!listenerBeans.isEmpty()) &#123;</span><br><span class="line">		ConfigurableBeanFactory beanFactory = getBeanFactory();</span><br><span class="line">		<span class="keyword">for</span> (String listenerBeanName : listenerBeans) &#123;</span><br><span class="line">			<span class="keyword">try</span> &#123;</span><br><span class="line">				<span class="keyword">if</span> (supportsEvent(beanFactory, listenerBeanName, eventType)) &#123;</span><br><span class="line">					ApplicationListener&lt;?&gt; listener =</span><br><span class="line">							beanFactory.getBean(listenerBeanName, ApplicationListener.class);</span><br><span class="line">					<span class="keyword">if</span> (!allListeners.contains(listener) &amp;&amp; supportsEvent(listener, eventType, sourceType)) &#123;</span><br><span class="line">						<span class="keyword">if</span> (retriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">							<span class="keyword">if</span> (beanFactory.isSingleton(listenerBeanName)) &#123;</span><br><span class="line">								filteredListeners.add(listener);</span><br><span class="line">							&#125;</span><br><span class="line">							<span class="keyword">else</span> &#123;</span><br><span class="line">								filteredListenerBeans.add(listenerBeanName);</span><br><span class="line">							&#125;</span><br><span class="line">						&#125;</span><br><span class="line">						allListeners.add(listener);</span><br><span class="line">					&#125;</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">else</span> &#123;</span><br><span class="line">					<span class="comment">// Remove non-matching listeners that originally came from</span></span><br><span class="line">					<span class="comment">// ApplicationListenerDetector, possibly ruled out by additional</span></span><br><span class="line">					<span class="comment">// BeanDefinition metadata (e.g. factory method generics) above.</span></span><br><span class="line">					Object listener = beanFactory.getSingleton(listenerBeanName);</span><br><span class="line">					<span class="keyword">if</span> (retriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">						filteredListeners.remove(listener);</span><br><span class="line">					&#125;</span><br><span class="line">					allListeners.remove(listener);</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">catch</span> (NoSuchBeanDefinitionException ex) &#123;</span><br><span class="line">				<span class="comment">// Singleton listener instance (without backing bean definition) disappeared -</span></span><br><span class="line">				<span class="comment">// probably in the middle of the destruction phase</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	AnnotationAwareOrderComparator.sort(allListeners);</span><br><span class="line">	<span class="keyword">if</span> (retriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">		<span class="keyword">if</span> (filteredListenerBeans.isEmpty()) &#123;</span><br><span class="line">			retriever.applicationListeners = <span class="keyword">new</span> LinkedHashSet&lt;&gt;(allListeners);</span><br><span class="line">			retriever.applicationListenerBeans = filteredListenerBeans;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">else</span> &#123;</span><br><span class="line">			retriever.applicationListeners = filteredListeners;</span><br><span class="line">			retriever.applicationListenerBeans = filteredListenerBeans;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> allListeners;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<ol>
+<li>筛选出由<strong>编程式</strong>注入到 IOC 容器的，监听当前发布事件的监听器</li>
+<li>筛选出由<strong>声明式 / 配置式</strong>注入到 IOC 容器的，监听当前发布事件的监听器</li>
+<li>监听器排序</li>
+</ol>
+</blockquote>
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+      <tags>
+        <tag>spring</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Spring中控制Bean生命周期的三种方式</title>
     <url>/2021/06/22/Spring%E4%B8%AD%E6%8E%A7%E5%88%B6Bean%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E7%9A%84%E4%B8%89%E7%A7%8D%E6%96%B9%E5%BC%8F/</url>
     <content><![CDATA[<table>
@@ -188,54 +333,20 @@
       </tags>
   </entry>
   <entry>
-    <title>Spring中三种后置处理器对比</title>
-    <url>/2021/06/24/Spring%E4%B8%AD%E4%B8%89%E7%A7%8D%E5%90%8E%E7%BD%AE%E5%A4%84%E7%90%86%E5%99%A8%E5%AF%B9%E6%AF%94/</url>
-    <content><![CDATA[<table>
-<thead>
-<tr>
-<th></th>
-<th>BeanPostProcessor</th>
-<th>BeanFactoryPostProcessor</th>
-<th>BeanDefinitionRegistryPostProcessor</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>处理目标</td>
-<td>bean 实例</td>
-<td>BeanDefinition</td>
-<td>BeanDefinition、.class 文件等</td>
-</tr>
-<tr>
-<td>执行时机</td>
-<td>bena 的初始化阶段前后（已创建出 bean 对象）</td>
-<td>BeanDefinition解析完毕并注册进 BeanFactory 之后（此时 bean 未实例化）</td>
-<td>配置文件、配置类已解析完毕并注册进 BeanFactory，但还未被 BeanFactoryPostProcessor 处理</td>
-</tr>
-<tr>
-<td>可操作空间</td>
-<td>对 bean 的属性赋值、创建代理对象等</td>
-<td>给 BeanDefinition 中增删属性，移除 BeanDefinition 等</td>
-<td>向 BeanFactory 中注册新的 BeanDefinition 和 BeanFactoryPostProcessor</td>
-</tr>
-</tbody></table>
+    <title>Spring中模块装配的三种方式</title>
+    <url>/2021/06/25/Spring%E4%B8%AD%E6%A8%A1%E5%9D%97%E8%A3%85%E9%85%8D%E7%9A%84%E4%B8%89%E7%A7%8D%E6%96%B9%E5%BC%8F/</url>
+    <content><![CDATA[<h3 id="Import"><a href="#Import" class="headerlink" title="@Import"></a>@Import</h3><p>可直接导入普通类、配置类、ImportSeletor 的实现类和 ImportBeanDefinitionRegistrar 的实现类，通常情况下是写在自定义注解上</p>
+<h3 id="编写-ImportSeletor-的实现类"><a href="#编写-ImportSeletor-的实现类" class="headerlink" title="编写 ImportSeletor 的实现类"></a>编写 ImportSeletor 的实现类</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">ImportSelector</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Select and return the names of which class(es) should be imported based on</span></span><br><span class="line"><span class="comment">	 * the &#123;<span class="doctag">@link</span> AnnotationMetadata&#125; of the importing @&#123;<span class="doctag">@link</span> Configuration&#125; class.</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@return</span> the class names, or an empty array if none</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	String[] selectImports(AnnotationMetadata importingClassMetadata);</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Nullable</span></span><br><span class="line">	<span class="function"><span class="keyword">default</span> Predicate&lt;String&gt; <span class="title">getExclusionFilter</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>通过 selectImports 方法导入对象，返回的是一组需要导入的类的全限定类名</p>
+</blockquote>
 <span id="more"></span>
 
-<h3 id="BeanPostProcessor"><a href="#BeanPostProcessor" class="headerlink" title="BeanPostProcessor"></a>BeanPostProcessor</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">BeanPostProcessor</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">   <span class="meta">@Nullable</span></span><br><span class="line">   <span class="function"><span class="keyword">default</span> Object <span class="title">postProcessBeforeInitialization</span><span class="params">(Object bean, String beanName)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> bean;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="meta">@Nullable</span></span><br><span class="line">   <span class="function"><span class="keyword">default</span> Object <span class="title">postProcessAfterInitialization</span><span class="params">(Object bean, String beanName)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> bean;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="编写-ImportBeanDefinitionRegistrar-的实现类"><a href="#编写-ImportBeanDefinitionRegistrar-的实现类" class="headerlink" title="编写 ImportBeanDefinitionRegistrar 的实现类"></a>编写 ImportBeanDefinitionRegistrar 的实现类</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">ImportBeanDefinitionRegistrar</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">default</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitions</span><span class="params">(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry,</span></span></span><br><span class="line"><span class="params"><span class="function">			BeanNameGenerator importBeanNameGenerator)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">		registerBeanDefinitions(importingClassMetadata, registry);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">default</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitions</span><span class="params">(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry)</span> </span>&#123;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <blockquote>
-<p>入参中的 <em>bean</em> 为根据 <em>BeanDefinition</em> 生成的 bean</p>
-<p>出参中的 <em>bean</em>，如果不为 null 则会替换掉 BeanFactory 中传入的 <em>bean</em></p>
-<p>如果该 bean，是通过 <em>factoryBean</em> 生成的，则不会执行 <em>postProcesserBeforeInitialization</em> 方法</p>
-</blockquote>
-<h3 id="BeanFactoryPostProcessor"><a href="#BeanFactoryPostProcessor" class="headerlink" title="BeanFactoryPostProcessor"></a>BeanFactoryPostProcessor</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">BeanFactoryPostProcessor</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Modify the application context&#x27;s internal bean factory after its standard</span></span><br><span class="line"><span class="comment">	 * initialization. All bean definitions will have been loaded, but no beans</span></span><br><span class="line"><span class="comment">	 * will have been instantiated yet. This allows for overriding or adding</span></span><br><span class="line"><span class="comment">	 * properties even to eager-initializing beans.</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@param</span> beanFactory the bean factory used by the application context</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@throws</span> org.springframework.beans.BeansException in case of errors</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">postProcessBeanFactory</span><span class="params">(ConfigurableListableBeanFactory beanFactory)</span> <span class="keyword">throws</span> BeansException</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>通过入参 <em>beanfactory</em> 就可以获取到对应的 <em>beanDefinition</em></p>
-</blockquote>
-<h3 id="BeanDefinitionRegistryPostProcessor"><a href="#BeanDefinitionRegistryPostProcessor" class="headerlink" title="BeanDefinitionRegistryPostProcessor"></a>BeanDefinitionRegistryPostProcessor</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">BeanDefinitionRegistryPostProcessor</span> <span class="keyword">extends</span> <span class="title">BeanFactoryPostProcessor</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Modify the application context&#x27;s internal bean definition registry after its</span></span><br><span class="line"><span class="comment">	 * standard initialization. All regular bean definitions will have been loaded,</span></span><br><span class="line"><span class="comment">	 * but no beans will have been instantiated yet. This allows for adding further</span></span><br><span class="line"><span class="comment">	 * bean definitions before the next post-processing phase kicks in.</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@param</span> registry the bean definition registry used by the application context</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@throws</span> org.springframework.beans.BeansException in case of errors</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">postProcessBeanDefinitionRegistry</span><span class="params">(BeanDefinitionRegistry registry)</span> <span class="keyword">throws</span> BeansException</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>通过 <em>BeanDefinitionRegistry</em> 的 <em>registerBeanDefinition</em> 方法就可以向容器中注入 <em>beanDefinition</em></p>
+<p>直接通过 BeanDefinitionRegistry 的 registerBeanDefinition 方法注册 BeanDefinition 到容器中</p>
 </blockquote>
 ]]></content>
       <categories>
