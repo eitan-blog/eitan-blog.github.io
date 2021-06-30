@@ -127,6 +127,18 @@
       </tags>
   </entry>
   <entry>
+    <title>Spring中Bean的生命周期</title>
+    <url>/2021/06/30/Spring%E4%B8%ADBean%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/</url>
+    <content><![CDATA[<h2 id="Bean的生命周期概述图"><a href="#Bean的生命周期概述图" class="headerlink" title="Bean的生命周期概述图"></a>Bean的生命周期概述图</h2><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210630110630.png" alt="image-20210630110625527"></p>
+<span id="more"></span>]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+      <tags>
+        <tag>spring</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Spring中SPI的使用</title>
     <url>/2021/06/25/Spring%E4%B8%ADSPI%E7%9A%84%E4%BD%BF%E7%94%A8/</url>
     <content><![CDATA[<h3 id="什么是SPI"><a href="#什么是SPI" class="headerlink" title="什么是SPI"></a>什么是SPI</h3><p>SPI 全程叫 <strong>Service Provider Interface</strong> 服务提供接口，它可以通过一个指定的接口 / 抽象类，寻找到预先配置好的实现类（并创建实现类对象）。</p>
@@ -146,6 +158,33 @@
 
 
 <h3 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h3><figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.MysqlDemoDao@f2a0b8e</span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.OracleDemoDao@<span class="number">593634</span>ad</span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span><span class="selector-class">.MysqlDemoDao</span></span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.OracleDemoDao</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+      <tags>
+        <tag>spring</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Spring中bean的几种注入方式</title>
+    <url>/2021/06/30/Spring%E4%B8%ADbean%E7%9A%84%E5%87%A0%E7%A7%8D%E6%B3%A8%E5%85%A5%E6%96%B9%E5%BC%8F/</url>
+    <content><![CDATA[<h3 id="声明式注入"><a href="#声明式注入" class="headerlink" title="声明式注入"></a>声明式注入</h3><h4 id="Configuration-Bean"><a href="#Configuration-Bean" class="headerlink" title="@Configuration + @Bean"></a>@Configuration + @Bean</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">QuickstartConfiguration</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Person <span class="title">person</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Person();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Component-ComponentScan"><a href="#Component-ComponentScan" class="headerlink" title="@Component + @ComponentScan"></a>@Component + @ComponentScan</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="meta">@ComponentScan(&quot;com.linkedbear.spring.annotation.c_scan&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ComponentScanConfiguration</span></span></span><br></pre></td></tr></table></figure>
+
+<h4 id="Import"><a href="#Import" class="headerlink" title="@Import"></a>@Import</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Import(&#123;Boss.class, BartenderConfiguration.class&#125;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> EnableTavern</span><br></pre></td></tr></table></figure>
+
+<span id="more"></span>
+
+<h3 id="配置式注入"><a href="#配置式注入" class="headerlink" title="配置式注入"></a>配置式注入</h3><h4 id="lt-bean-gt-标签声明"><a href="#lt-bean-gt-标签声明" class="headerlink" title="&lt;bean&gt;标签声明"></a>&lt;bean&gt;标签声明</h4><figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">&quot;person&quot;</span> <span class="attr">class</span>=<span class="string">&quot;com.linkedbear.spring.basic_dl.a_quickstart_byname.bean.Person&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="编程式注入-BeanDefinition"><a href="#编程式注入-BeanDefinition" class="headerlink" title="编程式注入 BeanDefinition"></a>编程式注入 <em>BeanDefinition</em></h3><h4 id="ImportBeanDefinitionRegistrar"><a href="#ImportBeanDefinitionRegistrar" class="headerlink" title="ImportBeanDefinitionRegistrar"></a>ImportBeanDefinitionRegistrar</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WaiterRegistrar</span> <span class="keyword">implements</span> <span class="title">ImportBeanDefinitionRegistrar</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitions</span><span class="params">(AnnotationMetadata metadata, BeanDefinitionRegistry registry)</span> </span>&#123;</span><br><span class="line">        registry.registerBeanDefinition(<span class="string">&quot;waiter&quot;</span>, <span class="keyword">new</span> RootBeanDefinition(Waiter.class));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="手动构造-BeanDefinition-注入"><a href="#手动构造-BeanDefinition-注入" class="headerlink" title="手动构造 BeanDefinition 注入"></a>手动构造 <em>BeanDefinition</em> 注入</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line">AnnotationConfigApplicationContext ctx = <span class="keyword">new</span> AnnotationConfigApplicationContext();</span><br><span class="line"></span><br><span class="line">BeanDefinition personDefinition = BeanDefinitionBuilder.rootBeanDefinition(Person.class)</span><br><span class="line">        .addPropertyValue(<span class="string">&quot;name&quot;</span>, <span class="string">&quot;zhangsan&quot;</span>).getBeanDefinition();</span><br><span class="line">ctx.registerBeanDefinition(<span class="string">&quot;person&quot;</span>, personDefinition);</span><br><span class="line"></span><br><span class="line">ctx.refresh();</span><br></pre></td></tr></table></figure>
+
+<h4 id="借助-BeanDefinitionRegistryPostProcessor-注入"><a href="#借助-BeanDefinitionRegistryPostProcessor-注入" class="headerlink" title="借助 BeanDefinitionRegistryPostProcessor 注入"></a>借助 BeanDefinitionRegistryPostProcessor 注入</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">postProcessBeanDefinitionRegistry</span><span class="params">(BeanDefinitionRegistry registry)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">    registry.registerBeanDefinition(<span class="string">&quot;animalNameSetterPostProcessor&quot;</span>, </span><br><span class="line">            <span class="keyword">new</span> RootBeanDefinition(AnimalNameSetterPostProcessor.class));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 ]]></content>
       <categories>
@@ -333,6 +372,18 @@
       </tags>
   </entry>
   <entry>
+    <title>Tags Testing Article</title>
+    <url>/2021/05/11/Tags-Testing-Article/</url>
+    <content><![CDATA[<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;Hello World!&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://raw.githubusercontent.com/xyq-material/blog/master/LeetCode/20210512131715.png" alt="逸"></p>
+]]></content>
+      <tags>
+        <tag>Testing</tag>
+        <tag>Another Tag</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Spring中模块装配的三种方式</title>
     <url>/2021/06/25/Spring%E4%B8%AD%E6%A8%A1%E5%9D%97%E8%A3%85%E9%85%8D%E7%9A%84%E4%B8%89%E7%A7%8D%E6%96%B9%E5%BC%8F/</url>
     <content><![CDATA[<h3 id="Import"><a href="#Import" class="headerlink" title="@Import"></a>@Import</h3><p>可直接导入普通类、配置类、ImportSeletor 的实现类和 ImportBeanDefinitionRegistrar 的实现类，通常情况下是写在自定义注解上</p>
@@ -357,18 +408,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Tags Testing Article</title>
-    <url>/2021/05/11/Tags-Testing-Article/</url>
-    <content><![CDATA[<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;Hello World!&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><img src="https://raw.githubusercontent.com/xyq-material/blog/master/LeetCode/20210512131715.png" alt="逸"></p>
-]]></content>
-      <tags>
-        <tag>Testing</tag>
-        <tag>Another Tag</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Hello World</title>
     <url>/2021/05/11/hello-world/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
@@ -387,6 +426,27 @@
 
 <p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
 ]]></content>
+  </entry>
+  <entry>
+    <title>算法题-查询给定目录下的文件数量</title>
+    <url>/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E6%9F%A5%E8%AF%A2%E7%BB%99%E5%AE%9A%E7%9B%AE%E5%BD%95%E4%B8%8B%E7%9A%84%E6%96%87%E4%BB%B6%E6%95%B0%E9%87%8F/</url>
+    <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><ol>
+<li>给定一个文件目录的路径，写一个函数统计这个目录下的所有文件</li>
+<li>隐藏文件也算，但是文件夹不算</li>
+</ol>
+<span id="more"></span>
+
+<h2 id="解答"><a href="#解答" class="headerlink" title="解答"></a>解答</h2><h3 id="栈"><a href="#栈" class="headerlink" title="栈"></a>栈</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">getFileNumber</span><span class="params">(String folderPath)</span> </span>&#123;</span><br><span class="line">    File root = <span class="keyword">new</span> File(folderPath);</span><br><span class="line">    <span class="keyword">if</span> (!root.isDirectory() &amp;&amp; !root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    Stack&lt;File&gt; stack = <span class="keyword">new</span> Stack&lt;&gt;();</span><br><span class="line">    stack.add(root);</span><br><span class="line">    <span class="keyword">int</span> files = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (!stack.isEmpty()) &#123;</span><br><span class="line">        File folder = stack.pop();</span><br><span class="line">        <span class="keyword">for</span> (File next : folder.listFiles()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (next.isFile()) &#123;</span><br><span class="line">                files++;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (next.isDirectory()) &#123;</span><br><span class="line">                stack.push(next);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> files;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="递归"><a href="#递归" class="headerlink" title="递归"></a>递归</h3><figure class="highlight gradle"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> mySolution(String path) &#123;</span><br><span class="line">    <span class="keyword">int</span> fileNumber = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">File</span> <span class="keyword">file</span> = <span class="keyword">new</span> <span class="keyword">File</span>(path);</span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">file</span>.exists()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isDirectory()) &#123;</span><br><span class="line">        <span class="keyword">File</span>[] files = <span class="keyword">file</span>.listFiles();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">File</span> f : files) &#123;</span><br><span class="line">            fileNumber = fileNumber + mySolution(f.getPath());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fileNumber;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>algorithm</category>
+      </categories>
+      <tags>
+        <tag>algorithm</tag>
+      </tags>
   </entry>
   <entry>
     <title>算法题-实现LRU缓存机制</title>
@@ -418,27 +478,6 @@
 <li>再使用一个 Map&lt;int, LRUNode&gt; 维护使用频率，其中 key 为使用频率，value 为一个维护使用时间的链表</li>
 <li>在 LFUNode 中需要存储当前元素的使用频率，在调取 get(int key) 方法时，将其从原链表移除，更新该node的频率并将其添加至新频率所在的链表</li>
 </ul>
-]]></content>
-      <categories>
-        <category>algorithm</category>
-      </categories>
-      <tags>
-        <tag>algorithm</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>算法题-查询给定目录下的文件数量</title>
-    <url>/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E6%9F%A5%E8%AF%A2%E7%BB%99%E5%AE%9A%E7%9B%AE%E5%BD%95%E4%B8%8B%E7%9A%84%E6%96%87%E4%BB%B6%E6%95%B0%E9%87%8F/</url>
-    <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><ol>
-<li>给定一个文件目录的路径，写一个函数统计这个目录下的所有文件</li>
-<li>隐藏文件也算，但是文件夹不算</li>
-</ol>
-<span id="more"></span>
-
-<h2 id="解答"><a href="#解答" class="headerlink" title="解答"></a>解答</h2><h3 id="栈"><a href="#栈" class="headerlink" title="栈"></a>栈</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">getFileNumber</span><span class="params">(String folderPath)</span> </span>&#123;</span><br><span class="line">    File root = <span class="keyword">new</span> File(folderPath);</span><br><span class="line">    <span class="keyword">if</span> (!root.isDirectory() &amp;&amp; !root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    Stack&lt;File&gt; stack = <span class="keyword">new</span> Stack&lt;&gt;();</span><br><span class="line">    stack.add(root);</span><br><span class="line">    <span class="keyword">int</span> files = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (!stack.isEmpty()) &#123;</span><br><span class="line">        File folder = stack.pop();</span><br><span class="line">        <span class="keyword">for</span> (File next : folder.listFiles()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (next.isFile()) &#123;</span><br><span class="line">                files++;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (next.isDirectory()) &#123;</span><br><span class="line">                stack.push(next);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> files;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="递归"><a href="#递归" class="headerlink" title="递归"></a>递归</h3><figure class="highlight gradle"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> mySolution(String path) &#123;</span><br><span class="line">    <span class="keyword">int</span> fileNumber = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">File</span> <span class="keyword">file</span> = <span class="keyword">new</span> <span class="keyword">File</span>(path);</span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">file</span>.exists()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isDirectory()) &#123;</span><br><span class="line">        <span class="keyword">File</span>[] files = <span class="keyword">file</span>.listFiles();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">File</span> f : files) &#123;</span><br><span class="line">            fileNumber = fileNumber + mySolution(f.getPath());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fileNumber;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
 ]]></content>
       <categories>
         <category>algorithm</category>
