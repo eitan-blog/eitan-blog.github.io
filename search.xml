@@ -130,7 +130,25 @@
     <title>Spring中Bean的生命周期</title>
     <url>/2021/06/30/Spring%E4%B8%ADBean%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F/</url>
     <content><![CDATA[<h2 id="Bean的生命周期概述图"><a href="#Bean的生命周期概述图" class="headerlink" title="Bean的生命周期概述图"></a>Bean的生命周期概述图</h2><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210630110630.png" alt="image-20210630110625527"></p>
-<span id="more"></span>]]></content>
+<p>原著：<a href="https://juejin.cn/book/6857911863016390663/section/6867689993351987207">从 0 开始深入学习 Spring</a></p>
+<span id="more"></span>
+
+<h2 id="BeanDefinition阶段"><a href="#BeanDefinition阶段" class="headerlink" title="BeanDefinition阶段"></a>BeanDefinition阶段</h2><h3 id="加载并解析xml配置文件"><a href="#加载并解析xml配置文件" class="headerlink" title="加载并解析xml配置文件"></a>加载并解析xml配置文件</h3><ol>
+<li><em>AbstractApplicationContext</em> 的 <em>refresh()</em> 方法的 <em>obtainFreshBeanFactory()</em> 会触发 XML 配置文件的读取。</li>
+<li>通过 <em>XmlBeanDefinitionReader</em>，加载 XML 配置文件<ol>
+<li>通过 resourceLoader 将 String 类型的 location 转化为 Resource</li>
+<li>通过 <em>doLoadDocument(InputSource inputSource, Resource resource)</em> 将 Resource 转为 Document</li>
+</ol>
+</li>
+<li>使用 DefaultBeanDefinitinoDocumentReader 解析 XML 转化的 DOC<ol>
+<li><em>doc.getDocumentElement()</em> 获取根节点</li>
+<li>获取根节点的 profile 属性与 <em>Environment</em> 中生效的 profile 比较判断该 XML 配置文件是否解析</li>
+<li>解析 XML 并封装为 <em>BeanDefinitionHolder</em></li>
+</ol>
+</li>
+<li>最终还是调用 <em>registry.registerBeanDefinition(String beanName, BeanDefinition beanDefinition)</em> 方法将 BeanDefinition 注册进 BeanFactory</li>
+</ol>
+]]></content>
       <categories>
         <category>java</category>
       </categories>
@@ -243,6 +261,30 @@
 
 <blockquote>
 <p>通过 <em>BeanDefinitionRegistry</em> 的 <em>registerBeanDefinition</em> 方法就可以向容器中注入 <em>beanDefinition</em></p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+      <tags>
+        <tag>spring</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Spring中模块装配的三种方式</title>
+    <url>/2021/06/25/Spring%E4%B8%AD%E6%A8%A1%E5%9D%97%E8%A3%85%E9%85%8D%E7%9A%84%E4%B8%89%E7%A7%8D%E6%96%B9%E5%BC%8F/</url>
+    <content><![CDATA[<h3 id="Import"><a href="#Import" class="headerlink" title="@Import"></a>@Import</h3><p>可直接导入普通类、配置类、ImportSeletor 的实现类和 ImportBeanDefinitionRegistrar 的实现类，通常情况下是写在自定义注解上</p>
+<h3 id="编写-ImportSeletor-的实现类"><a href="#编写-ImportSeletor-的实现类" class="headerlink" title="编写 ImportSeletor 的实现类"></a>编写 ImportSeletor 的实现类</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">ImportSelector</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Select and return the names of which class(es) should be imported based on</span></span><br><span class="line"><span class="comment">	 * the &#123;<span class="doctag">@link</span> AnnotationMetadata&#125; of the importing @&#123;<span class="doctag">@link</span> Configuration&#125; class.</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@return</span> the class names, or an empty array if none</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	String[] selectImports(AnnotationMetadata importingClassMetadata);</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Nullable</span></span><br><span class="line">	<span class="function"><span class="keyword">default</span> Predicate&lt;String&gt; <span class="title">getExclusionFilter</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>通过 selectImports 方法导入对象，返回的是一组需要导入的类的全限定类名</p>
+</blockquote>
+<span id="more"></span>
+
+<h3 id="编写-ImportBeanDefinitionRegistrar-的实现类"><a href="#编写-ImportBeanDefinitionRegistrar-的实现类" class="headerlink" title="编写 ImportBeanDefinitionRegistrar 的实现类"></a>编写 ImportBeanDefinitionRegistrar 的实现类</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">ImportBeanDefinitionRegistrar</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">default</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitions</span><span class="params">(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry,</span></span></span><br><span class="line"><span class="params"><span class="function">			BeanNameGenerator importBeanNameGenerator)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">		registerBeanDefinitions(importingClassMetadata, registry);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">default</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitions</span><span class="params">(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry)</span> </span>&#123;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>直接通过 BeanDefinitionRegistry 的 registerBeanDefinition 方法注册 BeanDefinition 到容器中</p>
 </blockquote>
 ]]></content>
       <categories>
@@ -384,30 +426,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Spring中模块装配的三种方式</title>
-    <url>/2021/06/25/Spring%E4%B8%AD%E6%A8%A1%E5%9D%97%E8%A3%85%E9%85%8D%E7%9A%84%E4%B8%89%E7%A7%8D%E6%96%B9%E5%BC%8F/</url>
-    <content><![CDATA[<h3 id="Import"><a href="#Import" class="headerlink" title="@Import"></a>@Import</h3><p>可直接导入普通类、配置类、ImportSeletor 的实现类和 ImportBeanDefinitionRegistrar 的实现类，通常情况下是写在自定义注解上</p>
-<h3 id="编写-ImportSeletor-的实现类"><a href="#编写-ImportSeletor-的实现类" class="headerlink" title="编写 ImportSeletor 的实现类"></a>编写 ImportSeletor 的实现类</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">ImportSelector</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Select and return the names of which class(es) should be imported based on</span></span><br><span class="line"><span class="comment">	 * the &#123;<span class="doctag">@link</span> AnnotationMetadata&#125; of the importing @&#123;<span class="doctag">@link</span> Configuration&#125; class.</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@return</span> the class names, or an empty array if none</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	String[] selectImports(AnnotationMetadata importingClassMetadata);</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Nullable</span></span><br><span class="line">	<span class="function"><span class="keyword">default</span> Predicate&lt;String&gt; <span class="title">getExclusionFilter</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>通过 selectImports 方法导入对象，返回的是一组需要导入的类的全限定类名</p>
-</blockquote>
-<span id="more"></span>
-
-<h3 id="编写-ImportBeanDefinitionRegistrar-的实现类"><a href="#编写-ImportBeanDefinitionRegistrar-的实现类" class="headerlink" title="编写 ImportBeanDefinitionRegistrar 的实现类"></a>编写 ImportBeanDefinitionRegistrar 的实现类</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">ImportBeanDefinitionRegistrar</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">default</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitions</span><span class="params">(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry,</span></span></span><br><span class="line"><span class="params"><span class="function">			BeanNameGenerator importBeanNameGenerator)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">		registerBeanDefinitions(importingClassMetadata, registry);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">default</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitions</span><span class="params">(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry)</span> </span>&#123;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>直接通过 BeanDefinitionRegistry 的 registerBeanDefinition 方法注册 BeanDefinition 到容器中</p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>java</category>
-      </categories>
-      <tags>
-        <tag>spring</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Hello World</title>
     <url>/2021/05/11/hello-world/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
@@ -428,18 +446,31 @@
 ]]></content>
   </entry>
   <entry>
-    <title>算法题-查询给定目录下的文件数量</title>
-    <url>/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E6%9F%A5%E8%AF%A2%E7%BB%99%E5%AE%9A%E7%9B%AE%E5%BD%95%E4%B8%8B%E7%9A%84%E6%96%87%E4%BB%B6%E6%95%B0%E9%87%8F/</url>
-    <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><ol>
-<li>给定一个文件目录的路径，写一个函数统计这个目录下的所有文件</li>
-<li>隐藏文件也算，但是文件夹不算</li>
-</ol>
+    <title>算法题-二维数组中的查找</title>
+    <url>/2021/07/01/%E7%AE%97%E6%B3%95%E9%A2%98-%E4%BA%8C%E7%BB%B4%E6%95%B0%E7%BB%84%E4%B8%AD%E7%9A%84%E6%9F%A5%E6%89%BE/</url>
+    <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><p>在一个 n * m 的二维数组中，每一行都按照从左到右递增的顺序排序，每一列都按照从上到下递增的顺序排序。请完成一个高效的函数，输入这样的一个二维数组和一个整数，判断数组中是否含有该整数。</p>
+<p>示例:</p>
+<figure class="highlight angelscript"><table><tr><td class="code"><pre><span class="line">现有矩阵 matrix 如下：</span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[</span></span><br><span class="line"><span class="string">  [1,   4,  7, 11, 15]</span>,</span><br><span class="line"><span class="string">  [2,   5,  8, 12, 19]</span>,</span><br><span class="line"><span class="string">  [3,   6,  9, 16, 22]</span>,</span><br><span class="line"><span class="string">  [10, 13, 14, 17, 24]</span>,</span><br><span class="line"><span class="string">  [18, 21, 23, 26, 30]</span></span><br><span class="line">]</span><br><span class="line">给定 target = <span class="number">5</span>，返回 <span class="literal">true</span>。</span><br><span class="line">给定 target = <span class="number">20</span>，返回 <span class="literal">false</span>。</span><br><span class="line"></span><br><span class="line">限制：</span><br><span class="line"><span class="number">0</span> &lt;= n &lt;= <span class="number">1000</span></span><br><span class="line"><span class="number">0</span> &lt;= m &lt;= <span class="number">1000</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>来源：力扣（LeetCode）<br>链接：<a href="https://leetcode-cn.com/problems/er-wei-shu-zu-zhong-de-cha-zhao-lcof">https://leetcode-cn.com/problems/er-wei-shu-zu-zhong-de-cha-zhao-lcof</a><br>著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
 <span id="more"></span>
 
-<h2 id="解答"><a href="#解答" class="headerlink" title="解答"></a>解答</h2><h3 id="栈"><a href="#栈" class="headerlink" title="栈"></a>栈</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">getFileNumber</span><span class="params">(String folderPath)</span> </span>&#123;</span><br><span class="line">    File root = <span class="keyword">new</span> File(folderPath);</span><br><span class="line">    <span class="keyword">if</span> (!root.isDirectory() &amp;&amp; !root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    Stack&lt;File&gt; stack = <span class="keyword">new</span> Stack&lt;&gt;();</span><br><span class="line">    stack.add(root);</span><br><span class="line">    <span class="keyword">int</span> files = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (!stack.isEmpty()) &#123;</span><br><span class="line">        File folder = stack.pop();</span><br><span class="line">        <span class="keyword">for</span> (File next : folder.listFiles()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (next.isFile()) &#123;</span><br><span class="line">                files++;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (next.isDirectory()) &#123;</span><br><span class="line">                stack.push(next);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> files;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h3 id="递归"><a href="#递归" class="headerlink" title="递归"></a>递归</h3><figure class="highlight gradle"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> mySolution(String path) &#123;</span><br><span class="line">    <span class="keyword">int</span> fileNumber = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">File</span> <span class="keyword">file</span> = <span class="keyword">new</span> <span class="keyword">File</span>(path);</span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">file</span>.exists()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isDirectory()) &#123;</span><br><span class="line">        <span class="keyword">File</span>[] files = <span class="keyword">file</span>.listFiles();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">File</span> f : files) &#123;</span><br><span class="line">            fileNumber = fileNumber + mySolution(f.getPath());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fileNumber;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
+<h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><ol>
+<li>由题可知：每一行都按照从左到右递增的顺序排序，每一列都按照从上到下递增的顺序排序</li>
+<li>因此可以关注左上和右下两点，以左上顶点为例，若 <em>target</em> 小于 *matrix[i][j]*，则 <em>target</em> 所在区域必在其 <em>左侧（即 i–）</em>，若 <em>target</em> 大于 *matrix[i][j]*，则 <em>target</em> 所在区域必在其 <em>下方（即j++）</em>;</li>
+<li>若 <em>索引越界</em> 则表示在 <em>matrix</em> 中找不到对应的 <em>target</em>，返回 <em>false</em></li>
+</ol>
+<h2 id="题解"><a href="#题解" class="headerlink" title="题解"></a>题解</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">findNumberIn2DArray</span><span class="params">(<span class="keyword">int</span>[][] matrix, <span class="keyword">int</span> target)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (matrix.length == <span class="number">0</span> || matrix[<span class="number">0</span>].length == <span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> j = matrix[<span class="number">0</span>].length - <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (i &gt;= matrix.length || j &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (matrix[i][j] == target) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (matrix[i][j] &lt; target) &#123;</span><br><span class="line">                i++;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                j--;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li>对于从左到右递增且从上到下递增的二维数组的遍历可以考虑从左上或者右下开始</li>
+</ul>
 ]]></content>
       <categories>
         <category>algorithm</category>
@@ -478,6 +509,27 @@
 <li>再使用一个 Map&lt;int, LRUNode&gt; 维护使用频率，其中 key 为使用频率，value 为一个维护使用时间的链表</li>
 <li>在 LFUNode 中需要存储当前元素的使用频率，在调取 get(int key) 方法时，将其从原链表移除，更新该node的频率并将其添加至新频率所在的链表</li>
 </ul>
+]]></content>
+      <categories>
+        <category>algorithm</category>
+      </categories>
+      <tags>
+        <tag>algorithm</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>算法题-查询给定目录下的文件数量</title>
+    <url>/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E6%9F%A5%E8%AF%A2%E7%BB%99%E5%AE%9A%E7%9B%AE%E5%BD%95%E4%B8%8B%E7%9A%84%E6%96%87%E4%BB%B6%E6%95%B0%E9%87%8F/</url>
+    <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><ol>
+<li>给定一个文件目录的路径，写一个函数统计这个目录下的所有文件</li>
+<li>隐藏文件也算，但是文件夹不算</li>
+</ol>
+<span id="more"></span>
+
+<h2 id="解答"><a href="#解答" class="headerlink" title="解答"></a>解答</h2><h3 id="栈"><a href="#栈" class="headerlink" title="栈"></a>栈</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">getFileNumber</span><span class="params">(String folderPath)</span> </span>&#123;</span><br><span class="line">    File root = <span class="keyword">new</span> File(folderPath);</span><br><span class="line">    <span class="keyword">if</span> (!root.isDirectory() &amp;&amp; !root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    Stack&lt;File&gt; stack = <span class="keyword">new</span> Stack&lt;&gt;();</span><br><span class="line">    stack.add(root);</span><br><span class="line">    <span class="keyword">int</span> files = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (!stack.isEmpty()) &#123;</span><br><span class="line">        File folder = stack.pop();</span><br><span class="line">        <span class="keyword">for</span> (File next : folder.listFiles()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (next.isFile()) &#123;</span><br><span class="line">                files++;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (next.isDirectory()) &#123;</span><br><span class="line">                stack.push(next);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> files;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="递归"><a href="#递归" class="headerlink" title="递归"></a>递归</h3><figure class="highlight gradle"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> mySolution(String path) &#123;</span><br><span class="line">    <span class="keyword">int</span> fileNumber = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">File</span> <span class="keyword">file</span> = <span class="keyword">new</span> <span class="keyword">File</span>(path);</span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">file</span>.exists()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isDirectory()) &#123;</span><br><span class="line">        <span class="keyword">File</span>[] files = <span class="keyword">file</span>.listFiles();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">File</span> f : files) &#123;</span><br><span class="line">            fileNumber = fileNumber + mySolution(f.getPath());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fileNumber;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 ]]></content>
       <categories>
         <category>algorithm</category>
