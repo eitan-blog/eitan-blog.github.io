@@ -127,6 +127,62 @@
       </tags>
   </entry>
   <entry>
+    <title>Spring中SPI的使用</title>
+    <url>/2021/06/25/Spring%E4%B8%ADSPI%E7%9A%84%E4%BD%BF%E7%94%A8/</url>
+    <content><![CDATA[<h3 id="什么是SPI"><a href="#什么是SPI" class="headerlink" title="什么是SPI"></a>什么是SPI</h3><p>SPI 全程叫 <strong>Service Provider Interface</strong> 服务提供接口，它可以通过一个指定的接口 / 抽象类，寻找到预先配置好的实现类（并创建实现类对象）。</p>
+<p>Spring 通过 <em>SpringFactoriesLoader</em> 读取放在 <em>META-INF</em> 目录下名为 <em>spring.factories</em> 的文件，获取文件中的权限定类名转化为实体对象。</p>
+<span id="more"></span>
+
+<h3 id="spring-factories"><a href="#spring-factories" class="headerlink" title="spring.factories"></a>spring.factories</h3><figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="meta">com.eitan.spring.spi.dao.DemoDao</span>=<span class="string">\</span></span><br><span class="line"><span class="string">  com.eitan.spring.spi.daoImpl.MysqlDemoDao,\</span></span><br><span class="line"><span class="string">  com.eitan.spring.spi.daoImpl.OracleDemoDao</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="接口和实现类"><a href="#接口和实现类" class="headerlink" title="接口和实现类"></a>接口和实现类</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">DemoDao</span> </span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MysqlDemoDao</span> <span class="keyword">implements</span> <span class="title">DemoDao</span> </span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">OracleDemoDao</span> <span class="keyword">implements</span> <span class="title">DemoDao</span> </span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="SpringApplication"><a href="#SpringApplication" class="headerlink" title="SpringApplication"></a>SpringApplication</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SpringApplication</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        List&lt;DemoDao&gt; demoDaoList = SpringFactoriesLoader.loadFactories(DemoDao.class, SpringApplication.class.getClassLoader());</span><br><span class="line">        demoDaoList.forEach(System.out::println);</span><br><span class="line"></span><br><span class="line">        List&lt;String&gt; factoryNames = SpringFactoriesLoader.loadFactoryNames(DemoDao.class, SpringApplication.class.getClassLoader());</span><br><span class="line">        factoryNames.forEach(System.out::println);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h3><figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.MysqlDemoDao@f2a0b8e</span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.OracleDemoDao@<span class="number">593634</span>ad</span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span><span class="selector-class">.MysqlDemoDao</span></span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.OracleDemoDao</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+      <tags>
+        <tag>spring</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Spring中bean的几种注入方式</title>
+    <url>/2021/06/30/Spring%E4%B8%ADbean%E7%9A%84%E5%87%A0%E7%A7%8D%E6%B3%A8%E5%85%A5%E6%96%B9%E5%BC%8F/</url>
+    <content><![CDATA[<h3 id="声明式注入"><a href="#声明式注入" class="headerlink" title="声明式注入"></a>声明式注入</h3><h4 id="Configuration-Bean"><a href="#Configuration-Bean" class="headerlink" title="@Configuration + @Bean"></a>@Configuration + @Bean</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">QuickstartConfiguration</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Person <span class="title">person</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Person();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Component-ComponentScan"><a href="#Component-ComponentScan" class="headerlink" title="@Component + @ComponentScan"></a>@Component + @ComponentScan</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="meta">@ComponentScan(&quot;com.linkedbear.spring.annotation.c_scan&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ComponentScanConfiguration</span></span></span><br></pre></td></tr></table></figure>
+
+<h4 id="Import"><a href="#Import" class="headerlink" title="@Import"></a>@Import</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Import(&#123;Boss.class, BartenderConfiguration.class&#125;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> EnableTavern</span><br></pre></td></tr></table></figure>
+
+<span id="more"></span>
+
+<h3 id="配置式注入"><a href="#配置式注入" class="headerlink" title="配置式注入"></a>配置式注入</h3><h4 id="lt-bean-gt-标签声明"><a href="#lt-bean-gt-标签声明" class="headerlink" title="&lt;bean&gt;标签声明"></a>&lt;bean&gt;标签声明</h4><figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">&quot;person&quot;</span> <span class="attr">class</span>=<span class="string">&quot;com.linkedbear.spring.basic_dl.a_quickstart_byname.bean.Person&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="编程式注入-BeanDefinition"><a href="#编程式注入-BeanDefinition" class="headerlink" title="编程式注入 BeanDefinition"></a>编程式注入 <em>BeanDefinition</em></h3><h4 id="ImportBeanDefinitionRegistrar"><a href="#ImportBeanDefinitionRegistrar" class="headerlink" title="ImportBeanDefinitionRegistrar"></a>ImportBeanDefinitionRegistrar</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WaiterRegistrar</span> <span class="keyword">implements</span> <span class="title">ImportBeanDefinitionRegistrar</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitions</span><span class="params">(AnnotationMetadata metadata, BeanDefinitionRegistry registry)</span> </span>&#123;</span><br><span class="line">        registry.registerBeanDefinition(<span class="string">&quot;waiter&quot;</span>, <span class="keyword">new</span> RootBeanDefinition(Waiter.class));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="手动构造-BeanDefinition-注入"><a href="#手动构造-BeanDefinition-注入" class="headerlink" title="手动构造 BeanDefinition 注入"></a>手动构造 <em>BeanDefinition</em> 注入</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line">AnnotationConfigApplicationContext ctx = <span class="keyword">new</span> AnnotationConfigApplicationContext();</span><br><span class="line"></span><br><span class="line">BeanDefinition personDefinition = BeanDefinitionBuilder.rootBeanDefinition(Person.class)</span><br><span class="line">        .addPropertyValue(<span class="string">&quot;name&quot;</span>, <span class="string">&quot;zhangsan&quot;</span>).getBeanDefinition();</span><br><span class="line">ctx.registerBeanDefinition(<span class="string">&quot;person&quot;</span>, personDefinition);</span><br><span class="line"></span><br><span class="line">ctx.refresh();</span><br></pre></td></tr></table></figure>
+
+<h4 id="借助-BeanDefinitionRegistryPostProcessor-注入"><a href="#借助-BeanDefinitionRegistryPostProcessor-注入" class="headerlink" title="借助 BeanDefinitionRegistryPostProcessor 注入"></a>借助 BeanDefinitionRegistryPostProcessor 注入</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">postProcessBeanDefinitionRegistry</span><span class="params">(BeanDefinitionRegistry registry)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">    registry.registerBeanDefinition(<span class="string">&quot;animalNameSetterPostProcessor&quot;</span>, </span><br><span class="line">            <span class="keyword">new</span> RootBeanDefinition(AnimalNameSetterPostProcessor.class));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+      <tags>
+        <tag>spring</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Spring中@Conditional是如何生效的</title>
     <url>/2021/08/07/Spring%E4%B8%AD@Conditional%E6%98%AF%E5%A6%82%E4%BD%95%E7%94%9F%E6%95%88%E7%9A%84/</url>
     <content><![CDATA[<p>本文灵感源自<a href="https://ke.qq.com/course/package/20773">马士兵MAC课程-源码五班</a></p>
@@ -202,62 +258,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Spring中bean的几种注入方式</title>
-    <url>/2021/06/30/Spring%E4%B8%ADbean%E7%9A%84%E5%87%A0%E7%A7%8D%E6%B3%A8%E5%85%A5%E6%96%B9%E5%BC%8F/</url>
-    <content><![CDATA[<h3 id="声明式注入"><a href="#声明式注入" class="headerlink" title="声明式注入"></a>声明式注入</h3><h4 id="Configuration-Bean"><a href="#Configuration-Bean" class="headerlink" title="@Configuration + @Bean"></a>@Configuration + @Bean</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">QuickstartConfiguration</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Person <span class="title">person</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Person();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="Component-ComponentScan"><a href="#Component-ComponentScan" class="headerlink" title="@Component + @ComponentScan"></a>@Component + @ComponentScan</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="meta">@ComponentScan(&quot;com.linkedbear.spring.annotation.c_scan&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ComponentScanConfiguration</span></span></span><br></pre></td></tr></table></figure>
-
-<h4 id="Import"><a href="#Import" class="headerlink" title="@Import"></a>@Import</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Import(&#123;Boss.class, BartenderConfiguration.class&#125;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> EnableTavern</span><br></pre></td></tr></table></figure>
-
-<span id="more"></span>
-
-<h3 id="配置式注入"><a href="#配置式注入" class="headerlink" title="配置式注入"></a>配置式注入</h3><h4 id="lt-bean-gt-标签声明"><a href="#lt-bean-gt-标签声明" class="headerlink" title="&lt;bean&gt;标签声明"></a>&lt;bean&gt;标签声明</h4><figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">&quot;person&quot;</span> <span class="attr">class</span>=<span class="string">&quot;com.linkedbear.spring.basic_dl.a_quickstart_byname.bean.Person&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="编程式注入-BeanDefinition"><a href="#编程式注入-BeanDefinition" class="headerlink" title="编程式注入 BeanDefinition"></a>编程式注入 <em>BeanDefinition</em></h3><h4 id="ImportBeanDefinitionRegistrar"><a href="#ImportBeanDefinitionRegistrar" class="headerlink" title="ImportBeanDefinitionRegistrar"></a>ImportBeanDefinitionRegistrar</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WaiterRegistrar</span> <span class="keyword">implements</span> <span class="title">ImportBeanDefinitionRegistrar</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitions</span><span class="params">(AnnotationMetadata metadata, BeanDefinitionRegistry registry)</span> </span>&#123;</span><br><span class="line">        registry.registerBeanDefinition(<span class="string">&quot;waiter&quot;</span>, <span class="keyword">new</span> RootBeanDefinition(Waiter.class));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="手动构造-BeanDefinition-注入"><a href="#手动构造-BeanDefinition-注入" class="headerlink" title="手动构造 BeanDefinition 注入"></a>手动构造 <em>BeanDefinition</em> 注入</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line">AnnotationConfigApplicationContext ctx = <span class="keyword">new</span> AnnotationConfigApplicationContext();</span><br><span class="line"></span><br><span class="line">BeanDefinition personDefinition = BeanDefinitionBuilder.rootBeanDefinition(Person.class)</span><br><span class="line">        .addPropertyValue(<span class="string">&quot;name&quot;</span>, <span class="string">&quot;zhangsan&quot;</span>).getBeanDefinition();</span><br><span class="line">ctx.registerBeanDefinition(<span class="string">&quot;person&quot;</span>, personDefinition);</span><br><span class="line"></span><br><span class="line">ctx.refresh();</span><br></pre></td></tr></table></figure>
-
-<h4 id="借助-BeanDefinitionRegistryPostProcessor-注入"><a href="#借助-BeanDefinitionRegistryPostProcessor-注入" class="headerlink" title="借助 BeanDefinitionRegistryPostProcessor 注入"></a>借助 BeanDefinitionRegistryPostProcessor 注入</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">postProcessBeanDefinitionRegistry</span><span class="params">(BeanDefinitionRegistry registry)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">    registry.registerBeanDefinition(<span class="string">&quot;animalNameSetterPostProcessor&quot;</span>, </span><br><span class="line">            <span class="keyword">new</span> RootBeanDefinition(AnimalNameSetterPostProcessor.class));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>java</category>
-      </categories>
-      <tags>
-        <tag>spring</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Spring中SPI的使用</title>
-    <url>/2021/06/25/Spring%E4%B8%ADSPI%E7%9A%84%E4%BD%BF%E7%94%A8/</url>
-    <content><![CDATA[<h3 id="什么是SPI"><a href="#什么是SPI" class="headerlink" title="什么是SPI"></a>什么是SPI</h3><p>SPI 全程叫 <strong>Service Provider Interface</strong> 服务提供接口，它可以通过一个指定的接口 / 抽象类，寻找到预先配置好的实现类（并创建实现类对象）。</p>
-<p>Spring 通过 <em>SpringFactoriesLoader</em> 读取放在 <em>META-INF</em> 目录下名为 <em>spring.factories</em> 的文件，获取文件中的权限定类名转化为实体对象。</p>
-<span id="more"></span>
-
-<h3 id="spring-factories"><a href="#spring-factories" class="headerlink" title="spring.factories"></a>spring.factories</h3><figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="meta">com.eitan.spring.spi.dao.DemoDao</span>=<span class="string">\</span></span><br><span class="line"><span class="string">  com.eitan.spring.spi.daoImpl.MysqlDemoDao,\</span></span><br><span class="line"><span class="string">  com.eitan.spring.spi.daoImpl.OracleDemoDao</span></span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="接口和实现类"><a href="#接口和实现类" class="headerlink" title="接口和实现类"></a>接口和实现类</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">DemoDao</span> </span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MysqlDemoDao</span> <span class="keyword">implements</span> <span class="title">DemoDao</span> </span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">OracleDemoDao</span> <span class="keyword">implements</span> <span class="title">DemoDao</span> </span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="SpringApplication"><a href="#SpringApplication" class="headerlink" title="SpringApplication"></a>SpringApplication</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SpringApplication</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        List&lt;DemoDao&gt; demoDaoList = SpringFactoriesLoader.loadFactories(DemoDao.class, SpringApplication.class.getClassLoader());</span><br><span class="line">        demoDaoList.forEach(System.out::println);</span><br><span class="line"></span><br><span class="line">        List&lt;String&gt; factoryNames = SpringFactoriesLoader.loadFactoryNames(DemoDao.class, SpringApplication.class.getClassLoader());</span><br><span class="line">        factoryNames.forEach(System.out::println);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h3><figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.MysqlDemoDao@f2a0b8e</span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.OracleDemoDao@<span class="number">593634</span>ad</span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span><span class="selector-class">.MysqlDemoDao</span></span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.OracleDemoDao</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>java</category>
-      </categories>
-      <tags>
-        <tag>spring</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Spring中三种后置处理器对比</title>
     <url>/2021/06/24/Spring%E4%B8%AD%E4%B8%89%E7%A7%8D%E5%90%8E%E7%BD%AE%E5%A4%84%E7%90%86%E5%99%A8%E5%AF%B9%E6%AF%94/</url>
     <content><![CDATA[<table>
@@ -306,64 +306,6 @@
 
 <blockquote>
 <p>通过 <em>BeanDefinitionRegistry</em> 的 <em>registerBeanDefinition</em> 方法就可以向容器中注入 <em>beanDefinition</em></p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>java</category>
-      </categories>
-      <tags>
-        <tag>spring</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Spring中事件广播原理</title>
-    <url>/2021/06/25/Spring%E4%B8%AD%E4%BA%8B%E4%BB%B6%E5%B9%BF%E6%92%AD%E5%8E%9F%E7%90%86/</url>
-    <content><![CDATA[<h2 id="SpringFramework-的事件模型"><a href="#SpringFramework-的事件模型" class="headerlink" title="SpringFramework 的事件模型"></a>SpringFramework 的事件模型</h2><ul>
-<li>ApplicationEventPublisher：事件发布器，是用来接受事件，并交给事件广播器处理</li>
-<li>ApplicationEventMulticaster：事件广播器，拿到事件发布器的事件，并广播给监听器</li>
-</ul>
-<blockquote>
-<p><em>ApplicationContext</em> 接口继承了 <em>ApplicationEventPublisher</em> ，拥有事件发布的功能；<em>ApplicationContext</em> 的第一个抽象实现类 <em>AbstractApplicationContext</em> 组合了一个 <em>ApplicationEventMulticaster</em> ，拥有事件广播的能力。综合来看，<em>ApplicationContext</em> 的落地实现就已经能够完成事件驱动模型中的 “观察者” 身份了</p>
-</blockquote>
-<span id="more"></span>
-
-
-
-<h2 id="publishEvent"><a href="#publishEvent" class="headerlink" title="publishEvent()"></a>publishEvent()</h2><p>该方法的实现在 <em>AbstractApplicationContext</em> 中</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">publishEvent</span><span class="params">(Object event, <span class="meta">@Nullable</span> ResolvableType eventType)</span> </span>&#123;</span><br><span class="line">    Assert.notNull(event, <span class="string">&quot;Event must not be null&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Decorate event as an ApplicationEvent if necessary</span></span><br><span class="line">    <span class="comment">// 这里要给普通的对象封装为PayloadApplicationEvent</span></span><br><span class="line">    ApplicationEvent applicationEvent;</span><br><span class="line">    <span class="keyword">if</span> (event <span class="keyword">instanceof</span> ApplicationEvent) &#123;</span><br><span class="line">        applicationEvent = (ApplicationEvent) event;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        applicationEvent = <span class="keyword">new</span> PayloadApplicationEvent&lt;&gt;(<span class="keyword">this</span>, event);</span><br><span class="line">        <span class="keyword">if</span> (eventType == <span class="keyword">null</span>) &#123;</span><br><span class="line">            eventType = ((PayloadApplicationEvent&lt;?&gt;) applicationEvent).getResolvableType();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Multicast right now if possible - or lazily once the multicaster is initialized</span></span><br><span class="line">    <span class="comment">// 添加事件广播（earlyApplicationEvents太过于复杂，会考虑后续加餐内容解释）</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.earlyApplicationEvents != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">this</span>.earlyApplicationEvents.add(applicationEvent);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        getApplicationEventMulticaster().multicastEvent(applicationEvent, eventType);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Publish event via parent context as well...</span></span><br><span class="line">    <span class="comment">// 通知父容器发布事件</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.parent != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span>.parent <span class="keyword">instanceof</span> AbstractApplicationContext) &#123;</span><br><span class="line">            ((AbstractApplicationContext) <span class="keyword">this</span>.parent).publishEvent(event, eventType);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">this</span>.parent.publishEvent(event);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>广播事件的行为可以分为三部分：</p>
-<ol>
-<li>适配 payload 类型的 <em>ApplicationEvent</em>，即如果入参不是 <em>Event</em> 的子类则包装成 <em>PayloadApplicationEvent</em></li>
-<li>在本容器中广播事件</li>
-<li>通知父容器发布事件（正好知道了为什么子容器的事件会广播到父容器）</li>
-</ol>
-</blockquote>
-<h2 id="multicastEvent"><a href="#multicastEvent" class="headerlink" title="multicastEvent()"></a>multicastEvent()</h2><p>该方法位于 <em>ApplicationEventMulticaster</em> 的唯一落地实现类 <em>SimpleApplicationEventMulticaster</em> 中：</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">multicastEvent</span><span class="params">(<span class="keyword">final</span> ApplicationEvent event, <span class="meta">@Nullable</span> ResolvableType eventType)</span> </span>&#123;</span><br><span class="line">    ResolvableType type = (eventType != <span class="keyword">null</span> ? eventType : resolveDefaultEventType(event));</span><br><span class="line">    Executor executor = getTaskExecutor();</span><br><span class="line">    <span class="keyword">for</span> (ApplicationListener&lt;?&gt; listener : getApplicationListeners(event, type)) &#123;</span><br><span class="line">        <span class="keyword">if</span> (executor != <span class="keyword">null</span>) &#123;</span><br><span class="line">            executor.execute(() -&gt; invokeListener(listener, event));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            invokeListener(listener, event);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>ResolvableType type = (eventType != null ? eventType : resolveDefaultEventType(event))：包装 <em>ApplicationEvent</em> 的具体类型，目的是可以更方便的获取对象和类的一些信息（父类、接口、泛型等）</li>
-<li>getApplicationListeners(event, type)：获取该事件对应的 <em>Listeners</em></li>
-<li>invokeListener(listener, event)：调用 <em>doInvokeListener(listener, event)</em> 方法，最终调用 <em>Listener</em> 的 <em>onApplicationEvent(E event)</em> 方法实现监听器方法的调用</li>
-</ul>
-<h2 id="getApplicationListeners-event-type"><a href="#getApplicationListeners-event-type" class="headerlink" title="getApplicationListeners(event, type)"></a>getApplicationListeners(event, type)</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">protected</span> Collection&lt;ApplicationListener&lt;?&gt;&gt; getApplicationListeners(</span><br><span class="line">			ApplicationEvent event, ResolvableType eventType) &#123;</span><br><span class="line"></span><br><span class="line">		Object source = event.getSource();</span><br><span class="line">		Class&lt;?&gt; sourceType = (source != <span class="keyword">null</span> ? source.getClass() : <span class="keyword">null</span>);</span><br><span class="line">		ListenerCacheKey cacheKey = <span class="keyword">new</span> ListenerCacheKey(eventType, sourceType);</span><br><span class="line"></span><br><span class="line">		<span class="comment">// Potential new retriever to populate</span></span><br><span class="line">		CachedListenerRetriever newRetriever = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// Quick check for existing entry on ConcurrentHashMap</span></span><br><span class="line">		CachedListenerRetriever existingRetriever = <span class="keyword">this</span>.retrieverCache.get(cacheKey);</span><br><span class="line">		<span class="keyword">if</span> (existingRetriever == <span class="keyword">null</span>) &#123;</span><br><span class="line">			<span class="comment">// Caching a new ListenerRetriever if possible</span></span><br><span class="line">			<span class="keyword">if</span> (<span class="keyword">this</span>.beanClassLoader == <span class="keyword">null</span> ||</span><br><span class="line">					(ClassUtils.isCacheSafe(event.getClass(), <span class="keyword">this</span>.beanClassLoader) &amp;&amp;</span><br><span class="line">							(sourceType == <span class="keyword">null</span> || ClassUtils.isCacheSafe(sourceType, <span class="keyword">this</span>.beanClassLoader)))) &#123;</span><br><span class="line">				newRetriever = <span class="keyword">new</span> CachedListenerRetriever();</span><br><span class="line">				existingRetriever = <span class="keyword">this</span>.retrieverCache.putIfAbsent(cacheKey, newRetriever);</span><br><span class="line">				<span class="keyword">if</span> (existingRetriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">					newRetriever = <span class="keyword">null</span>;  <span class="comment">// no need to populate it in retrieveApplicationListeners</span></span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (existingRetriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">			Collection&lt;ApplicationListener&lt;?&gt;&gt; result = existingRetriever.getApplicationListeners();</span><br><span class="line">			<span class="keyword">if</span> (result != <span class="keyword">null</span>) &#123;</span><br><span class="line">				<span class="keyword">return</span> result;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">// If result is null, the existing retriever is not fully populated yet by another thread.</span></span><br><span class="line">			<span class="comment">// Proceed like caching wasn&#x27;t possible for this current local attempt.</span></span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> retrieveApplicationListeners(eventType, sourceType, newRetriever);</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<ul>
-<li>先从 <em>retrieverCache</em> 中获取，如果能获取到则直接返回</li>
-<li>获取不到则调用 <em>retrieveApplicationListeners(eventType, sourceType, newRetriever)</em> ，并将结果放入 <em>retrieverCache</em> 中</li>
-</ul>
-</blockquote>
-<h2 id="retrieveApplicationListeners-eventType-sourceType-newRetriever"><a href="#retrieveApplicationListeners-eventType-sourceType-newRetriever" class="headerlink" title="retrieveApplicationListeners(eventType, sourceType, newRetriever)"></a>retrieveApplicationListeners(eventType, sourceType, newRetriever)</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> Collection&lt;ApplicationListener&lt;?&gt;&gt; retrieveApplicationListeners(</span><br><span class="line">		ResolvableType eventType, <span class="meta">@Nullable</span> Class&lt;?&gt; sourceType, <span class="meta">@Nullable</span> CachedListenerRetriever retriever) &#123;</span><br><span class="line"></span><br><span class="line">	List&lt;ApplicationListener&lt;?&gt;&gt; allListeners = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">	Set&lt;ApplicationListener&lt;?&gt;&gt; filteredListeners = (retriever != <span class="keyword">null</span> ? <span class="keyword">new</span> LinkedHashSet&lt;&gt;() : <span class="keyword">null</span>);</span><br><span class="line">	Set&lt;String&gt; filteredListenerBeans = (retriever != <span class="keyword">null</span> ? <span class="keyword">new</span> LinkedHashSet&lt;&gt;() : <span class="keyword">null</span>);</span><br><span class="line"></span><br><span class="line">	Set&lt;ApplicationListener&lt;?&gt;&gt; listeners;</span><br><span class="line">	Set&lt;String&gt; listenerBeans;</span><br><span class="line">	<span class="keyword">synchronized</span> (<span class="keyword">this</span>.defaultRetriever) &#123;</span><br><span class="line">		listeners = <span class="keyword">new</span> LinkedHashSet&lt;&gt;(<span class="keyword">this</span>.defaultRetriever.applicationListeners);</span><br><span class="line">		listenerBeans = <span class="keyword">new</span> LinkedHashSet&lt;&gt;(<span class="keyword">this</span>.defaultRetriever.applicationListenerBeans);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Add programmatically registered listeners, including ones coming</span></span><br><span class="line">	<span class="comment">// from ApplicationListenerDetector (singleton beans and inner beans).</span></span><br><span class="line">	<span class="keyword">for</span> (ApplicationListener&lt;?&gt; listener : listeners) &#123;</span><br><span class="line">		<span class="keyword">if</span> (supportsEvent(listener, eventType, sourceType)) &#123;</span><br><span class="line">			<span class="keyword">if</span> (retriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">				filteredListeners.add(listener);</span><br><span class="line">			&#125;</span><br><span class="line">			allListeners.add(listener);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Add listeners by bean name, potentially overlapping with programmatically</span></span><br><span class="line">	<span class="comment">// registered listeners above - but here potentially with additional metadata.</span></span><br><span class="line">	<span class="keyword">if</span> (!listenerBeans.isEmpty()) &#123;</span><br><span class="line">		ConfigurableBeanFactory beanFactory = getBeanFactory();</span><br><span class="line">		<span class="keyword">for</span> (String listenerBeanName : listenerBeans) &#123;</span><br><span class="line">			<span class="keyword">try</span> &#123;</span><br><span class="line">				<span class="keyword">if</span> (supportsEvent(beanFactory, listenerBeanName, eventType)) &#123;</span><br><span class="line">					ApplicationListener&lt;?&gt; listener =</span><br><span class="line">							beanFactory.getBean(listenerBeanName, ApplicationListener.class);</span><br><span class="line">					<span class="keyword">if</span> (!allListeners.contains(listener) &amp;&amp; supportsEvent(listener, eventType, sourceType)) &#123;</span><br><span class="line">						<span class="keyword">if</span> (retriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">							<span class="keyword">if</span> (beanFactory.isSingleton(listenerBeanName)) &#123;</span><br><span class="line">								filteredListeners.add(listener);</span><br><span class="line">							&#125;</span><br><span class="line">							<span class="keyword">else</span> &#123;</span><br><span class="line">								filteredListenerBeans.add(listenerBeanName);</span><br><span class="line">							&#125;</span><br><span class="line">						&#125;</span><br><span class="line">						allListeners.add(listener);</span><br><span class="line">					&#125;</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">else</span> &#123;</span><br><span class="line">					<span class="comment">// Remove non-matching listeners that originally came from</span></span><br><span class="line">					<span class="comment">// ApplicationListenerDetector, possibly ruled out by additional</span></span><br><span class="line">					<span class="comment">// BeanDefinition metadata (e.g. factory method generics) above.</span></span><br><span class="line">					Object listener = beanFactory.getSingleton(listenerBeanName);</span><br><span class="line">					<span class="keyword">if</span> (retriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">						filteredListeners.remove(listener);</span><br><span class="line">					&#125;</span><br><span class="line">					allListeners.remove(listener);</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">catch</span> (NoSuchBeanDefinitionException ex) &#123;</span><br><span class="line">				<span class="comment">// Singleton listener instance (without backing bean definition) disappeared -</span></span><br><span class="line">				<span class="comment">// probably in the middle of the destruction phase</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	AnnotationAwareOrderComparator.sort(allListeners);</span><br><span class="line">	<span class="keyword">if</span> (retriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">		<span class="keyword">if</span> (filteredListenerBeans.isEmpty()) &#123;</span><br><span class="line">			retriever.applicationListeners = <span class="keyword">new</span> LinkedHashSet&lt;&gt;(allListeners);</span><br><span class="line">			retriever.applicationListenerBeans = filteredListenerBeans;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">else</span> &#123;</span><br><span class="line">			retriever.applicationListeners = filteredListeners;</span><br><span class="line">			retriever.applicationListenerBeans = filteredListenerBeans;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> allListeners;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<ol>
-<li>筛选出由<strong>编程式</strong>注入到 IOC 容器的，监听当前发布事件的监听器</li>
-<li>筛选出由<strong>声明式 / 配置式</strong>注入到 IOC 容器的，监听当前发布事件的监听器</li>
-<li>监听器排序</li>
-</ol>
 </blockquote>
 ]]></content>
       <categories>
@@ -459,6 +401,107 @@
       </tags>
   </entry>
   <entry>
+    <title>Spring中事件广播原理</title>
+    <url>/2021/06/25/Spring%E4%B8%AD%E4%BA%8B%E4%BB%B6%E5%B9%BF%E6%92%AD%E5%8E%9F%E7%90%86/</url>
+    <content><![CDATA[<h2 id="SpringFramework-的事件模型"><a href="#SpringFramework-的事件模型" class="headerlink" title="SpringFramework 的事件模型"></a>SpringFramework 的事件模型</h2><ul>
+<li>ApplicationEventPublisher：事件发布器，是用来接受事件，并交给事件广播器处理</li>
+<li>ApplicationEventMulticaster：事件广播器，拿到事件发布器的事件，并广播给监听器</li>
+</ul>
+<blockquote>
+<p><em>ApplicationContext</em> 接口继承了 <em>ApplicationEventPublisher</em> ，拥有事件发布的功能；<em>ApplicationContext</em> 的第一个抽象实现类 <em>AbstractApplicationContext</em> 组合了一个 <em>ApplicationEventMulticaster</em> ，拥有事件广播的能力。综合来看，<em>ApplicationContext</em> 的落地实现就已经能够完成事件驱动模型中的 “观察者” 身份了</p>
+</blockquote>
+<span id="more"></span>
+
+
+
+<h2 id="publishEvent"><a href="#publishEvent" class="headerlink" title="publishEvent()"></a>publishEvent()</h2><p>该方法的实现在 <em>AbstractApplicationContext</em> 中</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">publishEvent</span><span class="params">(Object event, <span class="meta">@Nullable</span> ResolvableType eventType)</span> </span>&#123;</span><br><span class="line">    Assert.notNull(event, <span class="string">&quot;Event must not be null&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Decorate event as an ApplicationEvent if necessary</span></span><br><span class="line">    <span class="comment">// 这里要给普通的对象封装为PayloadApplicationEvent</span></span><br><span class="line">    ApplicationEvent applicationEvent;</span><br><span class="line">    <span class="keyword">if</span> (event <span class="keyword">instanceof</span> ApplicationEvent) &#123;</span><br><span class="line">        applicationEvent = (ApplicationEvent) event;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        applicationEvent = <span class="keyword">new</span> PayloadApplicationEvent&lt;&gt;(<span class="keyword">this</span>, event);</span><br><span class="line">        <span class="keyword">if</span> (eventType == <span class="keyword">null</span>) &#123;</span><br><span class="line">            eventType = ((PayloadApplicationEvent&lt;?&gt;) applicationEvent).getResolvableType();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Multicast right now if possible - or lazily once the multicaster is initialized</span></span><br><span class="line">    <span class="comment">// 添加事件广播（earlyApplicationEvents太过于复杂，会考虑后续加餐内容解释）</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.earlyApplicationEvents != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">this</span>.earlyApplicationEvents.add(applicationEvent);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        getApplicationEventMulticaster().multicastEvent(applicationEvent, eventType);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Publish event via parent context as well...</span></span><br><span class="line">    <span class="comment">// 通知父容器发布事件</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.parent != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span>.parent <span class="keyword">instanceof</span> AbstractApplicationContext) &#123;</span><br><span class="line">            ((AbstractApplicationContext) <span class="keyword">this</span>.parent).publishEvent(event, eventType);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">this</span>.parent.publishEvent(event);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>广播事件的行为可以分为三部分：</p>
+<ol>
+<li>适配 payload 类型的 <em>ApplicationEvent</em>，即如果入参不是 <em>Event</em> 的子类则包装成 <em>PayloadApplicationEvent</em></li>
+<li>在本容器中广播事件</li>
+<li>通知父容器发布事件（正好知道了为什么子容器的事件会广播到父容器）</li>
+</ol>
+</blockquote>
+<h2 id="multicastEvent"><a href="#multicastEvent" class="headerlink" title="multicastEvent()"></a>multicastEvent()</h2><p>该方法位于 <em>ApplicationEventMulticaster</em> 的唯一落地实现类 <em>SimpleApplicationEventMulticaster</em> 中：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">multicastEvent</span><span class="params">(<span class="keyword">final</span> ApplicationEvent event, <span class="meta">@Nullable</span> ResolvableType eventType)</span> </span>&#123;</span><br><span class="line">    ResolvableType type = (eventType != <span class="keyword">null</span> ? eventType : resolveDefaultEventType(event));</span><br><span class="line">    Executor executor = getTaskExecutor();</span><br><span class="line">    <span class="keyword">for</span> (ApplicationListener&lt;?&gt; listener : getApplicationListeners(event, type)) &#123;</span><br><span class="line">        <span class="keyword">if</span> (executor != <span class="keyword">null</span>) &#123;</span><br><span class="line">            executor.execute(() -&gt; invokeListener(listener, event));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            invokeListener(listener, event);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>ResolvableType type = (eventType != null ? eventType : resolveDefaultEventType(event))：包装 <em>ApplicationEvent</em> 的具体类型，目的是可以更方便的获取对象和类的一些信息（父类、接口、泛型等）</li>
+<li>getApplicationListeners(event, type)：获取该事件对应的 <em>Listeners</em></li>
+<li>invokeListener(listener, event)：调用 <em>doInvokeListener(listener, event)</em> 方法，最终调用 <em>Listener</em> 的 <em>onApplicationEvent(E event)</em> 方法实现监听器方法的调用</li>
+</ul>
+<h2 id="getApplicationListeners-event-type"><a href="#getApplicationListeners-event-type" class="headerlink" title="getApplicationListeners(event, type)"></a>getApplicationListeners(event, type)</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">protected</span> Collection&lt;ApplicationListener&lt;?&gt;&gt; getApplicationListeners(</span><br><span class="line">			ApplicationEvent event, ResolvableType eventType) &#123;</span><br><span class="line"></span><br><span class="line">		Object source = event.getSource();</span><br><span class="line">		Class&lt;?&gt; sourceType = (source != <span class="keyword">null</span> ? source.getClass() : <span class="keyword">null</span>);</span><br><span class="line">		ListenerCacheKey cacheKey = <span class="keyword">new</span> ListenerCacheKey(eventType, sourceType);</span><br><span class="line"></span><br><span class="line">		<span class="comment">// Potential new retriever to populate</span></span><br><span class="line">		CachedListenerRetriever newRetriever = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// Quick check for existing entry on ConcurrentHashMap</span></span><br><span class="line">		CachedListenerRetriever existingRetriever = <span class="keyword">this</span>.retrieverCache.get(cacheKey);</span><br><span class="line">		<span class="keyword">if</span> (existingRetriever == <span class="keyword">null</span>) &#123;</span><br><span class="line">			<span class="comment">// Caching a new ListenerRetriever if possible</span></span><br><span class="line">			<span class="keyword">if</span> (<span class="keyword">this</span>.beanClassLoader == <span class="keyword">null</span> ||</span><br><span class="line">					(ClassUtils.isCacheSafe(event.getClass(), <span class="keyword">this</span>.beanClassLoader) &amp;&amp;</span><br><span class="line">							(sourceType == <span class="keyword">null</span> || ClassUtils.isCacheSafe(sourceType, <span class="keyword">this</span>.beanClassLoader)))) &#123;</span><br><span class="line">				newRetriever = <span class="keyword">new</span> CachedListenerRetriever();</span><br><span class="line">				existingRetriever = <span class="keyword">this</span>.retrieverCache.putIfAbsent(cacheKey, newRetriever);</span><br><span class="line">				<span class="keyword">if</span> (existingRetriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">					newRetriever = <span class="keyword">null</span>;  <span class="comment">// no need to populate it in retrieveApplicationListeners</span></span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (existingRetriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">			Collection&lt;ApplicationListener&lt;?&gt;&gt; result = existingRetriever.getApplicationListeners();</span><br><span class="line">			<span class="keyword">if</span> (result != <span class="keyword">null</span>) &#123;</span><br><span class="line">				<span class="keyword">return</span> result;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">// If result is null, the existing retriever is not fully populated yet by another thread.</span></span><br><span class="line">			<span class="comment">// Proceed like caching wasn&#x27;t possible for this current local attempt.</span></span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> retrieveApplicationListeners(eventType, sourceType, newRetriever);</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<ul>
+<li>先从 <em>retrieverCache</em> 中获取，如果能获取到则直接返回</li>
+<li>获取不到则调用 <em>retrieveApplicationListeners(eventType, sourceType, newRetriever)</em> ，并将结果放入 <em>retrieverCache</em> 中</li>
+</ul>
+</blockquote>
+<h2 id="retrieveApplicationListeners-eventType-sourceType-newRetriever"><a href="#retrieveApplicationListeners-eventType-sourceType-newRetriever" class="headerlink" title="retrieveApplicationListeners(eventType, sourceType, newRetriever)"></a>retrieveApplicationListeners(eventType, sourceType, newRetriever)</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> Collection&lt;ApplicationListener&lt;?&gt;&gt; retrieveApplicationListeners(</span><br><span class="line">		ResolvableType eventType, <span class="meta">@Nullable</span> Class&lt;?&gt; sourceType, <span class="meta">@Nullable</span> CachedListenerRetriever retriever) &#123;</span><br><span class="line"></span><br><span class="line">	List&lt;ApplicationListener&lt;?&gt;&gt; allListeners = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">	Set&lt;ApplicationListener&lt;?&gt;&gt; filteredListeners = (retriever != <span class="keyword">null</span> ? <span class="keyword">new</span> LinkedHashSet&lt;&gt;() : <span class="keyword">null</span>);</span><br><span class="line">	Set&lt;String&gt; filteredListenerBeans = (retriever != <span class="keyword">null</span> ? <span class="keyword">new</span> LinkedHashSet&lt;&gt;() : <span class="keyword">null</span>);</span><br><span class="line"></span><br><span class="line">	Set&lt;ApplicationListener&lt;?&gt;&gt; listeners;</span><br><span class="line">	Set&lt;String&gt; listenerBeans;</span><br><span class="line">	<span class="keyword">synchronized</span> (<span class="keyword">this</span>.defaultRetriever) &#123;</span><br><span class="line">		listeners = <span class="keyword">new</span> LinkedHashSet&lt;&gt;(<span class="keyword">this</span>.defaultRetriever.applicationListeners);</span><br><span class="line">		listenerBeans = <span class="keyword">new</span> LinkedHashSet&lt;&gt;(<span class="keyword">this</span>.defaultRetriever.applicationListenerBeans);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Add programmatically registered listeners, including ones coming</span></span><br><span class="line">	<span class="comment">// from ApplicationListenerDetector (singleton beans and inner beans).</span></span><br><span class="line">	<span class="keyword">for</span> (ApplicationListener&lt;?&gt; listener : listeners) &#123;</span><br><span class="line">		<span class="keyword">if</span> (supportsEvent(listener, eventType, sourceType)) &#123;</span><br><span class="line">			<span class="keyword">if</span> (retriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">				filteredListeners.add(listener);</span><br><span class="line">			&#125;</span><br><span class="line">			allListeners.add(listener);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Add listeners by bean name, potentially overlapping with programmatically</span></span><br><span class="line">	<span class="comment">// registered listeners above - but here potentially with additional metadata.</span></span><br><span class="line">	<span class="keyword">if</span> (!listenerBeans.isEmpty()) &#123;</span><br><span class="line">		ConfigurableBeanFactory beanFactory = getBeanFactory();</span><br><span class="line">		<span class="keyword">for</span> (String listenerBeanName : listenerBeans) &#123;</span><br><span class="line">			<span class="keyword">try</span> &#123;</span><br><span class="line">				<span class="keyword">if</span> (supportsEvent(beanFactory, listenerBeanName, eventType)) &#123;</span><br><span class="line">					ApplicationListener&lt;?&gt; listener =</span><br><span class="line">							beanFactory.getBean(listenerBeanName, ApplicationListener.class);</span><br><span class="line">					<span class="keyword">if</span> (!allListeners.contains(listener) &amp;&amp; supportsEvent(listener, eventType, sourceType)) &#123;</span><br><span class="line">						<span class="keyword">if</span> (retriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">							<span class="keyword">if</span> (beanFactory.isSingleton(listenerBeanName)) &#123;</span><br><span class="line">								filteredListeners.add(listener);</span><br><span class="line">							&#125;</span><br><span class="line">							<span class="keyword">else</span> &#123;</span><br><span class="line">								filteredListenerBeans.add(listenerBeanName);</span><br><span class="line">							&#125;</span><br><span class="line">						&#125;</span><br><span class="line">						allListeners.add(listener);</span><br><span class="line">					&#125;</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">else</span> &#123;</span><br><span class="line">					<span class="comment">// Remove non-matching listeners that originally came from</span></span><br><span class="line">					<span class="comment">// ApplicationListenerDetector, possibly ruled out by additional</span></span><br><span class="line">					<span class="comment">// BeanDefinition metadata (e.g. factory method generics) above.</span></span><br><span class="line">					Object listener = beanFactory.getSingleton(listenerBeanName);</span><br><span class="line">					<span class="keyword">if</span> (retriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">						filteredListeners.remove(listener);</span><br><span class="line">					&#125;</span><br><span class="line">					allListeners.remove(listener);</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">catch</span> (NoSuchBeanDefinitionException ex) &#123;</span><br><span class="line">				<span class="comment">// Singleton listener instance (without backing bean definition) disappeared -</span></span><br><span class="line">				<span class="comment">// probably in the middle of the destruction phase</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	AnnotationAwareOrderComparator.sort(allListeners);</span><br><span class="line">	<span class="keyword">if</span> (retriever != <span class="keyword">null</span>) &#123;</span><br><span class="line">		<span class="keyword">if</span> (filteredListenerBeans.isEmpty()) &#123;</span><br><span class="line">			retriever.applicationListeners = <span class="keyword">new</span> LinkedHashSet&lt;&gt;(allListeners);</span><br><span class="line">			retriever.applicationListenerBeans = filteredListenerBeans;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">else</span> &#123;</span><br><span class="line">			retriever.applicationListeners = filteredListeners;</span><br><span class="line">			retriever.applicationListenerBeans = filteredListenerBeans;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> allListeners;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<ol>
+<li>筛选出由<strong>编程式</strong>注入到 IOC 容器的，监听当前发布事件的监听器</li>
+<li>筛选出由<strong>声明式 / 配置式</strong>注入到 IOC 容器的，监听当前发布事件的监听器</li>
+<li>监听器排序</li>
+</ol>
+</blockquote>
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+      <tags>
+        <tag>spring</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Spring源码阅读环境搭建</title>
+    <url>/2021/07/06/Spring%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/</url>
+    <content><![CDATA[<h2 id="安装-Gradle"><a href="#安装-Gradle" class="headerlink" title="安装 Gradle"></a>安装 Gradle</h2><h3 id="下载压缩包"><a href="#下载压缩包" class="headerlink" title="下载压缩包"></a>下载压缩包</h3><p><a href="https://services.gradle.org/distributions/">下载链接</a>，选择 <em>gradle-6.5.1-all .zip</em></p>
+<h3 id="配置环境变量"><a href="#配置环境变量" class="headerlink" title="配置环境变量"></a>配置环境变量</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706125653.png" alt="image-20210706125648901"></p>
+<p>并在 <strong>Path</strong> 中添加 <em>%GRADLE_HOME%\bin</em></p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706125852.png" alt="image-20210706125850699"></p>
+<span id="more"></span>
+
+<h3 id="验证是否生效"><a href="#验证是否生效" class="headerlink" title="验证是否生效"></a>验证是否生效</h3><p><em>Win</em> + <em>R</em> 打开 <em>cmd</em>，输入 <em>gradle -v</em> 验证是否安装成功</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706130129.png" alt="image-20210706130127447"></p>
+<h2 id="下载源码"><a href="#下载源码" class="headerlink" title="下载源码"></a>下载源码</h2><h3 id="fork"><a href="#fork" class="headerlink" title="fork"></a>fork</h3><p>将<a href="https://github.com/eitan-blog/spring-framework">官方仓库</a>的代码<strong>fork</strong>到自己的仓库</p>
+<h3 id="拉取代码到本地"><a href="#拉取代码到本地" class="headerlink" title="拉取代码到本地"></a>拉取代码到本地</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">git clone https://github.com/eitan-blog/spring-framework.git</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="开始构建"><a href="#开始构建" class="headerlink" title="开始构建"></a>开始构建</h2><h3 id="为源码安装对应版本的-Gradle"><a href="#为源码安装对应版本的-Gradle" class="headerlink" title="为源码安装对应版本的 Gradle"></a>为源码安装对应版本的 Gradle</h3><p>运行源码根目录下的 <em>gradlew.bat</em> 文件</p>
+<h3 id="使用-IDEA-打开源码，设置-Gradle-本地仓库"><a href="#使用-IDEA-打开源码，设置-Gradle-本地仓库" class="headerlink" title="使用 IDEA 打开源码，设置 Gradle 本地仓库"></a>使用 IDEA 打开源码，设置 Gradle 本地仓库</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706141630.png" alt="image-20210706141627600"></p>
+<h3 id="修改-build-gradle-文件"><a href="#修改-build-gradle-文件" class="headerlink" title="修改 build.gradle 文件"></a>修改 build.gradle 文件</h3><ol>
+<li><p>在头部添加</p>
+<figure class="highlight nginx"><table><tr><td class="code"><pre><span class="line"><span class="section">buildscript</span> &#123;</span><br><span class="line">    <span class="section">repositories</span> &#123;</span><br><span class="line">		<span class="section">maven</span> &#123; <span class="attribute">url</span> <span class="string">&quot;https://repo.spring.io/plugins-release&quot;</span> &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>添加镜像</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706142921.png" alt="image-20210706142917838"></p>
+<figure class="highlight dts"><table><tr><td class="code"><pre><span class="line"><span class="class">repositories </span>&#123;</span><br><span class="line">    <span class="comment">// 新增两个阿里云镜像</span></span><br><span class="line">    <span class="class">maven </span>&#123; url <span class="string">&quot;https://maven.aliyun.com/nexus/content/groups/public&quot;</span> &#125;</span><br><span class="line">    <span class="class">maven </span>&#123; url <span class="string">&quot;https://maven.aliyun.com/nexus/content/repositories/jcenter&quot;</span> &#125;</span><br><span class="line">    <span class="comment">// 新增spring插件库</span></span><br><span class="line">    <span class="class">maven </span>&#123; url <span class="string">&quot;https://repo.spring.io/plugins-release&quot;</span> &#125;</span><br><span class="line">    mavenCentral()</span><br><span class="line">    <span class="class">maven </span>&#123; url <span class="string">&quot;https://repo.spring.io/libs-spring-framework-build&quot;</span> &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="构建"><a href="#构建" class="headerlink" title="构建"></a>构建</h3><p>点击 <em>Reload Gradle Project</em> 按钮，将自动下载相关依赖进行项目构建。若是出现失败，有可能是网络不好，多尝试几次或者翻墙后再次尝试</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706154348.png" alt="image-20210706154344453"></p>
+<h3 id="验证是否构建成功"><a href="#验证是否构建成功" class="headerlink" title="验证是否构建成功"></a>验证是否构建成功</h3><ol>
+<li>打开 <em>ApplicationContext</em></li>
+<li>按住 <em>Ctrl + Alt + u</em>，若能显示相关依赖说明构建成功</li>
+</ol>
+<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><h3 id="首先编译-spring-oxm"><a href="#首先编译-spring-oxm" class="headerlink" title="首先编译 spring-oxm"></a>首先编译 spring-oxm</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706160227.png" alt="image-20210706160216070"></p>
+<h3 id="其次编译-spring-core"><a href="#其次编译-spring-core" class="headerlink" title="其次编译 spring-core"></a>其次编译 spring-core</h3><p>同样是点击 <em>compileTestJava</em></p>
+<h3 id="编译整个项目"><a href="#编译整个项目" class="headerlink" title="编译整个项目"></a>编译整个项目</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706161013.png" alt="image-20210706161001977"></p>
+<p>自此，spring 源码阅读环境搭建完成。</p>
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+      <tags>
+        <tag>spring</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Spring扩展自定义属性编辑器</title>
     <url>/2021/07/15/Spring%E6%89%A9%E5%B1%95%E8%87%AA%E5%AE%9A%E4%B9%89%E5%B1%9E%E6%80%A7%E7%BC%96%E8%BE%91%E5%99%A8/</url>
     <content><![CDATA[<p>本文学习自<a href="https://ke.qq.com/course/package/20773">马士兵MAC课程-源码五班</a></p>
@@ -528,6 +571,38 @@
       </tags>
   </entry>
   <entry>
+    <title>Tags Testing Article</title>
+    <url>/2021/05/11/Tags-Testing-Article/</url>
+    <content><![CDATA[<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;Hello World!&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://raw.githubusercontent.com/xyq-material/blog/master/LeetCode/20210512131715.png" alt="逸"></p>
+]]></content>
+      <tags>
+        <tag>Testing</tag>
+        <tag>Another Tag</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Hello World</title>
+    <url>/2021/05/11/hello-world/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<span id="more"></span>
+
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+]]></content>
+  </entry>
+  <entry>
     <title>Spring自定义标签</title>
     <url>/2021/07/08/Spring%E8%87%AA%E5%AE%9A%E4%B9%89%E6%A0%87%E7%AD%BE/</url>
     <content><![CDATA[<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210708133248.png" alt="image-20210708133243955"></p>
@@ -540,7 +615,7 @@
 <ol>
 <li>xmlns:xsd=”<a href="http://www.w3.org/2001/XMLSchema&quot;%EF%BC%9A%E8%A1%A8%E7%A4%BA%E8%AF%A5%E5%BC%95%E7%94%A8%E8%AF%A5%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%E7%9A%84%E7%BC%96%E5%86%99%E8%A7%84%E8%8C%83">http://www.w3.org/2001/XMLSchema&quot;：表示该引用该命名空间的编写规范</a></li>
 <li>targetNamespace=”<a href="http://eitan-blog.github.io/schema/eitan&quot;%EF%BC%9A%E8%A1%A8%E7%A4%BA%E5%BD%93%E5%89%8D%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%E7%9A%84%E5%9C%B0%E5%9D%80">http://eitan-blog.github.io/schema/eitan&quot;：表示当前命名空间的地址</a></li>
-<li>elementFormDefault=”qualified” attributeFormDefault=”unqualified”：表示使用该命名空间的规范时，元素必须使用前缀短名，而属性可以不用，如 **&lt;eitan:user id=”user1” userName=”eitan” email=”<a href="mailto:&#x65;&#105;&#116;&#x61;&#x6e;&#95;&#98;&#x6c;&#111;&#103;&#x40;&#x31;&#x36;&#51;&#46;&#x63;&#x6f;&#x6d;">&#x65;&#105;&#116;&#x61;&#x6e;&#95;&#98;&#x6c;&#111;&#103;&#x40;&#x31;&#x36;&#51;&#46;&#x63;&#x6f;&#x6d;</a>“ password=”123456”&gt;&lt;/eitan:user&gt;<em><em>中 <em>eitan</em> 就是前缀短名，</em>user* 是元素，*userName</em> 是属性</li>
+<li>elementFormDefault=”qualified” attributeFormDefault=”unqualified”：表示使用该命名空间的规范时，元素必须使用前缀短名，而属性可以不用，如 **&lt;eitan:user id=”user1” userName=”eitan” email=”<a href="mailto:&#x65;&#x69;&#116;&#x61;&#110;&#95;&#98;&#108;&#111;&#103;&#x40;&#x31;&#54;&#x33;&#46;&#x63;&#x6f;&#109;">&#x65;&#x69;&#116;&#x61;&#110;&#95;&#98;&#108;&#111;&#103;&#x40;&#x31;&#54;&#x33;&#46;&#x63;&#x6f;&#109;</a>“ password=”123456”&gt;&lt;/eitan:user&gt;<em><em>中 <em>eitan</em> 就是前缀短名，</em>user* 是元素，*userName</em> 是属性</li>
 </ol>
 </blockquote>
 <h3 id="添加-spring-handlers"><a href="#添加-spring-handlers" class="headerlink" title="添加 spring.handlers"></a>添加 spring.handlers</h3><figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="meta">http\://eitan-blog.github.io/schema/eitan</span>=<span class="string">com.eitan.tag.handler.UserNamespaceHandler</span></span><br></pre></td></tr></table></figure>
@@ -572,14 +647,14 @@
 <li> xsi:schemaLocation=<a href="http://eitan-blog.github.io/schema/eitan">http://eitan-blog.github.io/schema/eitan</a>  <a href="http://eitan-blog.github.io/schema/eitan/user.xsd">http://eitan-blog.github.io/schema/eitan/user.xsd</a></li>
 </ol>
 </li>
-<li>在文件中使用自己的标签：*&lt;eitan:user id=”user1” userName=”eitan” email=”<a href="mailto:&#x65;&#105;&#116;&#97;&#x6e;&#x5f;&#98;&#108;&#111;&#103;&#64;&#49;&#x36;&#x33;&#x2e;&#99;&#x6f;&#109;">&#x65;&#105;&#116;&#97;&#x6e;&#x5f;&#98;&#108;&#111;&#103;&#64;&#49;&#x36;&#x33;&#x2e;&#99;&#x6f;&#109;</a>“ password=”123456”&gt;&lt;/eitan:user&gt;*</li>
+<li>在文件中使用自己的标签：*&lt;eitan:user id=”user1” userName=”eitan” email=”<a href="mailto:&#101;&#x69;&#116;&#97;&#x6e;&#x5f;&#x62;&#108;&#x6f;&#103;&#64;&#49;&#54;&#51;&#46;&#x63;&#111;&#x6d;">&#101;&#x69;&#116;&#97;&#x6e;&#x5f;&#x62;&#108;&#x6f;&#103;&#64;&#49;&#54;&#51;&#46;&#x63;&#111;&#x6d;</a>“ password=”123456”&gt;&lt;/eitan:user&gt;*</li>
 </ol>
 </blockquote>
 <h3 id="效果"><a href="#效果" class="headerlink" title="效果"></a>效果</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyApplicationContext</span> </span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">		ApplicationContext ac = <span class="keyword">new</span> ClassPathXmlApplicationContext(<span class="string">&quot;spring-$&#123;username&#125;.xml&quot;</span>);</span><br><span class="line">		User user = ac.getBean(User.class);</span><br><span class="line">		System.out.println(user);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <blockquote>
 <p>在 <em>MyApplicationContext</em> 中获取并打印 <em>User.class</em>，可以发现写在 <em>xml</em> 中的属性成功注入进 <em>user</em> 中</p>
-<p>Connected to the target VM, address: ‘127.0.0.1:12821’, transport: ‘socket’<br>User{userName=’eitan’, email=’eitan<a href="mailto:&#95;&#x62;&#x6c;&#x6f;&#103;&#x40;&#x31;&#x36;&#51;&#x2e;&#x63;&#111;&#109;">&#95;&#x62;&#x6c;&#x6f;&#103;&#x40;&#x31;&#x36;&#51;&#x2e;&#x63;&#111;&#109;</a>‘, password=’123456’}</p>
+<p>Connected to the target VM, address: ‘127.0.0.1:12821’, transport: ‘socket’<br>User{userName=’eitan’, email=’eitan<a href="mailto:&#x5f;&#98;&#108;&#111;&#103;&#x40;&#x31;&#54;&#51;&#46;&#99;&#111;&#109;">&#x5f;&#98;&#108;&#111;&#103;&#x40;&#x31;&#54;&#51;&#46;&#99;&#111;&#109;</a>‘, password=’123456’}</p>
 </blockquote>
 <h2 id="源码解析"><a href="#源码解析" class="headerlink" title="源码解析"></a>源码解析</h2><ol>
 <li>该过程发生在 <em>AbstractApplicationContext</em> 的 <em>refresh()</em> 方法中</li>
@@ -628,81 +703,6 @@
       <tags>
         <tag>spring</tag>
       </tags>
-  </entry>
-  <entry>
-    <title>Spring源码阅读环境搭建</title>
-    <url>/2021/07/06/Spring%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/</url>
-    <content><![CDATA[<h2 id="安装-Gradle"><a href="#安装-Gradle" class="headerlink" title="安装 Gradle"></a>安装 Gradle</h2><h3 id="下载压缩包"><a href="#下载压缩包" class="headerlink" title="下载压缩包"></a>下载压缩包</h3><p><a href="https://services.gradle.org/distributions/">下载链接</a>，选择 <em>gradle-6.5.1-all .zip</em></p>
-<h3 id="配置环境变量"><a href="#配置环境变量" class="headerlink" title="配置环境变量"></a>配置环境变量</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706125653.png" alt="image-20210706125648901"></p>
-<p>并在 <strong>Path</strong> 中添加 <em>%GRADLE_HOME%\bin</em></p>
-<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706125852.png" alt="image-20210706125850699"></p>
-<span id="more"></span>
-
-<h3 id="验证是否生效"><a href="#验证是否生效" class="headerlink" title="验证是否生效"></a>验证是否生效</h3><p><em>Win</em> + <em>R</em> 打开 <em>cmd</em>，输入 <em>gradle -v</em> 验证是否安装成功</p>
-<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706130129.png" alt="image-20210706130127447"></p>
-<h2 id="下载源码"><a href="#下载源码" class="headerlink" title="下载源码"></a>下载源码</h2><h3 id="fork"><a href="#fork" class="headerlink" title="fork"></a>fork</h3><p>将<a href="https://github.com/eitan-blog/spring-framework">官方仓库</a>的代码<strong>fork</strong>到自己的仓库</p>
-<h3 id="拉取代码到本地"><a href="#拉取代码到本地" class="headerlink" title="拉取代码到本地"></a>拉取代码到本地</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">git clone https://github.com/eitan-blog/spring-framework.git</span><br></pre></td></tr></table></figure>
-
-
-
-<h2 id="开始构建"><a href="#开始构建" class="headerlink" title="开始构建"></a>开始构建</h2><h3 id="为源码安装对应版本的-Gradle"><a href="#为源码安装对应版本的-Gradle" class="headerlink" title="为源码安装对应版本的 Gradle"></a>为源码安装对应版本的 Gradle</h3><p>运行源码根目录下的 <em>gradlew.bat</em> 文件</p>
-<h3 id="使用-IDEA-打开源码，设置-Gradle-本地仓库"><a href="#使用-IDEA-打开源码，设置-Gradle-本地仓库" class="headerlink" title="使用 IDEA 打开源码，设置 Gradle 本地仓库"></a>使用 IDEA 打开源码，设置 Gradle 本地仓库</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706141630.png" alt="image-20210706141627600"></p>
-<h3 id="修改-build-gradle-文件"><a href="#修改-build-gradle-文件" class="headerlink" title="修改 build.gradle 文件"></a>修改 build.gradle 文件</h3><ol>
-<li><p>在头部添加</p>
-<figure class="highlight nginx"><table><tr><td class="code"><pre><span class="line"><span class="section">buildscript</span> &#123;</span><br><span class="line">    <span class="section">repositories</span> &#123;</span><br><span class="line">		<span class="section">maven</span> &#123; <span class="attribute">url</span> <span class="string">&quot;https://repo.spring.io/plugins-release&quot;</span> &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li><p>添加镜像</p>
-<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706142921.png" alt="image-20210706142917838"></p>
-<figure class="highlight dts"><table><tr><td class="code"><pre><span class="line"><span class="class">repositories </span>&#123;</span><br><span class="line">    <span class="comment">// 新增两个阿里云镜像</span></span><br><span class="line">    <span class="class">maven </span>&#123; url <span class="string">&quot;https://maven.aliyun.com/nexus/content/groups/public&quot;</span> &#125;</span><br><span class="line">    <span class="class">maven </span>&#123; url <span class="string">&quot;https://maven.aliyun.com/nexus/content/repositories/jcenter&quot;</span> &#125;</span><br><span class="line">    <span class="comment">// 新增spring插件库</span></span><br><span class="line">    <span class="class">maven </span>&#123; url <span class="string">&quot;https://repo.spring.io/plugins-release&quot;</span> &#125;</span><br><span class="line">    mavenCentral()</span><br><span class="line">    <span class="class">maven </span>&#123; url <span class="string">&quot;https://repo.spring.io/libs-spring-framework-build&quot;</span> &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-</ol>
-<h3 id="构建"><a href="#构建" class="headerlink" title="构建"></a>构建</h3><p>点击 <em>Reload Gradle Project</em> 按钮，将自动下载相关依赖进行项目构建。若是出现失败，有可能是网络不好，多尝试几次或者翻墙后再次尝试</p>
-<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706154348.png" alt="image-20210706154344453"></p>
-<h3 id="验证是否构建成功"><a href="#验证是否构建成功" class="headerlink" title="验证是否构建成功"></a>验证是否构建成功</h3><ol>
-<li>打开 <em>ApplicationContext</em></li>
-<li>按住 <em>Ctrl + Alt + u</em>，若能显示相关依赖说明构建成功</li>
-</ol>
-<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><h3 id="首先编译-spring-oxm"><a href="#首先编译-spring-oxm" class="headerlink" title="首先编译 spring-oxm"></a>首先编译 spring-oxm</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706160227.png" alt="image-20210706160216070"></p>
-<h3 id="其次编译-spring-core"><a href="#其次编译-spring-core" class="headerlink" title="其次编译 spring-core"></a>其次编译 spring-core</h3><p>同样是点击 <em>compileTestJava</em></p>
-<h3 id="编译整个项目"><a href="#编译整个项目" class="headerlink" title="编译整个项目"></a>编译整个项目</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706161013.png" alt="image-20210706161001977"></p>
-<p>自此，spring 源码阅读环境搭建完成。</p>
-]]></content>
-      <categories>
-        <category>java</category>
-      </categories>
-      <tags>
-        <tag>spring</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Tags Testing Article</title>
-    <url>/2021/05/11/Tags-Testing-Article/</url>
-    <content><![CDATA[<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;Hello World!&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><img src="https://raw.githubusercontent.com/xyq-material/blog/master/LeetCode/20210512131715.png" alt="逸"></p>
-]]></content>
-      <tags>
-        <tag>Testing</tag>
-        <tag>Another Tag</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Hello World</title>
-    <url>/2021/05/11/hello-world/</url>
-    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<span id="more"></span>
-
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
-]]></content>
   </entry>
   <entry>
     <title>从源码认识FactoryBean</title>
@@ -807,6 +807,27 @@
       </tags>
   </entry>
   <entry>
+    <title>算法题-查询给定目录下的文件数量</title>
+    <url>/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E6%9F%A5%E8%AF%A2%E7%BB%99%E5%AE%9A%E7%9B%AE%E5%BD%95%E4%B8%8B%E7%9A%84%E6%96%87%E4%BB%B6%E6%95%B0%E9%87%8F/</url>
+    <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><ol>
+<li>给定一个文件目录的路径，写一个函数统计这个目录下的所有文件</li>
+<li>隐藏文件也算，但是文件夹不算</li>
+</ol>
+<span id="more"></span>
+
+<h2 id="解答"><a href="#解答" class="headerlink" title="解答"></a>解答</h2><h3 id="栈"><a href="#栈" class="headerlink" title="栈"></a>栈</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">getFileNumber</span><span class="params">(String folderPath)</span> </span>&#123;</span><br><span class="line">    File root = <span class="keyword">new</span> File(folderPath);</span><br><span class="line">    <span class="keyword">if</span> (!root.isDirectory() &amp;&amp; !root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    Stack&lt;File&gt; stack = <span class="keyword">new</span> Stack&lt;&gt;();</span><br><span class="line">    stack.add(root);</span><br><span class="line">    <span class="keyword">int</span> files = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (!stack.isEmpty()) &#123;</span><br><span class="line">        File folder = stack.pop();</span><br><span class="line">        <span class="keyword">for</span> (File next : folder.listFiles()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (next.isFile()) &#123;</span><br><span class="line">                files++;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (next.isDirectory()) &#123;</span><br><span class="line">                stack.push(next);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> files;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="递归"><a href="#递归" class="headerlink" title="递归"></a>递归</h3><figure class="highlight gradle"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> mySolution(String path) &#123;</span><br><span class="line">    <span class="keyword">int</span> fileNumber = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">File</span> <span class="keyword">file</span> = <span class="keyword">new</span> <span class="keyword">File</span>(path);</span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">file</span>.exists()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isDirectory()) &#123;</span><br><span class="line">        <span class="keyword">File</span>[] files = <span class="keyword">file</span>.listFiles();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">File</span> f : files) &#123;</span><br><span class="line">            fileNumber = fileNumber + mySolution(f.getPath());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fileNumber;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>algorithm</category>
+      </categories>
+      <tags>
+        <tag>algorithm</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>算法题-实现LRU缓存机制</title>
     <url>/2021/05/26/%E7%AE%97%E6%B3%95%E9%A2%98-%E5%AE%9E%E7%8E%B0LRU%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/</url>
     <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><p><a href="https://leetcode-cn.com/problems/lru-cache/">leetcode第146题</a></p>
@@ -836,27 +857,6 @@
 <li>再使用一个 Map&lt;int, LRUNode&gt; 维护使用频率，其中 key 为使用频率，value 为一个维护使用时间的链表</li>
 <li>在 LFUNode 中需要存储当前元素的使用频率，在调取 get(int key) 方法时，将其从原链表移除，更新该node的频率并将其添加至新频率所在的链表</li>
 </ul>
-]]></content>
-      <categories>
-        <category>algorithm</category>
-      </categories>
-      <tags>
-        <tag>algorithm</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>算法题-查询给定目录下的文件数量</title>
-    <url>/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E6%9F%A5%E8%AF%A2%E7%BB%99%E5%AE%9A%E7%9B%AE%E5%BD%95%E4%B8%8B%E7%9A%84%E6%96%87%E4%BB%B6%E6%95%B0%E9%87%8F/</url>
-    <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><ol>
-<li>给定一个文件目录的路径，写一个函数统计这个目录下的所有文件</li>
-<li>隐藏文件也算，但是文件夹不算</li>
-</ol>
-<span id="more"></span>
-
-<h2 id="解答"><a href="#解答" class="headerlink" title="解答"></a>解答</h2><h3 id="栈"><a href="#栈" class="headerlink" title="栈"></a>栈</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">getFileNumber</span><span class="params">(String folderPath)</span> </span>&#123;</span><br><span class="line">    File root = <span class="keyword">new</span> File(folderPath);</span><br><span class="line">    <span class="keyword">if</span> (!root.isDirectory() &amp;&amp; !root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    Stack&lt;File&gt; stack = <span class="keyword">new</span> Stack&lt;&gt;();</span><br><span class="line">    stack.add(root);</span><br><span class="line">    <span class="keyword">int</span> files = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (!stack.isEmpty()) &#123;</span><br><span class="line">        File folder = stack.pop();</span><br><span class="line">        <span class="keyword">for</span> (File next : folder.listFiles()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (next.isFile()) &#123;</span><br><span class="line">                files++;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (next.isDirectory()) &#123;</span><br><span class="line">                stack.push(next);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> files;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="递归"><a href="#递归" class="headerlink" title="递归"></a>递归</h3><figure class="highlight gradle"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> mySolution(String path) &#123;</span><br><span class="line">    <span class="keyword">int</span> fileNumber = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">File</span> <span class="keyword">file</span> = <span class="keyword">new</span> <span class="keyword">File</span>(path);</span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">file</span>.exists()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isDirectory()) &#123;</span><br><span class="line">        <span class="keyword">File</span>[] files = <span class="keyword">file</span>.listFiles();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">File</span> f : files) &#123;</span><br><span class="line">            fileNumber = fileNumber + mySolution(f.getPath());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fileNumber;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
 ]]></content>
       <categories>
         <category>algorithm</category>
