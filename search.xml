@@ -84,6 +84,45 @@
       </tags>
   </entry>
   <entry>
+    <title>JVM 发生 GC 导致线程卡死问题</title>
+    <url>/2021/09/20/JVM%E5%8F%91%E7%94%9FGC%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E5%8D%A1%E6%AD%BB%E9%97%AE%E9%A2%98/</url>
+    <content><![CDATA[<p>案例出自 <a href="https://ke.qq.com/webcourse/3583073/103725980#taid=11648638505102433&vid=3701925920872990005">马士兵MAC课程</a></p>
+<h2 id="案例代码"><a href="#案例代码" class="headerlink" title="案例代码"></a>案例代码</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">OSRDemo</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">long</span> counter;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;main start&quot;</span>);</span><br><span class="line">        startBusinessThread();</span><br><span class="line">        startProblemThread();</span><br><span class="line">        <span class="comment">// 等待线程启动执行</span></span><br><span class="line">        Thread.sleep(<span class="number">500</span>);</span><br><span class="line">        <span class="comment">// 执行GC</span></span><br><span class="line">        System.gc();</span><br><span class="line">        System.out.println(<span class="string">&quot;main end&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">startProblemThread</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;Problem start&quot;</span>);</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000000</span>; i++) &#123;</span><br><span class="line">                <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; <span class="number">100000</span>; j++) &#123;</span><br><span class="line">                    counter += i % <span class="number">33</span>;</span><br><span class="line">                    counter += i % <span class="number">333</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;).start();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">startBusinessThread</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">            System.out.println(Thread.currentThread().getName() + <span class="string">&quot; start&quot;</span>);</span><br><span class="line">            <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">                System.out.println(<span class="string">&quot;执行业务一&quot;</span>);</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    Thread.sleep(<span class="number">1000</span>);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;, <span class="string">&quot;thread-01&quot;</span>).start();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<span id="more"></span>
+
+<h2 id="案例现象"><a href="#案例现象" class="headerlink" title="案例现象"></a>案例现象</h2><ol>
+<li>主线程创建两个线程，其中一个线程执行业务逻辑，每秒进行一次打印；另一个线程执行循环运算</li>
+<li>启动线程后，JVM 进行 GC 垃圾回收，此时可以发现业务线程和主线程均被阻塞</li>
+</ol>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920161354.png" alt="image-20210920161351031"></p>
+<h2 id="分析原因"><a href="#分析原因" class="headerlink" title="分析原因"></a>分析原因</h2><ol>
+<li>JVM 进行 GC 时，线程需要中断，因此所有线程都需要‘跑’到线程安全点(save point)后，再停顿下来。</li>
+<li>在 JDK1.8 及之前版本，C2 编辑器认为 int 的循环为有限循环，因此 startProblemThread() 创建的线程将不会进入线程安全点</li>
+<li>主线程和业务线程则进入线程安全点阻塞等待，而 startProblemThread() 创建的线程并不会发生中断，导致 GC 没法完成</li>
+<li>因此主线程和业务线程一直阻塞</li>
+</ol>
+<h2 id="解决措施"><a href="#解决措施" class="headerlink" title="解决措施"></a>解决措施</h2><h3 id="将-JDK-版本换成-11"><a href="#将-JDK-版本换成-11" class="headerlink" title="将 JDK 版本换成 11"></a>将 JDK 版本换成 11</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920163642.png" alt="image-20210920163640802"></p>
+<p>重新运行后发现不会阻塞</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920163734.png" alt="image-20210920163732266"></p>
+<h3 id="将-int-循环改为-long-值循环"><a href="#将-int-循环改为-long-值循环" class="headerlink" title="将 int 循环改为 long 值循环"></a>将 int 循环改为 long 值循环</h3><p>因为 long 值循环意味着这是一个较大的循环，JVM 会进行线程安全点的检查</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920163956.png" alt="image-20210920163954285"></p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920163922.png" alt="image-20210920163920287"></p>
+<h3 id="在循环中加入方法调用"><a href="#在循环中加入方法调用" class="headerlink" title="在循环中加入方法调用"></a>在循环中加入方法调用</h3><p>线程安全点的检查发生在方法调用前</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920164651.png" alt="image-20210920164649165"></p>
+<p>注意：如果调用的方法是空方法或者简单循环，则编译器会将其优化，不会继续线程安全点的检测，因此还是会阻塞</p>
+<h3 id="用-volatile-修饰-counter"><a href="#用-volatile-修饰-counter" class="headerlink" title="用 volatile 修饰 counter"></a>用 volatile 修饰 counter</h3><p>volatile 修饰的代码不会进行优化</p>
+<h3 id="添加-JVM-参数-XX-UseOnStackReplacement"><a href="#添加-JVM-参数-XX-UseOnStackReplacement" class="headerlink" title="添加 JVM 参数 -XX:-UseOnStackReplacement"></a>添加 JVM 参数 -XX:-UseOnStackReplacement</h3><p>关闭 OnStackReplacement 优化</p>
+<h3 id="添加-JVM-参数-XX-TieredStopAtLevel-3"><a href="#添加-JVM-参数-XX-TieredStopAtLevel-3" class="headerlink" title="添加 JVM 参数 -XX:TieredStopAtLevel=3"></a>添加 JVM 参数 -XX:TieredStopAtLevel=3</h3><p>不使用 C2 编译器的优化</p>
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+      <tags>
+        <tag>jvm</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>RocketMQ（一）</title>
     <url>/2021/05/17/RocketMQ%EF%BC%88%E4%B8%80%EF%BC%89/</url>
     <content><![CDATA[<h2 id="主要内容"><a href="#主要内容" class="headerlink" title="主要内容"></a>主要内容</h2><ul>
@@ -202,35 +241,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Spring中SPI的使用</title>
-    <url>/2021/06/25/Spring%E4%B8%ADSPI%E7%9A%84%E4%BD%BF%E7%94%A8/</url>
-    <content><![CDATA[<h3 id="什么是SPI"><a href="#什么是SPI" class="headerlink" title="什么是SPI"></a>什么是SPI</h3><p>SPI 全程叫 <strong>Service Provider Interface</strong> 服务提供接口，它可以通过一个指定的接口 / 抽象类，寻找到预先配置好的实现类（并创建实现类对象）。</p>
-<p>Spring 通过 <em>SpringFactoriesLoader</em> 读取放在 <em>META-INF</em> 目录下名为 <em>spring.factories</em> 的文件，获取文件中的权限定类名转化为实体对象。</p>
-<span id="more"></span>
-
-<h3 id="spring-factories"><a href="#spring-factories" class="headerlink" title="spring.factories"></a>spring.factories</h3><figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="meta">com.eitan.spring.spi.dao.DemoDao</span>=<span class="string">\</span></span><br><span class="line"><span class="string">  com.eitan.spring.spi.daoImpl.MysqlDemoDao,\</span></span><br><span class="line"><span class="string">  com.eitan.spring.spi.daoImpl.OracleDemoDao</span></span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="接口和实现类"><a href="#接口和实现类" class="headerlink" title="接口和实现类"></a>接口和实现类</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">DemoDao</span> </span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MysqlDemoDao</span> <span class="keyword">implements</span> <span class="title">DemoDao</span> </span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">OracleDemoDao</span> <span class="keyword">implements</span> <span class="title">DemoDao</span> </span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="SpringApplication"><a href="#SpringApplication" class="headerlink" title="SpringApplication"></a>SpringApplication</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SpringApplication</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        List&lt;DemoDao&gt; demoDaoList = SpringFactoriesLoader.loadFactories(DemoDao.class, SpringApplication.class.getClassLoader());</span><br><span class="line">        demoDaoList.forEach(System.out::println);</span><br><span class="line"></span><br><span class="line">        List&lt;String&gt; factoryNames = SpringFactoriesLoader.loadFactoryNames(DemoDao.class, SpringApplication.class.getClassLoader());</span><br><span class="line">        factoryNames.forEach(System.out::println);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h3><figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.MysqlDemoDao@f2a0b8e</span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.OracleDemoDao@<span class="number">593634</span>ad</span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span><span class="selector-class">.MysqlDemoDao</span></span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.OracleDemoDao</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>java</category>
-      </categories>
-      <tags>
-        <tag>spring</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Spring中bean的几种注入方式</title>
     <url>/2021/06/30/Spring%E4%B8%ADbean%E7%9A%84%E5%87%A0%E7%A7%8D%E6%B3%A8%E5%85%A5%E6%96%B9%E5%BC%8F/</url>
     <content><![CDATA[<h3 id="声明式注入"><a href="#声明式注入" class="headerlink" title="声明式注入"></a>声明式注入</h3><h4 id="Configuration-Bean"><a href="#Configuration-Bean" class="headerlink" title="@Configuration + @Bean"></a>@Configuration + @Bean</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">QuickstartConfiguration</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Person <span class="title">person</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Person();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -307,6 +317,35 @@
 <blockquote>
 <p>通过 <em>BeanDefinitionRegistry</em> 的 <em>registerBeanDefinition</em> 方法就可以向容器中注入 <em>beanDefinition</em></p>
 </blockquote>
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+      <tags>
+        <tag>spring</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Spring中SPI的使用</title>
+    <url>/2021/06/25/Spring%E4%B8%ADSPI%E7%9A%84%E4%BD%BF%E7%94%A8/</url>
+    <content><![CDATA[<h3 id="什么是SPI"><a href="#什么是SPI" class="headerlink" title="什么是SPI"></a>什么是SPI</h3><p>SPI 全程叫 <strong>Service Provider Interface</strong> 服务提供接口，它可以通过一个指定的接口 / 抽象类，寻找到预先配置好的实现类（并创建实现类对象）。</p>
+<p>Spring 通过 <em>SpringFactoriesLoader</em> 读取放在 <em>META-INF</em> 目录下名为 <em>spring.factories</em> 的文件，获取文件中的权限定类名转化为实体对象。</p>
+<span id="more"></span>
+
+<h3 id="spring-factories"><a href="#spring-factories" class="headerlink" title="spring.factories"></a>spring.factories</h3><figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="meta">com.eitan.spring.spi.dao.DemoDao</span>=<span class="string">\</span></span><br><span class="line"><span class="string">  com.eitan.spring.spi.daoImpl.MysqlDemoDao,\</span></span><br><span class="line"><span class="string">  com.eitan.spring.spi.daoImpl.OracleDemoDao</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="接口和实现类"><a href="#接口和实现类" class="headerlink" title="接口和实现类"></a>接口和实现类</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">DemoDao</span> </span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MysqlDemoDao</span> <span class="keyword">implements</span> <span class="title">DemoDao</span> </span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">OracleDemoDao</span> <span class="keyword">implements</span> <span class="title">DemoDao</span> </span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="SpringApplication"><a href="#SpringApplication" class="headerlink" title="SpringApplication"></a>SpringApplication</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SpringApplication</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        List&lt;DemoDao&gt; demoDaoList = SpringFactoriesLoader.loadFactories(DemoDao.class, SpringApplication.class.getClassLoader());</span><br><span class="line">        demoDaoList.forEach(System.out::println);</span><br><span class="line"></span><br><span class="line">        List&lt;String&gt; factoryNames = SpringFactoriesLoader.loadFactoryNames(DemoDao.class, SpringApplication.class.getClassLoader());</span><br><span class="line">        factoryNames.forEach(System.out::println);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h3><figure class="highlight stylus"><table><tr><td class="code"><pre><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.MysqlDemoDao@f2a0b8e</span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.OracleDemoDao@<span class="number">593634</span>ad</span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span><span class="selector-class">.MysqlDemoDao</span></span><br><span class="line">com<span class="selector-class">.eitan</span><span class="selector-class">.spring</span><span class="selector-class">.spi</span><span class="selector-class">.daoImpl</span>.OracleDemoDao</span><br></pre></td></tr></table></figure>
+
 ]]></content>
       <categories>
         <category>java</category>
@@ -435,30 +474,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Spring中模块装配的三种方式</title>
-    <url>/2021/06/25/Spring%E4%B8%AD%E6%A8%A1%E5%9D%97%E8%A3%85%E9%85%8D%E7%9A%84%E4%B8%89%E7%A7%8D%E6%96%B9%E5%BC%8F/</url>
-    <content><![CDATA[<h3 id="Import"><a href="#Import" class="headerlink" title="@Import"></a>@Import</h3><p>可直接导入普通类、配置类、ImportSeletor 的实现类和 ImportBeanDefinitionRegistrar 的实现类，通常情况下是写在自定义注解上</p>
-<h3 id="编写-ImportSeletor-的实现类"><a href="#编写-ImportSeletor-的实现类" class="headerlink" title="编写 ImportSeletor 的实现类"></a>编写 ImportSeletor 的实现类</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">ImportSelector</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Select and return the names of which class(es) should be imported based on</span></span><br><span class="line"><span class="comment">	 * the &#123;<span class="doctag">@link</span> AnnotationMetadata&#125; of the importing @&#123;<span class="doctag">@link</span> Configuration&#125; class.</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@return</span> the class names, or an empty array if none</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	String[] selectImports(AnnotationMetadata importingClassMetadata);</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Nullable</span></span><br><span class="line">	<span class="function"><span class="keyword">default</span> Predicate&lt;String&gt; <span class="title">getExclusionFilter</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>通过 selectImports 方法导入对象，返回的是一组需要导入的类的全限定类名</p>
-</blockquote>
-<span id="more"></span>
-
-<h3 id="编写-ImportBeanDefinitionRegistrar-的实现类"><a href="#编写-ImportBeanDefinitionRegistrar-的实现类" class="headerlink" title="编写 ImportBeanDefinitionRegistrar 的实现类"></a>编写 ImportBeanDefinitionRegistrar 的实现类</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">ImportBeanDefinitionRegistrar</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">default</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitions</span><span class="params">(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry,</span></span></span><br><span class="line"><span class="params"><span class="function">			BeanNameGenerator importBeanNameGenerator)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">		registerBeanDefinitions(importingClassMetadata, registry);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">default</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitions</span><span class="params">(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry)</span> </span>&#123;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>直接通过 BeanDefinitionRegistry 的 registerBeanDefinition 方法注册 BeanDefinition 到容器中</p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>java</category>
-      </categories>
-      <tags>
-        <tag>spring</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Spring扩展自定义属性编辑器</title>
     <url>/2021/07/15/Spring%E6%89%A9%E5%B1%95%E8%87%AA%E5%AE%9A%E4%B9%89%E5%B1%9E%E6%80%A7%E7%BC%96%E8%BE%91%E5%99%A8/</url>
     <content><![CDATA[<p>本文学习自<a href="https://ke.qq.com/course/package/20773">马士兵MAC课程-源码五班</a></p>
@@ -528,40 +543,50 @@
       </tags>
   </entry>
   <entry>
-    <title>Spring源码阅读环境搭建</title>
-    <url>/2021/07/06/Spring%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/</url>
-    <content><![CDATA[<h2 id="安装-Gradle"><a href="#安装-Gradle" class="headerlink" title="安装 Gradle"></a>安装 Gradle</h2><h3 id="下载压缩包"><a href="#下载压缩包" class="headerlink" title="下载压缩包"></a>下载压缩包</h3><p><a href="https://services.gradle.org/distributions/">下载链接</a>，选择 <em>gradle-6.5.1-all .zip</em></p>
-<h3 id="配置环境变量"><a href="#配置环境变量" class="headerlink" title="配置环境变量"></a>配置环境变量</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706125653.png" alt="image-20210706125648901"></p>
-<p>并在 <strong>Path</strong> 中添加 <em>%GRADLE_HOME%\bin</em></p>
-<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706125852.png" alt="image-20210706125850699"></p>
+    <title>Spring中模块装配的三种方式</title>
+    <url>/2021/06/25/Spring%E4%B8%AD%E6%A8%A1%E5%9D%97%E8%A3%85%E9%85%8D%E7%9A%84%E4%B8%89%E7%A7%8D%E6%96%B9%E5%BC%8F/</url>
+    <content><![CDATA[<h3 id="Import"><a href="#Import" class="headerlink" title="@Import"></a>@Import</h3><p>可直接导入普通类、配置类、ImportSeletor 的实现类和 ImportBeanDefinitionRegistrar 的实现类，通常情况下是写在自定义注解上</p>
+<h3 id="编写-ImportSeletor-的实现类"><a href="#编写-ImportSeletor-的实现类" class="headerlink" title="编写 ImportSeletor 的实现类"></a>编写 ImportSeletor 的实现类</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">ImportSelector</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * Select and return the names of which class(es) should be imported based on</span></span><br><span class="line"><span class="comment">	 * the &#123;<span class="doctag">@link</span> AnnotationMetadata&#125; of the importing @&#123;<span class="doctag">@link</span> Configuration&#125; class.</span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@return</span> the class names, or an empty array if none</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	String[] selectImports(AnnotationMetadata importingClassMetadata);</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Nullable</span></span><br><span class="line">	<span class="function"><span class="keyword">default</span> Predicate&lt;String&gt; <span class="title">getExclusionFilter</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>通过 selectImports 方法导入对象，返回的是一组需要导入的类的全限定类名</p>
+</blockquote>
 <span id="more"></span>
 
-<h3 id="验证是否生效"><a href="#验证是否生效" class="headerlink" title="验证是否生效"></a>验证是否生效</h3><p><em>Win</em> + <em>R</em> 打开 <em>cmd</em>，输入 <em>gradle -v</em> 验证是否安装成功</p>
-<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706130129.png" alt="image-20210706130127447"></p>
-<h2 id="下载源码"><a href="#下载源码" class="headerlink" title="下载源码"></a>下载源码</h2><h3 id="fork"><a href="#fork" class="headerlink" title="fork"></a>fork</h3><p>将<a href="https://github.com/eitan-blog/spring-framework">官方仓库</a>的代码<strong>fork</strong>到自己的仓库</p>
-<h3 id="拉取代码到本地"><a href="#拉取代码到本地" class="headerlink" title="拉取代码到本地"></a>拉取代码到本地</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">git clone https://github.com/eitan-blog/spring-framework.git</span><br></pre></td></tr></table></figure>
+<h3 id="编写-ImportBeanDefinitionRegistrar-的实现类"><a href="#编写-ImportBeanDefinitionRegistrar-的实现类" class="headerlink" title="编写 ImportBeanDefinitionRegistrar 的实现类"></a>编写 ImportBeanDefinitionRegistrar 的实现类</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">ImportBeanDefinitionRegistrar</span> </span>&#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">default</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitions</span><span class="params">(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry,</span></span></span><br><span class="line"><span class="params"><span class="function">			BeanNameGenerator importBeanNameGenerator)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">		registerBeanDefinitions(importingClassMetadata, registry);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">default</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitions</span><span class="params">(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry)</span> </span>&#123;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-
-
-<h2 id="开始构建"><a href="#开始构建" class="headerlink" title="开始构建"></a>开始构建</h2><h3 id="为源码安装对应版本的-Gradle"><a href="#为源码安装对应版本的-Gradle" class="headerlink" title="为源码安装对应版本的 Gradle"></a>为源码安装对应版本的 Gradle</h3><p>运行源码根目录下的 <em>gradlew.bat</em> 文件</p>
-<h3 id="使用-IDEA-打开源码，设置-Gradle-本地仓库"><a href="#使用-IDEA-打开源码，设置-Gradle-本地仓库" class="headerlink" title="使用 IDEA 打开源码，设置 Gradle 本地仓库"></a>使用 IDEA 打开源码，设置 Gradle 本地仓库</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706141630.png" alt="image-20210706141627600"></p>
-<h3 id="修改-build-gradle-文件"><a href="#修改-build-gradle-文件" class="headerlink" title="修改 build.gradle 文件"></a>修改 build.gradle 文件</h3><ol>
-<li><p>在头部添加</p>
-<figure class="highlight nginx"><table><tr><td class="code"><pre><span class="line"><span class="section">buildscript</span> &#123;</span><br><span class="line">    <span class="section">repositories</span> &#123;</span><br><span class="line">		<span class="section">maven</span> &#123; <span class="attribute">url</span> <span class="string">&quot;https://repo.spring.io/plugins-release&quot;</span> &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li><p>添加镜像</p>
-<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706142921.png" alt="image-20210706142917838"></p>
-<figure class="highlight dts"><table><tr><td class="code"><pre><span class="line"><span class="class">repositories </span>&#123;</span><br><span class="line">    <span class="comment">// 新增两个阿里云镜像</span></span><br><span class="line">    <span class="class">maven </span>&#123; url <span class="string">&quot;https://maven.aliyun.com/nexus/content/groups/public&quot;</span> &#125;</span><br><span class="line">    <span class="class">maven </span>&#123; url <span class="string">&quot;https://maven.aliyun.com/nexus/content/repositories/jcenter&quot;</span> &#125;</span><br><span class="line">    <span class="comment">// 新增spring插件库</span></span><br><span class="line">    <span class="class">maven </span>&#123; url <span class="string">&quot;https://repo.spring.io/plugins-release&quot;</span> &#125;</span><br><span class="line">    mavenCentral()</span><br><span class="line">    <span class="class">maven </span>&#123; url <span class="string">&quot;https://repo.spring.io/libs-spring-framework-build&quot;</span> &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<blockquote>
+<p>直接通过 BeanDefinitionRegistry 的 registerBeanDefinition 方法注册 BeanDefinition 到容器中</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+      <tags>
+        <tag>spring</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Spring源码阅读环境下使用AOP导致代码启动失败问题解决办法</title>
+    <url>/2021/08/26/Spring%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E7%8E%AF%E5%A2%83%E4%B8%8B%E4%BD%BF%E7%94%A8AOP%E5%AF%BC%E8%87%B4%E4%BB%A3%E7%A0%81%E5%90%AF%E5%8A%A8%E5%A4%B1%E8%B4%A5%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3%E5%8A%9E%E6%B3%95/</url>
+    <content><![CDATA[<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><ol>
+<li>在下载Spring源码并正常编译之后，编写与IOC相关代码能够正常运行</li>
+<li>但是在进行AOP代理后，程序不能正常启动 <em>java.lang.NoClassDefFoundError: org/aspectj/lang/JoinPoint</em></li>
 </ol>
-<h3 id="构建"><a href="#构建" class="headerlink" title="构建"></a>构建</h3><p>点击 <em>Reload Gradle Project</em> 按钮，将自动下载相关依赖进行项目构建。若是出现失败，有可能是网络不好，多尝试几次或者翻墙后再次尝试</p>
-<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706154348.png" alt="image-20210706154344453"></p>
-<h3 id="验证是否构建成功"><a href="#验证是否构建成功" class="headerlink" title="验证是否构建成功"></a>验证是否构建成功</h3><ol>
-<li>打开 <em>ApplicationContext</em></li>
-<li>按住 <em>Ctrl + Alt + u</em>，若能显示相关依赖说明构建成功</li>
+<span id="more"></span>
+
+<h2 id="解决措施"><a href="#解决措施" class="headerlink" title="解决措施"></a>解决措施</h2><ol>
+<li><p>百度输入报错信息，发现缺少jar包 <em>aspectjweaver</em></p>
+</li>
+<li><p>打开 <a href="https://mvnrepository.com/">mvnrepository</a>，搜索找到相应jar包的依赖</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210826103243.png" alt="image-20210826103238882"></p>
+</li>
+<li><p>复杂后添加到 <em>build.gradle</em> 中，并刷新</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210826103601.png" alt="image-20210826103559148"></p>
+</li>
+<li><p>重新运行成功</p>
+</li>
 </ol>
-<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><h3 id="首先编译-spring-oxm"><a href="#首先编译-spring-oxm" class="headerlink" title="首先编译 spring-oxm"></a>首先编译 spring-oxm</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706160227.png" alt="image-20210706160216070"></p>
-<h3 id="其次编译-spring-core"><a href="#其次编译-spring-core" class="headerlink" title="其次编译 spring-core"></a>其次编译 spring-core</h3><p>同样是点击 <em>compileTestJava</em></p>
-<h3 id="编译整个项目"><a href="#编译整个项目" class="headerlink" title="编译整个项目"></a>编译整个项目</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706161013.png" alt="image-20210706161001977"></p>
-<p>自此，spring 源码阅读环境搭建完成。</p>
 ]]></content>
       <categories>
         <category>java</category>
@@ -583,7 +608,7 @@
 <ol>
 <li>xmlns:xsd=”<a href="http://www.w3.org/2001/XMLSchema&quot;%EF%BC%9A%E8%A1%A8%E7%A4%BA%E8%AF%A5%E5%BC%95%E7%94%A8%E8%AF%A5%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%E7%9A%84%E7%BC%96%E5%86%99%E8%A7%84%E8%8C%83">http://www.w3.org/2001/XMLSchema&quot;：表示该引用该命名空间的编写规范</a></li>
 <li>targetNamespace=”<a href="http://eitan-blog.github.io/schema/eitan&quot;%EF%BC%9A%E8%A1%A8%E7%A4%BA%E5%BD%93%E5%89%8D%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%E7%9A%84%E5%9C%B0%E5%9D%80">http://eitan-blog.github.io/schema/eitan&quot;：表示当前命名空间的地址</a></li>
-<li>elementFormDefault=”qualified” attributeFormDefault=”unqualified”：表示使用该命名空间的规范时，元素必须使用前缀短名，而属性可以不用，如 **&lt;eitan:user id=”user1” userName=”eitan” email=”<a href="mailto:&#101;&#105;&#116;&#x61;&#110;&#x5f;&#98;&#108;&#x6f;&#103;&#x40;&#x31;&#54;&#51;&#x2e;&#99;&#111;&#x6d;">&#101;&#105;&#116;&#x61;&#110;&#x5f;&#98;&#108;&#x6f;&#103;&#x40;&#x31;&#54;&#51;&#x2e;&#99;&#111;&#x6d;</a>“ password=”123456”&gt;&lt;/eitan:user&gt;<em><em>中 <em>eitan</em> 就是前缀短名，</em>user* 是元素，*userName</em> 是属性</li>
+<li>elementFormDefault=”qualified” attributeFormDefault=”unqualified”：表示使用该命名空间的规范时，元素必须使用前缀短名，而属性可以不用，如 **&lt;eitan:user id=”user1” userName=”eitan” email=”<a href="mailto:&#101;&#x69;&#x74;&#x61;&#110;&#x5f;&#x62;&#108;&#111;&#103;&#64;&#49;&#x36;&#51;&#46;&#99;&#x6f;&#109;">&#101;&#x69;&#x74;&#x61;&#110;&#x5f;&#x62;&#108;&#111;&#103;&#64;&#49;&#x36;&#51;&#46;&#99;&#x6f;&#109;</a>“ password=”123456”&gt;&lt;/eitan:user&gt;<em><em>中 <em>eitan</em> 就是前缀短名，</em>user* 是元素，*userName</em> 是属性</li>
 </ol>
 </blockquote>
 <h3 id="添加-spring-handlers"><a href="#添加-spring-handlers" class="headerlink" title="添加 spring.handlers"></a>添加 spring.handlers</h3><figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="meta">http\://eitan-blog.github.io/schema/eitan</span>=<span class="string">com.eitan.tag.handler.UserNamespaceHandler</span></span><br></pre></td></tr></table></figure>
@@ -615,14 +640,14 @@
 <li> xsi:schemaLocation=<a href="http://eitan-blog.github.io/schema/eitan">http://eitan-blog.github.io/schema/eitan</a>  <a href="http://eitan-blog.github.io/schema/eitan/user.xsd">http://eitan-blog.github.io/schema/eitan/user.xsd</a></li>
 </ol>
 </li>
-<li>在文件中使用自己的标签：*&lt;eitan:user id=”user1” userName=”eitan” email=”<a href="mailto:&#101;&#105;&#x74;&#97;&#110;&#95;&#x62;&#108;&#111;&#103;&#x40;&#x31;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;">&#101;&#105;&#x74;&#97;&#110;&#95;&#x62;&#108;&#111;&#103;&#x40;&#x31;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;</a>“ password=”123456”&gt;&lt;/eitan:user&gt;*</li>
+<li>在文件中使用自己的标签：*&lt;eitan:user id=”user1” userName=”eitan” email=”<a href="mailto:&#x65;&#x69;&#x74;&#97;&#x6e;&#95;&#x62;&#x6c;&#111;&#x67;&#x40;&#49;&#x36;&#x33;&#46;&#x63;&#x6f;&#109;">&#x65;&#x69;&#x74;&#97;&#x6e;&#95;&#x62;&#x6c;&#111;&#x67;&#x40;&#49;&#x36;&#x33;&#46;&#x63;&#x6f;&#109;</a>“ password=”123456”&gt;&lt;/eitan:user&gt;*</li>
 </ol>
 </blockquote>
 <h3 id="效果"><a href="#效果" class="headerlink" title="效果"></a>效果</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyApplicationContext</span> </span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">		ApplicationContext ac = <span class="keyword">new</span> ClassPathXmlApplicationContext(<span class="string">&quot;spring-$&#123;username&#125;.xml&quot;</span>);</span><br><span class="line">		User user = ac.getBean(User.class);</span><br><span class="line">		System.out.println(user);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <blockquote>
 <p>在 <em>MyApplicationContext</em> 中获取并打印 <em>User.class</em>，可以发现写在 <em>xml</em> 中的属性成功注入进 <em>user</em> 中</p>
-<p>Connected to the target VM, address: ‘127.0.0.1:12821’, transport: ‘socket’<br>User{userName=’eitan’, email=’eitan<a href="mailto:&#x5f;&#x62;&#108;&#x6f;&#103;&#64;&#49;&#x36;&#51;&#46;&#x63;&#111;&#109;">&#x5f;&#x62;&#108;&#x6f;&#103;&#64;&#49;&#x36;&#51;&#46;&#x63;&#111;&#109;</a>‘, password=’123456’}</p>
+<p>Connected to the target VM, address: ‘127.0.0.1:12821’, transport: ‘socket’<br>User{userName=’eitan’, email=’eitan<a href="mailto:&#95;&#98;&#108;&#x6f;&#103;&#64;&#x31;&#x36;&#51;&#46;&#x63;&#x6f;&#109;">&#95;&#98;&#108;&#x6f;&#103;&#64;&#x31;&#x36;&#51;&#46;&#x63;&#x6f;&#109;</a>‘, password=’123456’}</p>
 </blockquote>
 <h2 id="源码解析"><a href="#源码解析" class="headerlink" title="源码解析"></a>源码解析</h2><ol>
 <li>该过程发生在 <em>AbstractApplicationContext</em> 的 <em>refresh()</em> 方法中</li>
@@ -673,15 +698,46 @@
       </tags>
   </entry>
   <entry>
-    <title>Tags Testing Article</title>
-    <url>/2021/05/11/Tags-Testing-Article/</url>
-    <content><![CDATA[<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;Hello World!&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+    <title>Spring源码阅读环境搭建</title>
+    <url>/2021/07/06/Spring%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/</url>
+    <content><![CDATA[<h2 id="安装-Gradle"><a href="#安装-Gradle" class="headerlink" title="安装 Gradle"></a>安装 Gradle</h2><h3 id="下载压缩包"><a href="#下载压缩包" class="headerlink" title="下载压缩包"></a>下载压缩包</h3><p><a href="https://services.gradle.org/distributions/">下载链接</a>，选择 <em>gradle-6.5.1-all .zip</em></p>
+<h3 id="配置环境变量"><a href="#配置环境变量" class="headerlink" title="配置环境变量"></a>配置环境变量</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706125653.png" alt="image-20210706125648901"></p>
+<p>并在 <strong>Path</strong> 中添加 <em>%GRADLE_HOME%\bin</em></p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706125852.png" alt="image-20210706125850699"></p>
+<span id="more"></span>
 
-<p><img src="https://raw.githubusercontent.com/xyq-material/blog/master/LeetCode/20210512131715.png" alt="逸"></p>
+<h3 id="验证是否生效"><a href="#验证是否生效" class="headerlink" title="验证是否生效"></a>验证是否生效</h3><p><em>Win</em> + <em>R</em> 打开 <em>cmd</em>，输入 <em>gradle -v</em> 验证是否安装成功</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706130129.png" alt="image-20210706130127447"></p>
+<h2 id="下载源码"><a href="#下载源码" class="headerlink" title="下载源码"></a>下载源码</h2><h3 id="fork"><a href="#fork" class="headerlink" title="fork"></a>fork</h3><p>将<a href="https://github.com/eitan-blog/spring-framework">官方仓库</a>的代码<strong>fork</strong>到自己的仓库</p>
+<h3 id="拉取代码到本地"><a href="#拉取代码到本地" class="headerlink" title="拉取代码到本地"></a>拉取代码到本地</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">git clone https://github.com/eitan-blog/spring-framework.git</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="开始构建"><a href="#开始构建" class="headerlink" title="开始构建"></a>开始构建</h2><h3 id="为源码安装对应版本的-Gradle"><a href="#为源码安装对应版本的-Gradle" class="headerlink" title="为源码安装对应版本的 Gradle"></a>为源码安装对应版本的 Gradle</h3><p>运行源码根目录下的 <em>gradlew.bat</em> 文件</p>
+<h3 id="使用-IDEA-打开源码，设置-Gradle-本地仓库"><a href="#使用-IDEA-打开源码，设置-Gradle-本地仓库" class="headerlink" title="使用 IDEA 打开源码，设置 Gradle 本地仓库"></a>使用 IDEA 打开源码，设置 Gradle 本地仓库</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706141630.png" alt="image-20210706141627600"></p>
+<h3 id="修改-build-gradle-文件"><a href="#修改-build-gradle-文件" class="headerlink" title="修改 build.gradle 文件"></a>修改 build.gradle 文件</h3><ol>
+<li><p>在头部添加</p>
+<figure class="highlight nginx"><table><tr><td class="code"><pre><span class="line"><span class="section">buildscript</span> &#123;</span><br><span class="line">    <span class="section">repositories</span> &#123;</span><br><span class="line">		<span class="section">maven</span> &#123; <span class="attribute">url</span> <span class="string">&quot;https://repo.spring.io/plugins-release&quot;</span> &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>添加镜像</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706142921.png" alt="image-20210706142917838"></p>
+<figure class="highlight dts"><table><tr><td class="code"><pre><span class="line"><span class="class">repositories </span>&#123;</span><br><span class="line">    <span class="comment">// 新增两个阿里云镜像</span></span><br><span class="line">    <span class="class">maven </span>&#123; url <span class="string">&quot;https://maven.aliyun.com/nexus/content/groups/public&quot;</span> &#125;</span><br><span class="line">    <span class="class">maven </span>&#123; url <span class="string">&quot;https://maven.aliyun.com/nexus/content/repositories/jcenter&quot;</span> &#125;</span><br><span class="line">    <span class="comment">// 新增spring插件库</span></span><br><span class="line">    <span class="class">maven </span>&#123; url <span class="string">&quot;https://repo.spring.io/plugins-release&quot;</span> &#125;</span><br><span class="line">    mavenCentral()</span><br><span class="line">    <span class="class">maven </span>&#123; url <span class="string">&quot;https://repo.spring.io/libs-spring-framework-build&quot;</span> &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="构建"><a href="#构建" class="headerlink" title="构建"></a>构建</h3><p>点击 <em>Reload Gradle Project</em> 按钮，将自动下载相关依赖进行项目构建。若是出现失败，有可能是网络不好，多尝试几次或者翻墙后再次尝试</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706154348.png" alt="image-20210706154344453"></p>
+<h3 id="验证是否构建成功"><a href="#验证是否构建成功" class="headerlink" title="验证是否构建成功"></a>验证是否构建成功</h3><ol>
+<li>打开 <em>ApplicationContext</em></li>
+<li>按住 <em>Ctrl + Alt + u</em>，若能显示相关依赖说明构建成功</li>
+</ol>
+<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><h3 id="首先编译-spring-oxm"><a href="#首先编译-spring-oxm" class="headerlink" title="首先编译 spring-oxm"></a>首先编译 spring-oxm</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706160227.png" alt="image-20210706160216070"></p>
+<h3 id="其次编译-spring-core"><a href="#其次编译-spring-core" class="headerlink" title="其次编译 spring-core"></a>其次编译 spring-core</h3><p>同样是点击 <em>compileTestJava</em></p>
+<h3 id="编译整个项目"><a href="#编译整个项目" class="headerlink" title="编译整个项目"></a>编译整个项目</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210706161013.png" alt="image-20210706161001977"></p>
+<p>自此，spring 源码阅读环境搭建完成。</p>
 ]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
       <tags>
-        <tag>Testing</tag>
-        <tag>Another Tag</tag>
+        <tag>spring</tag>
       </tags>
   </entry>
   <entry>
@@ -705,31 +761,49 @@
 ]]></content>
   </entry>
   <entry>
-    <title>算法题-二维数组中的查找</title>
-    <url>/2021/07/01/%E7%AE%97%E6%B3%95%E9%A2%98-%E4%BA%8C%E7%BB%B4%E6%95%B0%E7%BB%84%E4%B8%AD%E7%9A%84%E6%9F%A5%E6%89%BE/</url>
-    <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><p>在一个 n * m 的二维数组中，每一行都按照从左到右递增的顺序排序，每一列都按照从上到下递增的顺序排序。请完成一个高效的函数，输入这样的一个二维数组和一个整数，判断数组中是否含有该整数。</p>
-<p>示例:</p>
-<figure class="highlight angelscript"><table><tr><td class="code"><pre><span class="line">现有矩阵 matrix 如下：</span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[</span></span><br><span class="line"><span class="string">  [1,   4,  7, 11, 15]</span>,</span><br><span class="line"><span class="string">  [2,   5,  8, 12, 19]</span>,</span><br><span class="line"><span class="string">  [3,   6,  9, 16, 22]</span>,</span><br><span class="line"><span class="string">  [10, 13, 14, 17, 24]</span>,</span><br><span class="line"><span class="string">  [18, 21, 23, 26, 30]</span></span><br><span class="line">]</span><br><span class="line">给定 target = <span class="number">5</span>，返回 <span class="literal">true</span>。</span><br><span class="line">给定 target = <span class="number">20</span>，返回 <span class="literal">false</span>。</span><br><span class="line"></span><br><span class="line">限制：</span><br><span class="line"><span class="number">0</span> &lt;= n &lt;= <span class="number">1000</span></span><br><span class="line"><span class="number">0</span> &lt;= m &lt;= <span class="number">1000</span></span><br></pre></td></tr></table></figure>
+    <title>Tags Testing Article</title>
+    <url>/2021/05/11/Tags-Testing-Article/</url>
+    <content><![CDATA[<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;Hello World!&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
+<p><img src="https://raw.githubusercontent.com/xyq-material/blog/master/LeetCode/20210512131715.png" alt="逸"></p>
+]]></content>
+      <tags>
+        <tag>Testing</tag>
+        <tag>Another Tag</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>归并排序</title>
+    <url>/2021/09/19/%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F/</url>
+    <content><![CDATA[<h2 id="Leetcode-912-排序数组"><a href="#Leetcode-912-排序数组" class="headerlink" title="Leetcode-912.排序数组"></a><a href="https://leetcode-cn.com/problems/sort-an-array/">Leetcode-912.排序数组</a></h2><p>给你一个整数数组 nums，请你将该数组升序排列。</p>
+<h3 id="递归版本"><a href="#递归版本" class="headerlink" title="递归版本"></a>递归版本</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">int</span>[] sortArray(<span class="keyword">int</span>[] nums) &#123;</span><br><span class="line">        <span class="keyword">if</span> (nums.length &lt; <span class="number">2</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> nums;</span><br><span class="line">        &#125;</span><br><span class="line">        process(nums, <span class="number">0</span>, nums.length - <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">return</span> nums;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">process</span><span class="params">(<span class="keyword">int</span>[] nums, <span class="keyword">int</span> left, <span class="keyword">int</span> right)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (left == right) &#123;</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">int</span> mid = left + ((right - left) &gt;&gt; <span class="number">1</span>);</span><br><span class="line">        process(nums, left, mid);</span><br><span class="line">        process(nums, mid + <span class="number">1</span>, right);</span><br><span class="line">        merge(nums, left, right, mid);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">merge</span><span class="params">(<span class="keyword">int</span>[] nums, <span class="keyword">int</span> left, <span class="keyword">int</span> right, <span class="keyword">int</span> mid)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span>[] help = <span class="keyword">new</span> <span class="keyword">int</span>[right - left + <span class="number">1</span>];</span><br><span class="line">        <span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> leftPoint = left;</span><br><span class="line">        <span class="keyword">int</span> rightPoint = mid + <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span> (leftPoint &lt;= mid &amp;&amp; rightPoint &lt;= right) &#123;</span><br><span class="line">            help[i++] = nums[leftPoint] &lt; nums[rightPoint] ? nums[leftPoint++] : nums[rightPoint++];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">while</span> (leftPoint &lt;= mid) &#123;</span><br><span class="line">            help[i++] = nums[leftPoint++];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">while</span> (rightPoint &lt;= right)&#123;</span><br><span class="line">            help[i++] = nums[rightPoint++];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; help.length; j++) &#123;</span><br><span class="line">            nums[left + j] = help[j]; </span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-
-<p>来源：力扣（LeetCode）<br>链接：<a href="https://leetcode-cn.com/problems/er-wei-shu-zu-zhong-de-cha-zhao-lcof">https://leetcode-cn.com/problems/er-wei-shu-zu-zhong-de-cha-zhao-lcof</a><br>著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
 <span id="more"></span>
 
+<h3 id="非递归版本"><a href="#非递归版本" class="headerlink" title="非递归版本"></a>非递归版本</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920094231.png" alt="image-20210920094229297"></p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">int</span>[] sortArray(<span class="keyword">int</span>[] nums) &#123;</span><br><span class="line">        <span class="keyword">if</span> (nums.length &lt; <span class="number">2</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> nums;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">int</span> stepSize = <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span> (nums.length &gt; stepSize) &#123;</span><br><span class="line">            process(nums, stepSize);</span><br><span class="line">            stepSize &lt;&lt;= <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> nums;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">process</span><span class="params">(<span class="keyword">int</span>[] nums, <span class="keyword">int</span> stepSize)</span></span>&#123;</span><br><span class="line">        <span class="keyword">int</span> left = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">while</span> (left &lt; nums.length - <span class="number">1</span>) &#123;</span><br><span class="line">            <span class="keyword">int</span> mid = left + stepSize - <span class="number">1</span>;</span><br><span class="line">            <span class="keyword">if</span> (mid &gt;= nums.length -<span class="number">1</span>) &#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">int</span> right = Math.min(mid + stepSize, nums.length - <span class="number">1</span>);</span><br><span class="line">            merge(nums, left, right, mid);</span><br><span class="line">            left += stepSize &lt;&lt; <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">merge</span><span class="params">(<span class="keyword">int</span>[] nums, <span class="keyword">int</span> left, <span class="keyword">int</span> right, <span class="keyword">int</span> mid)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">int</span>[] help = <span class="keyword">new</span> <span class="keyword">int</span>[right - left + <span class="number">1</span>];</span><br><span class="line">            <span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">int</span> leftPoint = left;</span><br><span class="line">            <span class="keyword">int</span> rightPoint = mid + <span class="number">1</span>;</span><br><span class="line">            <span class="keyword">while</span> (leftPoint &lt;= mid &amp;&amp; rightPoint &lt;= right) &#123;</span><br><span class="line">                help[i++] = nums[leftPoint] &lt; nums[rightPoint] ? nums[leftPoint++] : nums[rightPoint++];</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">while</span> (leftPoint &lt;= mid) &#123;</span><br><span class="line">                help[i++] = nums[leftPoint++];</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">while</span> (rightPoint &lt;= right) &#123;</span><br><span class="line">                help[i++] = nums[rightPoint++];</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; help.length; j++) &#123;</span><br><span class="line">                nums[left + j] = help[j];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-
-<h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><ol>
-<li>由题可知：每一行都按照从左到右递增的顺序排序，每一列都按照从上到下递增的顺序排序</li>
-<li>因此可以关注左上和右下两点，以左上顶点为例，若 <em>target</em> 小于 *matrix[i][j]*，则 <em>target</em> 所在区域必在其 <em>左侧（即 i–）</em>，若 <em>target</em> 大于 *matrix[i][j]*，则 <em>target</em> 所在区域必在其 <em>下方（即j++）</em>;</li>
-<li>若 <em>索引越界</em> 则表示在 <em>matrix</em> 中找不到对应的 <em>target</em>，返回 <em>false</em></li>
+]]></content>
+      <categories>
+        <category>algorithm</category>
+      </categories>
+      <tags>
+        <tag>algorithm</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>算法题-查询给定目录下的文件数量</title>
+    <url>/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E6%9F%A5%E8%AF%A2%E7%BB%99%E5%AE%9A%E7%9B%AE%E5%BD%95%E4%B8%8B%E7%9A%84%E6%96%87%E4%BB%B6%E6%95%B0%E9%87%8F/</url>
+    <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><ol>
+<li>给定一个文件目录的路径，写一个函数统计这个目录下的所有文件</li>
+<li>隐藏文件也算，但是文件夹不算</li>
 </ol>
-<h2 id="题解"><a href="#题解" class="headerlink" title="题解"></a>题解</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">findNumberIn2DArray</span><span class="params">(<span class="keyword">int</span>[][] matrix, <span class="keyword">int</span> target)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (matrix.length == <span class="number">0</span> || matrix[<span class="number">0</span>].length == <span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> j = matrix[<span class="number">0</span>].length - <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (i &gt;= matrix.length || j &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (matrix[i][j] == target) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (matrix[i][j] &lt; target) &#123;</span><br><span class="line">                i++;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                j--;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<span id="more"></span>
 
+<h2 id="解答"><a href="#解答" class="headerlink" title="解答"></a>解答</h2><h3 id="栈"><a href="#栈" class="headerlink" title="栈"></a>栈</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">getFileNumber</span><span class="params">(String folderPath)</span> </span>&#123;</span><br><span class="line">    File root = <span class="keyword">new</span> File(folderPath);</span><br><span class="line">    <span class="keyword">if</span> (!root.isDirectory() &amp;&amp; !root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    Stack&lt;File&gt; stack = <span class="keyword">new</span> Stack&lt;&gt;();</span><br><span class="line">    stack.add(root);</span><br><span class="line">    <span class="keyword">int</span> files = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (!stack.isEmpty()) &#123;</span><br><span class="line">        File folder = stack.pop();</span><br><span class="line">        <span class="keyword">for</span> (File next : folder.listFiles()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (next.isFile()) &#123;</span><br><span class="line">                files++;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (next.isDirectory()) &#123;</span><br><span class="line">                stack.push(next);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> files;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
+<h3 id="递归"><a href="#递归" class="headerlink" title="递归"></a>递归</h3><figure class="highlight gradle"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> mySolution(String path) &#123;</span><br><span class="line">    <span class="keyword">int</span> fileNumber = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">File</span> <span class="keyword">file</span> = <span class="keyword">new</span> <span class="keyword">File</span>(path);</span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">file</span>.exists()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isDirectory()) &#123;</span><br><span class="line">        <span class="keyword">File</span>[] files = <span class="keyword">file</span>.listFiles();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">File</span> f : files) &#123;</span><br><span class="line">            fileNumber = fileNumber + mySolution(f.getPath());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fileNumber;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
-<li>对于从左到右递增且从上到下递增的二维数组的遍历可以考虑从左上或者右下开始</li>
-</ul>
 ]]></content>
       <categories>
         <category>algorithm</category>
@@ -777,18 +851,31 @@
       </tags>
   </entry>
   <entry>
-    <title>算法题-查询给定目录下的文件数量</title>
-    <url>/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E6%9F%A5%E8%AF%A2%E7%BB%99%E5%AE%9A%E7%9B%AE%E5%BD%95%E4%B8%8B%E7%9A%84%E6%96%87%E4%BB%B6%E6%95%B0%E9%87%8F/</url>
-    <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><ol>
-<li>给定一个文件目录的路径，写一个函数统计这个目录下的所有文件</li>
-<li>隐藏文件也算，但是文件夹不算</li>
-</ol>
+    <title>算法题-二维数组中的查找</title>
+    <url>/2021/07/01/%E7%AE%97%E6%B3%95%E9%A2%98-%E4%BA%8C%E7%BB%B4%E6%95%B0%E7%BB%84%E4%B8%AD%E7%9A%84%E6%9F%A5%E6%89%BE/</url>
+    <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><p>在一个 n * m 的二维数组中，每一行都按照从左到右递增的顺序排序，每一列都按照从上到下递增的顺序排序。请完成一个高效的函数，输入这样的一个二维数组和一个整数，判断数组中是否含有该整数。</p>
+<p>示例:</p>
+<figure class="highlight angelscript"><table><tr><td class="code"><pre><span class="line">现有矩阵 matrix 如下：</span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[</span></span><br><span class="line"><span class="string">  [1,   4,  7, 11, 15]</span>,</span><br><span class="line"><span class="string">  [2,   5,  8, 12, 19]</span>,</span><br><span class="line"><span class="string">  [3,   6,  9, 16, 22]</span>,</span><br><span class="line"><span class="string">  [10, 13, 14, 17, 24]</span>,</span><br><span class="line"><span class="string">  [18, 21, 23, 26, 30]</span></span><br><span class="line">]</span><br><span class="line">给定 target = <span class="number">5</span>，返回 <span class="literal">true</span>。</span><br><span class="line">给定 target = <span class="number">20</span>，返回 <span class="literal">false</span>。</span><br><span class="line"></span><br><span class="line">限制：</span><br><span class="line"><span class="number">0</span> &lt;= n &lt;= <span class="number">1000</span></span><br><span class="line"><span class="number">0</span> &lt;= m &lt;= <span class="number">1000</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>来源：力扣（LeetCode）<br>链接：<a href="https://leetcode-cn.com/problems/er-wei-shu-zu-zhong-de-cha-zhao-lcof">https://leetcode-cn.com/problems/er-wei-shu-zu-zhong-de-cha-zhao-lcof</a><br>著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
 <span id="more"></span>
 
-<h2 id="解答"><a href="#解答" class="headerlink" title="解答"></a>解答</h2><h3 id="栈"><a href="#栈" class="headerlink" title="栈"></a>栈</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">getFileNumber</span><span class="params">(String folderPath)</span> </span>&#123;</span><br><span class="line">    File root = <span class="keyword">new</span> File(folderPath);</span><br><span class="line">    <span class="keyword">if</span> (!root.isDirectory() &amp;&amp; !root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    Stack&lt;File&gt; stack = <span class="keyword">new</span> Stack&lt;&gt;();</span><br><span class="line">    stack.add(root);</span><br><span class="line">    <span class="keyword">int</span> files = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (!stack.isEmpty()) &#123;</span><br><span class="line">        File folder = stack.pop();</span><br><span class="line">        <span class="keyword">for</span> (File next : folder.listFiles()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (next.isFile()) &#123;</span><br><span class="line">                files++;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (next.isDirectory()) &#123;</span><br><span class="line">                stack.push(next);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> files;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<h3 id="递归"><a href="#递归" class="headerlink" title="递归"></a>递归</h3><figure class="highlight gradle"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> mySolution(String path) &#123;</span><br><span class="line">    <span class="keyword">int</span> fileNumber = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">File</span> <span class="keyword">file</span> = <span class="keyword">new</span> <span class="keyword">File</span>(path);</span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">file</span>.exists()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isDirectory()) &#123;</span><br><span class="line">        <span class="keyword">File</span>[] files = <span class="keyword">file</span>.listFiles();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">File</span> f : files) &#123;</span><br><span class="line">            fileNumber = fileNumber + mySolution(f.getPath());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fileNumber;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
+<h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><ol>
+<li>由题可知：每一行都按照从左到右递增的顺序排序，每一列都按照从上到下递增的顺序排序</li>
+<li>因此可以关注左上和右下两点，以左上顶点为例，若 <em>target</em> 小于 *matrix[i][j]*，则 <em>target</em> 所在区域必在其 <em>左侧（即 i–）</em>，若 <em>target</em> 大于 *matrix[i][j]*，则 <em>target</em> 所在区域必在其 <em>下方（即j++）</em>;</li>
+<li>若 <em>索引越界</em> 则表示在 <em>matrix</em> 中找不到对应的 <em>target</em>，返回 <em>false</em></li>
+</ol>
+<h2 id="题解"><a href="#题解" class="headerlink" title="题解"></a>题解</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">findNumberIn2DArray</span><span class="params">(<span class="keyword">int</span>[][] matrix, <span class="keyword">int</span> target)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (matrix.length == <span class="number">0</span> || matrix[<span class="number">0</span>].length == <span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> j = matrix[<span class="number">0</span>].length - <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (i &gt;= matrix.length || j &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (matrix[i][j] == target) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (matrix[i][j] &lt; target) &#123;</span><br><span class="line">                i++;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                j--;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li>对于从左到右递增且从上到下递增的二维数组的遍历可以考虑从左上或者右下开始</li>
+</ul>
 ]]></content>
       <categories>
         <category>algorithm</category>
@@ -841,6 +928,48 @@
       </categories>
       <tags>
         <tag>system call</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>线程对象锁被暂用，导致线程无法正常结束问题</title>
+    <url>/2021/09/21/%E7%BA%BF%E7%A8%8B%E5%AF%B9%E8%B1%A1%E9%94%81%E8%A2%AB%E6%9A%82%E7%94%A8%EF%BC%8C%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%97%A0%E6%B3%95%E6%AD%A3%E5%B8%B8%E7%BB%93%E6%9D%9F%E9%97%AE%E9%A2%98/</url>
+    <content><![CDATA[<h2 id="案例代码"><a href="#案例代码" class="headerlink" title="案例代码"></a>案例代码</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test01</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Thread t1 = <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;t1 start&quot;</span>);</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                Thread.sleep(<span class="number">2000</span>);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">            System.out.println(<span class="string">&quot;t1 end&quot;</span>);</span><br><span class="line">        &#125;, <span class="string">&quot;thread-0&quot;</span>);</span><br><span class="line">        t1.start();</span><br><span class="line"></span><br><span class="line">        Thread t2 = <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">            <span class="keyword">synchronized</span> (t1) &#123;</span><br><span class="line">                System.out.println(<span class="string">&quot;t2 start&quot;</span>);</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    Thread.sleep(<span class="number">5000</span>);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">                System.out.println(<span class="string">&quot;t1 isAlive: &quot;</span> + t1.isAlive());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;, <span class="string">&quot;thread-1&quot;</span>);</span><br><span class="line">        t2.start();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<span id="more"></span>
+
+<h2 id="案例现象"><a href="#案例现象" class="headerlink" title="案例现象"></a>案例现象</h2><ol>
+<li><p>在主线程中创建并启动两个线程，线程 t1 睡眠两秒后打印 “t1 end” 后结束，线程 t2 睡眠五秒后打印了 t1 线程的状态</p>
+</li>
+<li><p>正常来说，t1 线程睡眠两秒并打印 “t1 end” 后就结束了，因此线程 t2 在打印线程 t1 的存活状态应该为 false</p>
+</li>
+<li><p>然而实际结果为 true</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210921222459.png" alt="image-20210921222454716"></p>
+</li>
+</ol>
+<h2 id="分析原因"><a href="#分析原因" class="headerlink" title="分析原因"></a>分析原因</h2><p>​    1. 线程 t1 在结束的时候需要获取自身对象这把锁，而这把锁被线程 t2 通过 synchronized 持有，因此没有结束</p>
+<h2 id="验证"><a href="#验证" class="headerlink" title="验证"></a>验证</h2><h3 id="方式一"><a href="#方式一" class="headerlink" title="方式一"></a>方式一</h3><p>在 synchronized 之前加上 *t1.join()*。</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210921223728.png" alt="image-20210921223726569"></p>
+<p>此时 t1 结束时，t2 并为持有 t1 对象作为锁，可以正常结束，因此 t2 打印 t1 线程状态是否存活为 false。</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210921223908.png" alt="image-20210921223906639"></p>
+<h3 id="方式二"><a href="#方式二" class="headerlink" title="方式二"></a>方式二</h3><p>在 synchronized 之后加上 *t1.join()*。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test01</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Thread t1 = <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;t1 start&quot;</span>);</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                Thread.sleep(<span class="number">2000</span>);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">            System.out.println(<span class="string">&quot;t1 end&quot;</span>);</span><br><span class="line">        &#125;, <span class="string">&quot;thread-0&quot;</span>);</span><br><span class="line">        t1.start();</span><br><span class="line"></span><br><span class="line">        Thread t2 = <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">            <span class="keyword">synchronized</span> (t1) &#123;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    t1.join();</span><br><span class="line">                &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">                System.out.println(<span class="string">&quot;t2 start&quot;</span>);</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    Thread.sleep(<span class="number">5000</span>);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">                System.out.println(<span class="string">&quot;t1 isAlive: &quot;</span> + t1.isAlive());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;, <span class="string">&quot;thread-1&quot;</span>);</span><br><span class="line">        t2.start();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210921224109.png" alt="image-20210921224107485"></p>
+<h4 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h4><ol>
+<li>当代码运行到 <em>t1.join()</em> 时，t2 持有的 t1 线程的对象锁，并且等待 t1 线程执行完成才能继续往下执行</li>
+<li>然而 t1 线程需要获取自身对象锁才能结束，只有当 t1 线程结束了 t2 线程才能继续往下执行释放 t1 线程的对象锁</li>
+<li>这段代码为什么可以正常结束而不发生死锁问题呢？</li>
+</ol>
+<h4 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h4><p>这时我们去关注 <em>join()</em> 方法的源代码</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">join</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</span><br><span class="line">    join(<span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">join</span><span class="params">(<span class="keyword">long</span> millis)</span></span></span><br><span class="line"><span class="function"><span class="keyword">throws</span> InterruptedException </span>&#123;</span><br><span class="line">    <span class="keyword">long</span> base = System.currentTimeMillis();</span><br><span class="line">    <span class="keyword">long</span> now = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (millis &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">&quot;timeout value is negative&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (millis == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">while</span> (isAlive()) &#123;</span><br><span class="line">            wait(<span class="number">0</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">while</span> (isAlive()) &#123;</span><br><span class="line">            <span class="keyword">long</span> delay = millis - now;</span><br><span class="line">            <span class="keyword">if</span> (delay &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            wait(delay);</span><br><span class="line">            now = System.currentTimeMillis() - base;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们发现，<em>join()</em> 方法的实现最终是通过循环判断当前线程的活跃状态 *isAlive()*，并调用 <em>wait(0)</em> 方法。而 <em>wait(0)</em> 方法是 Object 的方法，他会让当前线程释放它所持有的锁。因此 t1 线程就可以获取其自身的对象锁成功结束。</p>
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+      <tags>
+        <tag>multithreading</tag>
       </tags>
   </entry>
   <entry>
