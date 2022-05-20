@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;example.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Muse&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;right&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:true,&quot;bookmark&quot;:{&quot;enable&quot;:true,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:true,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;搜索...&quot;,&quot;empty&quot;:&quot;没有找到任何搜索结果：${query}&quot;,&quot;hits_time&quot;:&quot;找到 ${hits} 个搜索结果（用时 ${time} 毫秒）&quot;,&quot;hits&quot;:&quot;找到 ${hits} 个搜索结果&quot;},&quot;path&quot;:&quot;&#x2F;search.xml&quot;,&quot;localsearch&quot;:{&quot;enable&quot;:true,&quot;trigger&quot;:&quot;auto&quot;,&quot;top_n_per_article&quot;:1,&quot;unescape&quot;:false,&quot;preload&quot;:false}}</script>
+<meta name="description" content="Hadoop 之 HDFS初识 HDFS单机处理大量数据需求：有一个非常大的文本文件，其中只有两行相同，在有限的内存中如何找出这相同的两行。 基础知识：内存寻址时间 ns，磁盘寻址时间 ms。内存寻址比磁盘寻址快 10w 倍。 解决思路：读取每一行，通过 hashcode 散列成若干大小小于内存的小文件，分别将文件加入内存查找相同行。 耗时：假设文本 1 T，磁盘带宽 500 M&#x2F;s，小文件比">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Spark（一）">
+<meta property="og:url" content="http://example.com/Hadoop%20%E4%B9%8B%20HDFS.html">
+<meta property="og:site_name" content="Eitan&#39;s Blog">
+<meta property="og:description" content="Hadoop 之 HDFS初识 HDFS单机处理大量数据需求：有一个非常大的文本文件，其中只有两行相同，在有限的内存中如何找出这相同的两行。 基础知识：内存寻址时间 ns，磁盘寻址时间 ms。内存寻址比磁盘寻址快 10w 倍。 解决思路：读取每一行，通过 hashcode 散列成若干大小小于内存的小文件，分别将文件加入内存查找相同行。 耗时：假设文本 1 T，磁盘带宽 500 M&#x2F;s，小文件比">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220508093226.png">
+<meta property="article:published_time" content="2022-05-20T02:13:29.980Z">
+<meta property="article:modified_time" content="2022-05-20T02:13:29.980Z">
+<meta property="article:author" content="Eitan">
+<meta property="article:tag" content="spark">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220508093226.png">
+
+
+<link rel="canonical" href="http://example.com/Hadoop%20%E4%B9%8B%20HDFS">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:false,&quot;lang&quot;:&quot;zh-CN&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;example.com&#x2F;Hadoop%20%E4%B9%8B%20HDFS.html&quot;,&quot;path&quot;:&quot;Hadoop 之 HDFS.html&quot;,&quot;title&quot;:&quot;Spark（一）&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>Spark（一） | Eitan's Blog
+</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Eitan's Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Hadoop-%E4%B9%8B-HDFS"><span class="nav-number">1.</span> <span class="nav-text">Hadoop 之 HDFS</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9D%E8%AF%86-HDFS"><span class="nav-number">1.1.</span> <span class="nav-text">初识 HDFS</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8D%95%E6%9C%BA%E5%A4%84%E7%90%86%E5%A4%A7%E9%87%8F%E6%95%B0%E6%8D%AE"><span class="nav-number">1.1.1.</span> <span class="nav-text">单机处理大量数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A4%9A%E6%9C%BA%E5%A4%84%E7%90%86%E5%A4%A7%E9%87%8F%E6%95%B0%E6%8D%AE"><span class="nav-number">1.1.2.</span> <span class="nav-text">多机处理大量数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BE%A9%E8%AF%81%E7%9C%8B%E5%BE%85%E5%8D%95%E6%9C%BA-%E5%A4%9A%E6%9C%BA%E5%A4%84%E7%90%86%E5%A4%A7%E9%87%8F%E6%95%B0%E6%8D%AE"><span class="nav-number">1.1.3.</span> <span class="nav-text">辩证看待单机&#x2F;多机处理大量数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86%E6%80%9D%E8%B7%AF"><span class="nav-number">1.1.4.</span> <span class="nav-text">大数据处理思路</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81-HDFS-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F"><span class="nav-number">1.1.5.</span> <span class="nav-text">为什么需要 HDFS 文件系统</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HDFS-%E7%90%86%E8%AE%BA%E5%9F%BA%E7%A1%80"><span class="nav-number">1.2.</span> <span class="nav-text">HDFS 理论基础</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AD%98%E5%82%A8%E6%A8%A1%E5%9E%8B"><span class="nav-number">1.2.1.</span> <span class="nav-text">存储模型</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1"><span class="nav-number">1.2.2.</span> <span class="nav-text">架构设计</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A7%92%E8%89%B2%E5%8A%9F%E8%83%BD"><span class="nav-number">1.2.3.</span> <span class="nav-text">角色功能</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#NameNode"><span class="nav-number">1.2.3.1.</span> <span class="nav-text">NameNode</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#DataNode"><span class="nav-number">1.2.3.2.</span> <span class="nav-text">DataNode</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HDSF-%E6%8C%81%E4%B9%85%E5%8C%96"><span class="nav-number">1.2.4.</span> <span class="nav-text">HDSF 持久化</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#EditLog%EF%BC%9A%E6%97%A5%E5%BF%97"><span class="nav-number">1.2.4.1.</span> <span class="nav-text">EditLog：日志</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#FsImage%EF%BC%9A%E9%95%9C%E5%83%8F%E3%80%81%E5%BF%AB%E7%85%A7"><span class="nav-number">1.2.4.2.</span> <span class="nav-text">FsImage：镜像、快照</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E6%8C%81%E4%B9%85%E5%8C%96%E6%96%B9%E6%A1%88"><span class="nav-number">1.2.4.3.</span> <span class="nav-text">持久化方案</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HDFS-%E7%9A%84%E5%AE%89%E5%85%A8%E6%A8%A1%E5%BC%8F"><span class="nav-number">1.2.5.</span> <span class="nav-text">HDFS 的安全模式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SecondaryNameNode"><span class="nav-number">1.2.6.</span> <span class="nav-text">SecondaryNameNode</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%89%AF%E6%9C%AC%E6%94%BE%E7%BD%AE%E7%AD%96%E7%95%A5"><span class="nav-number">1.2.7.</span> <span class="nav-text">副本放置策略</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HDFS-%E7%9A%84%E5%86%99%E6%B5%81%E7%A8%8B"><span class="nav-number">1.2.8.</span> <span class="nav-text">HDFS 的写流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HDFS-%E7%9A%84%E8%AF%BB%E6%B5%81%E7%A8%8B"><span class="nav-number">1.2.9.</span> <span class="nav-text">HDFS 的读流程</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%99%85%E9%83%A8%E7%BD%B2"><span class="nav-number">1.3.</span> <span class="nav-text">实际部署</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD"><span class="nav-number">1.3.1.</span> <span class="nav-text">基础设施</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Hadoop-%E7%9A%84%E9%85%8D%E7%BD%AE-%E5%BA%94%E7%94%A8%E7%9A%84%E6%90%AD%E5%BB%BA%E8%BF%87%E7%A8%8B"><span class="nav-number">1.3.2.</span> <span class="nav-text">Hadoop 的配置(应用的搭建过程)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">1.3.3.</span> <span class="nav-text">初始化</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Eitan"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Eitan</p>
+  <div class="site-description" itemprop="description">blog用于记忆，大脑擅长思考</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">39</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/eitan-blog" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;eitan-blog" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:eitan_blog@163.com" title="E-Mail → mailto:eitan_blog@163.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/yourname" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner page posts-expand">
+  
+  
+
+
+    
+    
+    
+    <div class="post-block" lang="zh-CN"><header class="post-header">
+
+<h1 class="post-title" itemprop="name headline">Spark（一）
+</h1>
+
+<div class="post-meta-container">
+</div>
+
+</header>
+
+      
+      
+      <div class="post-body">
+          <span id="more"></span>
+
+<h2 id="Hadoop-之-HDFS"><a href="#Hadoop-之-HDFS" class="headerlink" title="Hadoop 之 HDFS"></a>Hadoop 之 HDFS</h2><h3 id="初识-HDFS"><a href="#初识-HDFS" class="headerlink" title="初识 HDFS"></a>初识 HDFS</h3><h4 id="单机处理大量数据"><a href="#单机处理大量数据" class="headerlink" title="单机处理大量数据"></a>单机处理大量数据</h4><p>需求：有一个非常大的文本文件，其中只有两行相同，在有限的内存中如何找出这相同的两行。</p>
+<p>基础知识：内存寻址时间 ns，磁盘寻址时间 ms。内存寻址比磁盘寻址快 10w 倍。</p>
+<p>解决思路：读取每一行，通过 hashcode 散列成若干大小小于内存的小文件，分别将文件加入内存查找相同行。</p>
+<p>耗时：假设文本 1 T，磁盘带宽 500 M/s，小文件比较时间忽略不计。将 1 T 文本分发为若干小文件耗时： 1T / 500M 大约 30 分钟。每个小文件加入内存进行比较耗时：1T / 500M 大约 30 分钟。</p>
+<p>结论：单机瓶颈是 IO。</p>
+<h4 id="多机处理大量数据"><a href="#多机处理大量数据" class="headerlink" title="多机处理大量数据"></a>多机处理大量数据</h4><p>需求：有一个非常大的文本文件，其中只有两行相同，使用多台机器找出这相同的两行。</p>
+<p>解决思路：</p>
+<ol>
+<li><p>将文本分成 N 份分发给多台机器。每台机器通过 hashcode 散列成 N 份小文件。</p>
+</li>
+<li><p>每台机器编号范围 0 - N-1，每台机器中文件编号范围 0 - N-1。机器获取编号对应的小文件合并后判断是否存在相同两行</p>
+</li>
+</ol>
+<p>耗时：假设每台机器分到文件大小 500 M，磁盘带宽 500 M/s，机器之间网络传输速度 100 M/s。每台机器并行读取文件散列为小文件时间 1 s，网络并行获取相同编号时间：合并后文件大小 500 M / 网络传输速度 100 M/s = 5 s。</p>
+<h4 id="辩证看待单机-多机处理大量数据"><a href="#辩证看待单机-多机处理大量数据" class="headerlink" title="辩证看待单机/多机处理大量数据"></a>辩证看待单机/多机处理大量数据</h4><ol>
+<li>多机处理耗时省略了大文件分发给不同机器的时间</li>
+<li>如果一共是 1 T 数据并且数据不在增长，分发文件给不同机器的时间将大于单机处理数据的时间。</li>
+<li>如果数据按每天增加 1 T 数据，每次只需分发当日数据即可，而单机得处理累计数据，因此多机更快</li>
+</ol>
+<h4 id="大数据处理思路"><a href="#大数据处理思路" class="headerlink" title="大数据处理思路"></a>大数据处理思路</h4><ol>
+<li>分而治之</li>
+<li>并行计算</li>
+<li>计算向数据移动</li>
+<li>数据本地化读取</li>
+</ol>
+<h4 id="为什么需要-HDFS-文件系统"><a href="#为什么需要-HDFS-文件系统" class="headerlink" title="为什么需要 HDFS 文件系统"></a>为什么需要 HDFS 文件系统</h4><p>更好的支持分布式计算</p>
+<h3 id="HDFS-理论基础"><a href="#HDFS-理论基础" class="headerlink" title="HDFS 理论基础"></a>HDFS 理论基础</h3><h4 id="存储模型"><a href="#存储模型" class="headerlink" title="存储模型"></a>存储模型</h4><ul>
+<li>文件线性按字节切割成块（block），具有 offsset 和 id</li>
+<li>文件和文件的 block 可以不一样</li>
+<li>一个文件除最后一个 block，其他 block 大小一致</li>
+<li>block 的大小依据硬件 I/O 特性调整</li>
+<li>block 被分散存放在集群节点中，具有 location</li>
+<li>block 具有副本（replication），没有主从概念，副本不能出现在同一节点</li>
+<li>副本是满足可靠性和性能的关键</li>
+<li>文件上传可以指定 block 的大小和副本数，上传后只能修改副本数</li>
+<li>一次写入多次读取，不支持修改</li>
+<li>支持追加数据</li>
+</ul>
+<h4 id="架构设计"><a href="#架构设计" class="headerlink" title="架构设计"></a>架构设计</h4><ul>
+<li>HDSF 是一个主从（Master/Slaves）架构</li>
+<li>由一个 NameNode 和一些 DataNode 组成</li>
+<li>面向文件包含：文件数据（data）和文件元数据（metadata）</li>
+<li>NameNode 负责存储和管理文件元数据，并维护了一个层次型的文件目录树</li>
+<li>DataNode 负责存储文件数据（block块），并提供 block 的读写</li>
+<li>DataNode 与 NameNode 维持心跳，并汇报自己持有的 block 信息</li>
+<li>Client 和 NameNode 交互文件元数据和DataNode交互文件block数据</li>
+</ul>
+<h4 id="角色功能"><a href="#角色功能" class="headerlink" title="角色功能"></a>角色功能</h4><h5 id="NameNode"><a href="#NameNode" class="headerlink" title="NameNode"></a>NameNode</h5><ul>
+<li>完全基于内存存储文件元数据、目录结构、文件 block 的映射</li>
+<li>需要持久化方案保证数据可靠性</li>
+<li>提供副本放置策略</li>
+</ul>
+<h5 id="DataNode"><a href="#DataNode" class="headerlink" title="DataNode"></a>DataNode</h5><ul>
+<li>基于本地磁盘存储 block（文件的形式）</li>
+<li>保存 block 的校验和数据保证 block 的可靠性</li>
+<li>与 NameNode 保持心跳，汇报 block 列表状态</li>
+</ul>
+<h4 id="HDSF-持久化"><a href="#HDSF-持久化" class="headerlink" title="HDSF 持久化"></a>HDSF 持久化</h4><h5 id="EditLog：日志"><a href="#EditLog：日志" class="headerlink" title="EditLog：日志"></a>EditLog：日志</h5><p>体积小，记录少时有优势</p>
+<h5 id="FsImage：镜像、快照"><a href="#FsImage：镜像、快照" class="headerlink" title="FsImage：镜像、快照"></a>FsImage：镜像、快照</h5><p>如果能快速的滚动更新时点</p>
+<h5 id="持久化方案"><a href="#持久化方案" class="headerlink" title="持久化方案"></a>持久化方案</h5><ul>
+<li>任何对文件系统元数据产生修改的操作，Namenode 都会使用一种称为 EditLog 的事务日志记录下来</li>
+<li>使用 FsImage 存储内存所有的元数据状态</li>
+<li>使用本地磁盘保存 EditLog 和 FsImage</li>
+<li>EditLog 具有完整性，数据丢失少，但恢复速度慢，并有体积膨胀风险</li>
+<li>FsImage 具有恢复速度快，体积与内存数据相当，但不能实时保存，数据丢失多</li>
+<li>NameNode使用了FsImage+EditLog 整合的方案：滚动将增量的 EditLog 更新到 FsImage，以保证更近时点的 FsImage 和更小的 EditLog 体积</li>
+</ul>
+<h4 id="HDFS-的安全模式"><a href="#HDFS-的安全模式" class="headerlink" title="HDFS 的安全模式"></a>HDFS 的安全模式</h4><ul>
+<li>HDFS 搭建时会格式化，格式化操作会产生一个空的 FsImage</li>
+<li>当 Namenode 启动时，它从硬盘中读取 Editlog 和 FsImage</li>
+<li>将所有 Editlog 中的事务作用在内存中的 FsImage 上</li>
+<li>并将这个新版本的 FsImage 从内存中保存到本地磁盘上</li>
+<li>然后删除旧的 Editlog，因为这个旧的 Editlog 的事务都已经作用在 FsImage 上了</li>
+<li>Namenode 启动后会进入一个称为安全模式的特殊状态。</li>
+<li>处于安全模式的 Namenode 是不会进行数据块的复制的。</li>
+<li>Namenode 从所有的 Datanode 接收心跳信号和块状态报告。</li>
+<li>每当 Namenode 检测确认某个数据块的副本数目达到这个最小值，那么该数据块就会被认为是副本安全(safely replicated)的。</li>
+<li>在一定百分比（这个参数可配置）的数据块被 Namenode 检测确认是安全之后（加上一个额外的30秒等待时间），Namenode 将退出安全模式状态。</li>
+<li>接下来它会确定还有哪些数据块的副本没有达到指定数目，并将这些数据块复制到其他 Datanode 上。</li>
+</ul>
+<h4 id="SecondaryNameNode"><a href="#SecondaryNameNode" class="headerlink" title="SecondaryNameNode"></a>SecondaryNameNode</h4><ul>
+<li>在非 Ha 模式下，SNN 一般是独立的节点，周期完成对 NameNode 的 EditLog 向 FsImage 合并，减少 EditLog 大小，减少NameNode 启动时间</li>
+<li>根据配置文件设置的时间间隔 fs.checkpoint.period 默认3600秒</li>
+<li>根据配置文件设置 edits log 大小 fs.checkpoint.size 规定 edits 文件的最大值默认是64MB</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220508093226.png" alt="image-20220508093221461"></p>
+<h4 id="副本放置策略"><a href="#副本放置策略" class="headerlink" title="副本放置策略"></a>副本放置策略</h4><ul>
+<li>第一个副本：放置在上传文件的DN；如果是集群外提交，则随机挑选一台磁盘不太满，CPU不太忙的节点。</li>
+<li>第二个副本：放置在于第一个副本不同的 机架的节点上。</li>
+<li>第三个副本：与第二个副本相同机架的节点。</li>
+<li>更多副本：随机节点。</li>
+</ul>
+<h4 id="HDFS-的写流程"><a href="#HDFS-的写流程" class="headerlink" title="HDFS 的写流程"></a>HDFS 的写流程</h4><ul>
+<li>Client和NN连接创建文件元数据</li>
+<li>NN判定元数据是否有效</li>
+<li>NN处发副本放置策略，返回一个有序的DN列表</li>
+<li>Client和DN建立Pipeline连接</li>
+<li>Client将块切分成packet（64KB），并使用chunk（512B）+chucksum（4B）填充</li>
+<li>Client将packet放入发送队列dataqueue中，并向第一个DN发送</li>
+<li>第一个DN收到packet后本地保存并发送给第二个DN</li>
+<li>第二个DN收到packet后本地保存并发送给第三个DN</li>
+<li>这一个过程中，上游节点同时发送下一个packet生活中类比工厂的流水线：结论：流式其实也是变种的并行计算</li>
+<li>Hdfs使用这种传输方式，副本数对于client是透明的</li>
+<li>当block传输完成，DN们各自向NN汇报，同时client继续传输下一个block</li>
+<li>所以，client的传输和block的汇报也是并行的</li>
+</ul>
+<h4 id="HDFS-的读流程"><a href="#HDFS-的读流程" class="headerlink" title="HDFS 的读流程"></a>HDFS 的读流程</h4><ul>
+<li><p>为了降低整体的带宽消耗和读取延时，HDFS会尽量让读取程序读取离它最近的副本。</p>
+</li>
+<li><p>如果在读取程序的同一个机架上有一个副本，那么就读取该副本。</p>
+</li>
+<li><p>如果一个HDFS集群跨越多个数据中心，那么客户端也将首先读本地数据中心的副本。</p>
+</li>
+<li><p>语义：下载一个文件：</p>
+<ul>
+<li><p>Client和NN交互文件元数据获取fileBlockLocation</p>
+</li>
+<li><p>NN会按距离策略排序返回</p>
+</li>
+<li><p>Client尝试下载block并校验数据完整性</p>
+</li>
+</ul>
+</li>
+<li><p>语义：下载一个文件其实是获取文件的所有的block元数据，那么子集获取某些block应该成立</p>
+<ul>
+<li>Hdfs支持client给出文件的offset自定义连接哪些block的DN，自定义获取数据</li>
+<li>这个是支持计算层的分治、并行计算的核心</li>
+</ul>
+</li>
+</ul>
+<h3 id="实际部署"><a href="#实际部署" class="headerlink" title="实际部署"></a>实际部署</h3><h4 id="基础设施"><a href="#基础设施" class="headerlink" title="基础设施"></a>基础设施</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"># 设置网络</span><br><span class="line">vi /etc/sysconfig/network-scripts/ifcfg-ens33</span><br><span class="line">BOOTPROTO=&quot;static&quot;</span><br><span class="line"></span><br><span class="line">IPADDR=&quot;192.168.203.148&quot;</span><br><span class="line">NETMASK=&quot;255.255.255.0&quot;</span><br><span class="line">GATEWAY=&quot;192.168.203.2&quot;</span><br><span class="line">DNS1=&quot;114.114.114.114&quot;</span><br><span class="line"></span><br><span class="line">----------------------------------------------</span><br><span class="line"></span><br><span class="line"># 设置主机名</span><br><span class="line">vi /etc/sysconfig/network</span><br><span class="line"># Created by anaconda</span><br><span class="line"># 网络是否被配置</span><br><span class="line">NETWORKING=yes</span><br><span class="line"></span><br><span class="line"># 是否开启IP转发功能</span><br><span class="line"># FORWARD_IPV4=yes</span><br><span class="line"></span><br><span class="line"># 服务器的主机名</span><br><span class="line">HOSTNAME=hadoop_node01</span><br><span class="line"></span><br><span class="line"># 网关的IP地址</span><br><span class="line"># GATEWAY=192.168.1.1</span><br><span class="line"></span><br><span class="line"># 网关的设备名，如：eth0</span><br><span class="line"># GATEWAYDEV=eth0</span><br><span class="line"></span><br><span class="line">----------------------------------------------</span><br><span class="line"></span><br><span class="line"># 设置本机的ip到主机名的映射关系</span><br><span class="line">vi /etc/hosts</span><br><span class="line">192.168.203.148 hadoop_node01</span><br><span class="line">192.168.203.149 hadoop_node02</span><br><span class="line">192.168.203.150 hadoop_node03</span><br><span class="line">192.168.203.151 hadoop_node04</span><br><span class="line"></span><br><span class="line">----------------------------------------------</span><br><span class="line"></span><br><span class="line"># 关闭防火墙</span><br><span class="line">systemctl stop firewalld</span><br><span class="line">systemctl disable firewalld</span><br><span class="line"># 关闭 selinux</span><br><span class="line">vi /etc/selinux/config</span><br><span class="line">SELINUX=disabled</span><br><span class="line"></span><br><span class="line">----------------------------------------------</span><br><span class="line"></span><br><span class="line"># 做时间同步</span><br><span class="line">yum install -y ntp</span><br><span class="line">vi /etc/ntp.conf</span><br><span class="line">server ntp1.aliyun.com</span><br><span class="line">systemctl start ntpd</span><br><span class="line">systemctl enable ntpd</span><br><span class="line"></span><br><span class="line">----------------------------------------------</span><br><span class="line"></span><br><span class="line"># SSH 免密登录</span><br><span class="line">ssh  localhost  1. 验证自己还没免密  2. 被动生成了 /root/.ssh</span><br><span class="line">ssh-keygen -t rsa -P &#x27;&#x27; -f ~/.ssh/id_rsa</span><br><span class="line">cat ~/.ssh/id_rsa.pub &gt;&gt; ~/.ssh/authorized_keys</span><br><span class="line">chmod 0600 ~/.ssh/authorized_keys</span><br><span class="line"></span><br><span class="line">----------------------------------------------</span><br><span class="line"></span><br><span class="line"># 安装JDK</span><br><span class="line">yum install java-1.8.0-openjdk-devel.x86_64</span><br></pre></td></tr></table></figure>
+
+<h4 id="Hadoop-的配置-应用的搭建过程"><a href="#Hadoop-的配置-应用的搭建过程" class="headerlink" title="Hadoop 的配置(应用的搭建过程)"></a>Hadoop 的配置(应用的搭建过程)</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"># 规划路径</span><br><span class="line">mkdir /opt/bigdata</span><br><span class="line">tar xf hadoop-3.3.2.tar.gz</span><br><span class="line">mv hadoop-3.3.2 /opt/bigdata/</span><br><span class="line"></span><br><span class="line"># 配置路径</span><br><span class="line">vi /etc/profile	</span><br><span class="line">export 	HADOOP_HOME=/opt/bigdata/hadoop-3.3.2</span><br><span class="line">export 	PATH=$PATH:$JAVA_HOME/bin:$HADOOP_HOME/bin:$HADOOP_HOME/sbin</span><br><span class="line">source /etc/profile</span><br><span class="line"></span><br><span class="line"># 配置 Hadoop 角色</span><br><span class="line">cd $HADOOP_HOME/etc/hadoop</span><br><span class="line"># 必须给hadoop配置javahome要不ssh过去找不到</span><br><span class="line">vi hadoop-env.sh</span><br><span class="line">export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.322.b06-1.el7_9.x86_64/jre</span><br><span class="line"></span><br><span class="line"># 给出 NameNode 角色在哪里启动</span><br><span class="line">vi core-site.xml</span><br><span class="line">&lt;configuration&gt;</span><br><span class="line">    &lt;property&gt;</span><br><span class="line">        &lt;name&gt;fs.defaultFS&lt;/name&gt;</span><br><span class="line">        &lt;value&gt;hdfs://hadoop_node01:9000&lt;/value&gt;</span><br><span class="line">    &lt;/property&gt;</span><br><span class="line">&lt;/configuration&gt;</span><br><span class="line"></span><br><span class="line"># 配置副本数、数据存储位置、SecondaryNameNode</span><br><span class="line">vi hdfs-site.xml</span><br><span class="line">&lt;configuration&gt;</span><br><span class="line">        &lt;property&gt;</span><br><span class="line">                &lt;name&gt;dfs.replication&lt;/name&gt;</span><br><span class="line">                &lt;value&gt;1&lt;/value&gt;</span><br><span class="line">        &lt;/property&gt;</span><br><span class="line">        &lt;property&gt;</span><br><span class="line">                &lt;name&gt;dfs.namenode.name.dir&lt;/name&gt;</span><br><span class="line">                &lt;value&gt;/var/bigdata/hadoop/local/dfs/name&lt;/value&gt;</span><br><span class="line">        &lt;/property&gt;</span><br><span class="line">        &lt;property&gt;</span><br><span class="line">                &lt;name&gt;dfs.datanode.data.dir&lt;/name&gt;</span><br><span class="line">                &lt;value&gt;/var/bigdata/hadoop/local/dfs/data&lt;/value&gt;</span><br><span class="line">        &lt;/property&gt;</span><br><span class="line">        &lt;property&gt;</span><br><span class="line">                &lt;name&gt;dfs.namenode.secondary.http-address&lt;/name&gt;</span><br><span class="line">                &lt;value&gt;hadoop_node01:50090&lt;/value&gt;</span><br><span class="line">        &lt;/property&gt;</span><br><span class="line">        &lt;property&gt;</span><br><span class="line">                &lt;name&gt;dfs.namenode.checkpoint.dir&lt;/name&gt;</span><br><span class="line">                &lt;value&gt;/var/bigdata/hadoop/local/dfs/secondary&lt;/value&gt;</span><br><span class="line">        &lt;/property&gt;</span><br><span class="line">&lt;/configuration&gt;</span><br><span class="line"></span><br><span class="line"># 配置DN这个角色再那里启动</span><br><span class="line">vi workers</span><br><span class="line">hadoop_node01</span><br></pre></td></tr></table></figure>
+
+<h4 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># 格式化 -&gt; 创建目录并初始化一个空的fsimage</span><br><span class="line">hdfs namenode -format</span><br><span class="line"></span><br><span class="line"># 脚本启动：第一次datanode和secondary角色会初始化创建自己的数据目录</span><br><span class="line">start-dfs.sh</span><br><span class="line"></span><br><span class="line">http://hadoop_node01:50070</span><br></pre></td></tr></table></figure>
+
+
+      </div>
+      
+      
+      
+    </div>
+
+    
+    
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Eitan</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script><script src="/js/bookmark.js"></script>
+
+  
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
