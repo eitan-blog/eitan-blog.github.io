@@ -428,6 +428,18 @@
       </tags>
   </entry>
   <entry>
+    <title>Spark（三）：源码初识</title>
+    <url>/2022/05/27/Spark%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E6%BA%90%E7%A0%81%E5%88%9D%E8%AF%86/</url>
+    <content><![CDATA[<p>本文为学习笔记，对应视频教程来自<a href="https://www.bilibili.com/video/BV11A411L7CK">尚硅谷大数据Spark教程从入门到精通</a></p>
+]]></content>
+      <categories>
+        <category>Big Data</category>
+      </categories>
+      <tags>
+        <tag>spark</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Spring中@Conditional是如何生效的</title>
     <url>/2021/08/07/Spring%E4%B8%AD@Conditional%E6%98%AF%E5%A6%82%E4%BD%95%E7%94%9F%E6%95%88%E7%9A%84/</url>
     <content><![CDATA[<p>本文灵感源自<a href="https://ke.qq.com/course/package/20773">马士兵MAC课程-源码五班</a></p>
@@ -955,7 +967,7 @@
 <ol>
 <li>xmlns:xsd=”<a href="http://www.w3.org/2001/XMLSchema&quot;%EF%BC%9A%E8%A1%A8%E7%A4%BA%E8%AF%A5%E5%BC%95%E7%94%A8%E8%AF%A5%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%E7%9A%84%E7%BC%96%E5%86%99%E8%A7%84%E8%8C%83">http://www.w3.org/2001/XMLSchema&quot;：表示该引用该命名空间的编写规范</a></li>
 <li>targetNamespace=”<a href="http://eitan-blog.github.io/schema/eitan&quot;%EF%BC%9A%E8%A1%A8%E7%A4%BA%E5%BD%93%E5%89%8D%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%E7%9A%84%E5%9C%B0%E5%9D%80">http://eitan-blog.github.io/schema/eitan&quot;：表示当前命名空间的地址</a></li>
-<li>elementFormDefault=”qualified” attributeFormDefault=”unqualified”：表示使用该命名空间的规范时，元素必须使用前缀短名，而属性可以不用，如 **&lt;eitan:user id=”user1” userName=”eitan” email=”<a href="mailto:&#101;&#105;&#x74;&#97;&#110;&#95;&#98;&#108;&#111;&#x67;&#x40;&#49;&#54;&#51;&#x2e;&#x63;&#111;&#x6d;">&#101;&#105;&#x74;&#97;&#110;&#95;&#98;&#108;&#111;&#x67;&#x40;&#49;&#54;&#51;&#x2e;&#x63;&#111;&#x6d;</a>“ password=”123456”&gt;&lt;/eitan:user&gt;<em><em>中 <em>eitan</em> 就是前缀短名，</em>user* 是元素，*userName</em> 是属性</li>
+<li>elementFormDefault=”qualified” attributeFormDefault=”unqualified”：表示使用该命名空间的规范时，元素必须使用前缀短名，而属性可以不用，如 **&lt;eitan:user id=”user1” userName=”eitan” email=”<a href="mailto:&#x65;&#x69;&#x74;&#x61;&#110;&#x5f;&#x62;&#x6c;&#111;&#103;&#64;&#49;&#54;&#x33;&#x2e;&#99;&#x6f;&#109;">&#x65;&#x69;&#x74;&#x61;&#110;&#x5f;&#x62;&#x6c;&#111;&#103;&#64;&#49;&#54;&#x33;&#x2e;&#99;&#x6f;&#109;</a>“ password=”123456”&gt;&lt;/eitan:user&gt;<em><em>中 <em>eitan</em> 就是前缀短名，</em>user* 是元素，*userName</em> 是属性</li>
 </ol>
 </blockquote>
 <h3 id="添加-spring-handlers"><a href="#添加-spring-handlers" class="headerlink" title="添加 spring.handlers"></a>添加 spring.handlers</h3><figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="meta">http\://eitan-blog.github.io/schema/eitan</span>=<span class="string">com.eitan.tag.handler.UserNamespaceHandler</span></span><br></pre></td></tr></table></figure>
@@ -987,14 +999,14 @@
 <li> xsi:schemaLocation=<a href="http://eitan-blog.github.io/schema/eitan">http://eitan-blog.github.io/schema/eitan</a>  <a href="http://eitan-blog.github.io/schema/eitan/user.xsd">http://eitan-blog.github.io/schema/eitan/user.xsd</a></li>
 </ol>
 </li>
-<li>在文件中使用自己的标签：*&lt;eitan:user id=”user1” userName=”eitan” email=”<a href="mailto:&#101;&#x69;&#116;&#x61;&#110;&#95;&#x62;&#x6c;&#111;&#x67;&#x40;&#x31;&#54;&#x33;&#x2e;&#99;&#x6f;&#109;">&#101;&#x69;&#116;&#x61;&#110;&#95;&#x62;&#x6c;&#111;&#x67;&#x40;&#x31;&#54;&#x33;&#x2e;&#99;&#x6f;&#109;</a>“ password=”123456”&gt;&lt;/eitan:user&gt;*</li>
+<li>在文件中使用自己的标签：*&lt;eitan:user id=”user1” userName=”eitan” email=”<a href="mailto:&#x65;&#x69;&#116;&#97;&#110;&#95;&#x62;&#x6c;&#x6f;&#103;&#x40;&#x31;&#54;&#51;&#46;&#99;&#111;&#109;">&#x65;&#x69;&#116;&#97;&#110;&#95;&#x62;&#x6c;&#x6f;&#103;&#x40;&#x31;&#54;&#51;&#46;&#99;&#111;&#109;</a>“ password=”123456”&gt;&lt;/eitan:user&gt;*</li>
 </ol>
 </blockquote>
 <h3 id="效果"><a href="#效果" class="headerlink" title="效果"></a>效果</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyApplicationContext</span> </span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">		ApplicationContext ac = <span class="keyword">new</span> ClassPathXmlApplicationContext(<span class="string">&quot;spring-$&#123;username&#125;.xml&quot;</span>);</span><br><span class="line">		User user = ac.getBean(User.class);</span><br><span class="line">		System.out.println(user);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <blockquote>
 <p>在 <em>MyApplicationContext</em> 中获取并打印 <em>User.class</em>，可以发现写在 <em>xml</em> 中的属性成功注入进 <em>user</em> 中</p>
-<p>Connected to the target VM, address: ‘127.0.0.1:12821’, transport: ‘socket’<br>User{userName=’eitan’, email=’eitan<a href="mailto:&#95;&#x62;&#108;&#x6f;&#103;&#x40;&#49;&#x36;&#51;&#46;&#x63;&#x6f;&#x6d;">&#95;&#x62;&#108;&#x6f;&#103;&#x40;&#49;&#x36;&#51;&#46;&#x63;&#x6f;&#x6d;</a>‘, password=’123456’}</p>
+<p>Connected to the target VM, address: ‘127.0.0.1:12821’, transport: ‘socket’<br>User{userName=’eitan’, email=’eitan<a href="mailto:&#95;&#x62;&#x6c;&#111;&#x67;&#64;&#x31;&#54;&#51;&#46;&#99;&#x6f;&#x6d;">&#95;&#x62;&#x6c;&#111;&#x67;&#64;&#x31;&#54;&#51;&#46;&#99;&#x6f;&#x6d;</a>‘, password=’123456’}</p>
 </blockquote>
 <h2 id="源码解析"><a href="#源码解析" class="headerlink" title="源码解析"></a>源码解析</h2><ol>
 <li>该过程发生在 <em>AbstractApplicationContext</em> 的 <em>refresh()</em> 方法中</li>
@@ -3433,20 +3445,13 @@
 <h4 id="首选位置（可选）"><a href="#首选位置（可选）" class="headerlink" title="首选位置（可选）"></a>首选位置（可选）</h4><p>计算数据时，可以根据计算节点的状态选择不同的节点位置进行计算</p>
 <figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Optionally overridden by subclasses to specify placement preferences.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">protected</span> <span class="function"><span class="keyword">def</span> <span class="title">getPreferredLocations</span></span>(split: <span class="type">Partition</span>): <span class="type">Seq</span>[<span class="type">String</span>] = <span class="type">Nil</span></span><br></pre></td></tr></table></figure>
 
-<h3 id="RDD-的执行流程"><a href="#RDD-的执行流程" class="headerlink" title="RDD 的执行流程"></a>RDD 的执行流程</h3><ol>
-<li>启动 Yarn 集群环境</li>
-</ol>
-<h6 id=""><a href="#" class="headerlink" title=""></a><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220522162734.png" alt="image-20220522162731363"></h6><ol start="2">
-<li>Spark 通过申请资源创建调度节点和计算节点</li>
-</ol>
+<h3 id="RDD-的执行流程"><a href="#RDD-的执行流程" class="headerlink" title="RDD 的执行流程"></a>RDD 的执行流程</h3><p>启动 Yarn 集群环境</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220522162734.png" alt="image-20220522162731363"></p>
+<p>Spark 通过申请资源创建调度节点和计算节点</p>
 <p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220522163018.png" alt="image-20220522163016911"></p>
-<ol start="3">
-<li>Spark 框架根据需求将计算逻辑根据分区划分成不同的任务</li>
-</ol>
+<p>Spark 框架根据需求将计算逻辑根据分区划分成不同的任务</p>
 <p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220522163530.png" alt="image-20220522163528738"></p>
-<ol start="4">
-<li>调度节点将任务根据计算节点状态发送到对应的计算节点进行计算</li>
-</ol>
+<p>调度节点将任务根据计算节点状态发送到对应的计算节点进行计算</p>
 <p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220522164119.png" alt="image-20220522164117888"></p>
 <h3 id="基础编程"><a href="#基础编程" class="headerlink" title="基础编程"></a>基础编程</h3><h4 id="RDD-的创建"><a href="#RDD-的创建" class="headerlink" title="RDD 的创建"></a>RDD 的创建</h4><figure class="highlight scala"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">object</span> <span class="title">Spark02_RDD_File</span> </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">main</span></span>(args: <span class="type">Array</span>[<span class="type">String</span>]): <span class="type">Unit</span> = &#123;</span><br><span class="line">    <span class="comment">// TODO 准备环境</span></span><br><span class="line">    <span class="keyword">val</span> sparkConf: <span class="type">SparkConf</span> = <span class="keyword">new</span> <span class="type">SparkConf</span>().setMaster(<span class="string">&quot;local[*]&quot;</span>).setAppName(<span class="string">&quot;RDD&quot;</span>)</span><br><span class="line">    <span class="keyword">val</span> sparkContext = <span class="keyword">new</span> <span class="type">SparkContext</span>(sparkConf)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// TODO 创建RDD</span></span><br><span class="line">    <span class="comment">// 本地文件</span></span><br><span class="line">    <span class="keyword">val</span> localRdd: <span class="type">RDD</span>[<span class="type">String</span>] = sparkContext.textFile(<span class="string">&quot;data/1.txt&quot;</span>)</span><br><span class="line">    <span class="comment">// 分布式文件</span></span><br><span class="line">    <span class="keyword">val</span> hdfsRdd: <span class="type">RDD</span>[<span class="type">String</span>] = sparkContext.textFile(<span class="string">&quot;hdfs://spark152:8020/data/1.txt&quot;</span>)</span><br><span class="line">    <span class="comment">// textFile：以行为单位读取数据</span></span><br><span class="line">    <span class="comment">// wholeTextFiles：以文件为单位读取数据</span></span><br><span class="line">    <span class="keyword">val</span> wholeTextRdd: <span class="type">RDD</span>[(<span class="type">String</span>, <span class="type">String</span>)] = sparkContext.wholeTextFiles(<span class="string">&quot;hdfs://spark152:8020/data&quot;</span>)</span><br><span class="line"></span><br><span class="line">    println(<span class="string">&quot;================ localRdd ================&quot;</span>)</span><br><span class="line">    localRdd.collect().foreach(println)</span><br><span class="line">    println(<span class="string">&quot;================ hdfsRdd ================&quot;</span>)</span><br><span class="line">    hdfsRdd.collect().foreach(println)</span><br><span class="line">    println(<span class="string">&quot;================ wholeTextRdd ================&quot;</span>)</span><br><span class="line">    wholeTextRdd.collect().foreach(println)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// TODO 关闭环境</span></span><br><span class="line">    sparkContext.stop()</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
