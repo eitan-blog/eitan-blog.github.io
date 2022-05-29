@@ -242,45 +242,6 @@
       </tags>
   </entry>
   <entry>
-    <title>JVM 发生 GC 导致线程卡死问题</title>
-    <url>/2021/09/20/JVM%E5%8F%91%E7%94%9FGC%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E5%8D%A1%E6%AD%BB%E9%97%AE%E9%A2%98/</url>
-    <content><![CDATA[<p>案例出自 <a href="https://ke.qq.com/webcourse/3583073/103725980#taid=11648638505102433&vid=3701925920872990005">马士兵MAC课程</a></p>
-<h2 id="案例代码"><a href="#案例代码" class="headerlink" title="案例代码"></a>案例代码</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">OSRDemo</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">long</span> counter;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;main start&quot;</span>);</span><br><span class="line">        startBusinessThread();</span><br><span class="line">        startProblemThread();</span><br><span class="line">        <span class="comment">// 等待线程启动执行</span></span><br><span class="line">        Thread.sleep(<span class="number">500</span>);</span><br><span class="line">        <span class="comment">// 执行GC</span></span><br><span class="line">        System.gc();</span><br><span class="line">        System.out.println(<span class="string">&quot;main end&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">startProblemThread</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;Problem start&quot;</span>);</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000000</span>; i++) &#123;</span><br><span class="line">                <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; <span class="number">100000</span>; j++) &#123;</span><br><span class="line">                    counter += i % <span class="number">33</span>;</span><br><span class="line">                    counter += i % <span class="number">333</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;).start();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">startBusinessThread</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">            System.out.println(Thread.currentThread().getName() + <span class="string">&quot; start&quot;</span>);</span><br><span class="line">            <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">                System.out.println(<span class="string">&quot;执行业务一&quot;</span>);</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    Thread.sleep(<span class="number">1000</span>);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;, <span class="string">&quot;thread-01&quot;</span>).start();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<span id="more"></span>
-
-<h2 id="案例现象"><a href="#案例现象" class="headerlink" title="案例现象"></a>案例现象</h2><ol>
-<li>主线程创建两个线程，其中一个线程执行业务逻辑，每秒进行一次打印；另一个线程执行循环运算</li>
-<li>启动线程后，JVM 进行 GC 垃圾回收，此时可以发现业务线程和主线程均被阻塞</li>
-</ol>
-<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920161354.png" alt="image-20210920161351031"></p>
-<h2 id="分析原因"><a href="#分析原因" class="headerlink" title="分析原因"></a>分析原因</h2><ol>
-<li>JVM 进行 GC 时，线程需要中断，因此所有线程都需要‘跑’到线程安全点(save point)后，再停顿下来。</li>
-<li>在 JDK1.8 及之前版本，C2 编辑器认为 int 的循环为有限循环，因此 startProblemThread() 创建的线程将不会进入线程安全点</li>
-<li>主线程和业务线程则进入线程安全点阻塞等待，而 startProblemThread() 创建的线程并不会发生中断，导致 GC 没法完成</li>
-<li>因此主线程和业务线程一直阻塞</li>
-</ol>
-<h2 id="解决措施"><a href="#解决措施" class="headerlink" title="解决措施"></a>解决措施</h2><h3 id="将-JDK-版本换成-11"><a href="#将-JDK-版本换成-11" class="headerlink" title="将 JDK 版本换成 11"></a>将 JDK 版本换成 11</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920163642.png" alt="image-20210920163640802"></p>
-<p>重新运行后发现不会阻塞</p>
-<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920163734.png" alt="image-20210920163732266"></p>
-<h3 id="将-int-循环改为-long-值循环"><a href="#将-int-循环改为-long-值循环" class="headerlink" title="将 int 循环改为 long 值循环"></a>将 int 循环改为 long 值循环</h3><p>因为 long 值循环意味着这是一个较大的循环，JVM 会进行线程安全点的检查</p>
-<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920163956.png" alt="image-20210920163954285"></p>
-<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920163922.png" alt="image-20210920163920287"></p>
-<h3 id="在循环中加入方法调用"><a href="#在循环中加入方法调用" class="headerlink" title="在循环中加入方法调用"></a>在循环中加入方法调用</h3><p>线程安全点的检查发生在方法调用前</p>
-<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920164651.png" alt="image-20210920164649165"></p>
-<p>注意：如果调用的方法是空方法或者简单循环，则编译器会将其优化，不会继续线程安全点的检测，因此还是会阻塞</p>
-<h3 id="用-volatile-修饰-counter"><a href="#用-volatile-修饰-counter" class="headerlink" title="用 volatile 修饰 counter"></a>用 volatile 修饰 counter</h3><p>volatile 修饰的代码不会进行优化</p>
-<h3 id="添加-JVM-参数-XX-UseOnStackReplacement"><a href="#添加-JVM-参数-XX-UseOnStackReplacement" class="headerlink" title="添加 JVM 参数 -XX:-UseOnStackReplacement"></a>添加 JVM 参数 -XX:-UseOnStackReplacement</h3><p>关闭 OnStackReplacement 优化</p>
-<h3 id="添加-JVM-参数-XX-TieredStopAtLevel-3"><a href="#添加-JVM-参数-XX-TieredStopAtLevel-3" class="headerlink" title="添加 JVM 参数 -XX:TieredStopAtLevel=3"></a>添加 JVM 参数 -XX:TieredStopAtLevel=3</h3><p>不使用 C2 编译器的优化</p>
-]]></content>
-      <categories>
-        <category>java</category>
-      </categories>
-      <tags>
-        <tag>jvm</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>JDK 分析工具学习（未完成）</title>
     <url>/2021/09/29/JDK%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7%E5%AD%A6%E4%B9%A0/</url>
     <content><![CDATA[<h2 id="常用分析工具"><a href="#常用分析工具" class="headerlink" title="常用分析工具"></a>常用分析工具</h2><table>
@@ -344,46 +305,42 @@
       </tags>
   </entry>
   <entry>
-    <title>RocketMQ（一）</title>
-    <url>/2021/05/17/RocketMQ%EF%BC%88%E4%B8%80%EF%BC%89/</url>
-    <content><![CDATA[<h2 id="主要内容"><a href="#主要内容" class="headerlink" title="主要内容"></a>主要内容</h2><ul>
-<li>编译安装</li>
-<li>HelloWorld</li>
-</ul>
-<h3 id="官方网站"><a href="#官方网站" class="headerlink" title="官方网站"></a>官方网站</h3><p><a href="http://rocketmq.apache.org/">http://rocketmq.apache.org/</a></p>
-<h3 id="Github"><a href="#Github" class="headerlink" title="Github"></a>Github</h3><p><a href="https://github.com/apache/rocketmq">https://github.com/apache/rocketmq</a></p>
+    <title>JVM 发生 GC 导致线程卡死问题</title>
+    <url>/2021/09/20/JVM%E5%8F%91%E7%94%9FGC%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E5%8D%A1%E6%AD%BB%E9%97%AE%E9%A2%98/</url>
+    <content><![CDATA[<p>案例出自 <a href="https://ke.qq.com/webcourse/3583073/103725980#taid=11648638505102433&vid=3701925920872990005">马士兵MAC课程</a></p>
+<h2 id="案例代码"><a href="#案例代码" class="headerlink" title="案例代码"></a>案例代码</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">OSRDemo</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">long</span> counter;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;main start&quot;</span>);</span><br><span class="line">        startBusinessThread();</span><br><span class="line">        startProblemThread();</span><br><span class="line">        <span class="comment">// 等待线程启动执行</span></span><br><span class="line">        Thread.sleep(<span class="number">500</span>);</span><br><span class="line">        <span class="comment">// 执行GC</span></span><br><span class="line">        System.gc();</span><br><span class="line">        System.out.println(<span class="string">&quot;main end&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">startProblemThread</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;Problem start&quot;</span>);</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000000</span>; i++) &#123;</span><br><span class="line">                <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; <span class="number">100000</span>; j++) &#123;</span><br><span class="line">                    counter += i % <span class="number">33</span>;</span><br><span class="line">                    counter += i % <span class="number">333</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;).start();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">startBusinessThread</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">            System.out.println(Thread.currentThread().getName() + <span class="string">&quot; start&quot;</span>);</span><br><span class="line">            <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">                System.out.println(<span class="string">&quot;执行业务一&quot;</span>);</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    Thread.sleep(<span class="number">1000</span>);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;, <span class="string">&quot;thread-01&quot;</span>).start();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
 <span id="more"></span>
 
-
-
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="在-Linux-上安装-JDK"><a href="#在-Linux-上安装-JDK" class="headerlink" title="在 Linux 上安装 JDK"></a>在 Linux 上安装 JDK</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">yum search jdk</span><br><span class="line"></span><br><span class="line">yum install java-1.8.0-openjdk.x86_64</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 找到安装位置</span></span><br><span class="line">java -verbose</span><br><span class="line"></span><br><span class="line">[Loaded java.lang.Shutdown from /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.292.b10-1.el7_9.x86_64/jre/lib/rt.jar]</span><br><span class="line">[Loaded java.lang.Shutdown$Lock from /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.292.b10-1.el7_9.x86_64/jre/lib/rt.jar]</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 配置 JAVA_HOME</span></span><br><span class="line">vim /etc/profile</span><br></pre></td></tr></table></figure>
-
-<h3 id="在-Linux-上安装-Maven"><a href="#在-Linux-上安装-Maven" class="headerlink" title="在 Linux 上安装 Maven"></a>在 Linux 上安装 Maven</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 下载压缩包</span></span><br><span class="line">wget https://mirrors.tuna.tsinghua.edu.cn/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 解压</span></span><br><span class="line">tar -zxvf apache-maven-3.6.3-bin.tar.gz</span><br><span class="line"></span><br><span class="line">mv apache-maven-3.6.3 /usr/local/</span><br><span class="line"></span><br><span class="line">vim /usr/local/apache-maven-3.6.3/conf/settings.xml</span><br><span class="line">   &lt;mirror&gt;</span><br><span class="line">      &lt;id&gt;aliyun-maven&lt;/id&gt;</span><br><span class="line">      &lt;mirrorOf&gt;*&lt;/mirrorOf&gt;</span><br><span class="line">      &lt;name&gt;aliyun maven&lt;/name&gt;</span><br><span class="line">      &lt;url&gt;http://maven.aliyun.com/nexus/content/groups/public&lt;/url&gt;</span><br><span class="line">    &lt;/mirror&gt;</span><br><span class="line">    </span><br><span class="line">vim /etc/profile</span><br><span class="line">export MAVEN_HOME=/usr/local/apache-maven-3.6.3</span><br><span class="line">export PATH=$PATH:$MAVEN_HAOM/bin</span><br><span class="line"></span><br><span class="line">source /etc/profile</span><br></pre></td></tr></table></figure>
-
-<h3 id="安装-RocketMQ"><a href="#安装-RocketMQ" class="headerlink" title="安装 RocketMQ"></a>安装 RocketMQ</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget https://mirrors.tuna.tsinghua.edu.cn/apache/rocketmq/4.8.0/rocketmq-all-4.8.0-source-release.zip</span><br><span class="line"></span><br><span class="line">unzip rocketmq-all-4.8.0-source-release.zip</span><br><span class="line"></span><br><span class="line">mvn -Prelease-all -DskipTests clean install -U</span><br><span class="line"></span><br><span class="line"># 启动</span><br><span class="line">./mqnamesrv</span><br><span class="line">./mqbroker</span><br><span class="line"></span><br><span class="line"># 测试</span><br><span class="line">./tools.sh org.apache.rocketmq.example.quickstart.Producer</span><br></pre></td></tr></table></figure>
-
-<p>若遇到错误：linux No compiler is provided in this environment. Perhaps you are running on a JRE rather than a JDK，则执行以下命令</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">yum install java-devel</span><br></pre></td></tr></table></figure>
-
-<p>启动报错：Native memory allocation (mmap) failed to map 2147483648 bytes for committing reserved memory</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">vim /usr/local/rocketmq-4.8.0/bin/runserver.sh</span><br><span class="line">vim /usr/local/rocketmq-4.8.0/bin/runbroker.sh</span><br><span class="line"></span><br><span class="line">JAVA_OPT=&quot;$&#123;JAVA_OPT&#125; -server -Xms4g -Xmx4g -Xmn2g -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m&quot;</span><br><span class="line"><span class="meta">#</span><span class="bash"> 改为</span></span><br><span class="line">JAVA_OPT=&quot;$&#123;JAVA_OPT&#125; -server -Xms256m -Xmx256m -Xmn128m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m&quot;</span><br></pre></td></tr></table></figure>
-
-<p>测试报错：connect to null failed</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">vim tools.sh</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 放在 JVM Configuration 之前</span></span><br><span class="line">export NAMESRV_ADDR=localhost:9876</span><br></pre></td></tr></table></figure>
-
-<p>测试报错：org.apache.rocketmq.client.exception.MQClientException: No route info of this topic: TopicTest</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 启动broker指定连接的ip：port</span></span><br><span class="line">./mqbroker -n localhost:9876</span><br></pre></td></tr></table></figure>
-
-<h3 id="控制台rocketmq-console编译安装"><a href="#控制台rocketmq-console编译安装" class="headerlink" title="控制台rocketmq-console编译安装"></a>控制台rocketmq-console编译安装</h3><h4 id="下载"><a href="#下载" class="headerlink" title="下载"></a>下载</h4><p><a href="https://github.com/apache/rocketmq-externals">github仓库</a></p>
-<h4 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h4><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mvn clean package -Dmaven.test.skip=true</span><br></pre></td></tr></table></figure>
-
-<h4 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h4><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">java -jar rocketmq-console-ng-2.0.0.jar --rocketmq.config.namesrvAddr=172.17.0.2:9876</span><br></pre></td></tr></table></figure>
+<h2 id="案例现象"><a href="#案例现象" class="headerlink" title="案例现象"></a>案例现象</h2><ol>
+<li>主线程创建两个线程，其中一个线程执行业务逻辑，每秒进行一次打印；另一个线程执行循环运算</li>
+<li>启动线程后，JVM 进行 GC 垃圾回收，此时可以发现业务线程和主线程均被阻塞</li>
+</ol>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920161354.png" alt="image-20210920161351031"></p>
+<h2 id="分析原因"><a href="#分析原因" class="headerlink" title="分析原因"></a>分析原因</h2><ol>
+<li>JVM 进行 GC 时，线程需要中断，因此所有线程都需要‘跑’到线程安全点(save point)后，再停顿下来。</li>
+<li>在 JDK1.8 及之前版本，C2 编辑器认为 int 的循环为有限循环，因此 startProblemThread() 创建的线程将不会进入线程安全点</li>
+<li>主线程和业务线程则进入线程安全点阻塞等待，而 startProblemThread() 创建的线程并不会发生中断，导致 GC 没法完成</li>
+<li>因此主线程和业务线程一直阻塞</li>
+</ol>
+<h2 id="解决措施"><a href="#解决措施" class="headerlink" title="解决措施"></a>解决措施</h2><h3 id="将-JDK-版本换成-11"><a href="#将-JDK-版本换成-11" class="headerlink" title="将 JDK 版本换成 11"></a>将 JDK 版本换成 11</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920163642.png" alt="image-20210920163640802"></p>
+<p>重新运行后发现不会阻塞</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920163734.png" alt="image-20210920163732266"></p>
+<h3 id="将-int-循环改为-long-值循环"><a href="#将-int-循环改为-long-值循环" class="headerlink" title="将 int 循环改为 long 值循环"></a>将 int 循环改为 long 值循环</h3><p>因为 long 值循环意味着这是一个较大的循环，JVM 会进行线程安全点的检查</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920163956.png" alt="image-20210920163954285"></p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920163922.png" alt="image-20210920163920287"></p>
+<h3 id="在循环中加入方法调用"><a href="#在循环中加入方法调用" class="headerlink" title="在循环中加入方法调用"></a>在循环中加入方法调用</h3><p>线程安全点的检查发生在方法调用前</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920164651.png" alt="image-20210920164649165"></p>
+<p>注意：如果调用的方法是空方法或者简单循环，则编译器会将其优化，不会继续线程安全点的检测，因此还是会阻塞</p>
+<h3 id="用-volatile-修饰-counter"><a href="#用-volatile-修饰-counter" class="headerlink" title="用 volatile 修饰 counter"></a>用 volatile 修饰 counter</h3><p>volatile 修饰的代码不会进行优化</p>
+<h3 id="添加-JVM-参数-XX-UseOnStackReplacement"><a href="#添加-JVM-参数-XX-UseOnStackReplacement" class="headerlink" title="添加 JVM 参数 -XX:-UseOnStackReplacement"></a>添加 JVM 参数 -XX:-UseOnStackReplacement</h3><p>关闭 OnStackReplacement 优化</p>
+<h3 id="添加-JVM-参数-XX-TieredStopAtLevel-3"><a href="#添加-JVM-参数-XX-TieredStopAtLevel-3" class="headerlink" title="添加 JVM 参数 -XX:TieredStopAtLevel=3"></a>添加 JVM 参数 -XX:TieredStopAtLevel=3</h3><p>不使用 C2 编译器的优化</p>
 ]]></content>
       <categories>
-        <category>algorithm</category>
+        <category>java</category>
       </categories>
       <tags>
-        <tag>RocketMQ</tag>
+        <tag>jvm</tag>
       </tags>
   </entry>
   <entry>
@@ -425,6 +382,49 @@
       </categories>
       <tags>
         <tag>MySQL</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>RocketMQ（一）</title>
+    <url>/2021/05/17/RocketMQ%EF%BC%88%E4%B8%80%EF%BC%89/</url>
+    <content><![CDATA[<h2 id="主要内容"><a href="#主要内容" class="headerlink" title="主要内容"></a>主要内容</h2><ul>
+<li>编译安装</li>
+<li>HelloWorld</li>
+</ul>
+<h3 id="官方网站"><a href="#官方网站" class="headerlink" title="官方网站"></a>官方网站</h3><p><a href="http://rocketmq.apache.org/">http://rocketmq.apache.org/</a></p>
+<h3 id="Github"><a href="#Github" class="headerlink" title="Github"></a>Github</h3><p><a href="https://github.com/apache/rocketmq">https://github.com/apache/rocketmq</a></p>
+<span id="more"></span>
+
+
+
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="在-Linux-上安装-JDK"><a href="#在-Linux-上安装-JDK" class="headerlink" title="在 Linux 上安装 JDK"></a>在 Linux 上安装 JDK</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">yum search jdk</span><br><span class="line"></span><br><span class="line">yum install java-1.8.0-openjdk.x86_64</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 找到安装位置</span></span><br><span class="line">java -verbose</span><br><span class="line"></span><br><span class="line">[Loaded java.lang.Shutdown from /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.292.b10-1.el7_9.x86_64/jre/lib/rt.jar]</span><br><span class="line">[Loaded java.lang.Shutdown$Lock from /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.292.b10-1.el7_9.x86_64/jre/lib/rt.jar]</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 配置 JAVA_HOME</span></span><br><span class="line">vim /etc/profile</span><br></pre></td></tr></table></figure>
+
+<h3 id="在-Linux-上安装-Maven"><a href="#在-Linux-上安装-Maven" class="headerlink" title="在 Linux 上安装 Maven"></a>在 Linux 上安装 Maven</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 下载压缩包</span></span><br><span class="line">wget https://mirrors.tuna.tsinghua.edu.cn/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 解压</span></span><br><span class="line">tar -zxvf apache-maven-3.6.3-bin.tar.gz</span><br><span class="line"></span><br><span class="line">mv apache-maven-3.6.3 /usr/local/</span><br><span class="line"></span><br><span class="line">vim /usr/local/apache-maven-3.6.3/conf/settings.xml</span><br><span class="line">   &lt;mirror&gt;</span><br><span class="line">      &lt;id&gt;aliyun-maven&lt;/id&gt;</span><br><span class="line">      &lt;mirrorOf&gt;*&lt;/mirrorOf&gt;</span><br><span class="line">      &lt;name&gt;aliyun maven&lt;/name&gt;</span><br><span class="line">      &lt;url&gt;http://maven.aliyun.com/nexus/content/groups/public&lt;/url&gt;</span><br><span class="line">    &lt;/mirror&gt;</span><br><span class="line">    </span><br><span class="line">vim /etc/profile</span><br><span class="line">export MAVEN_HOME=/usr/local/apache-maven-3.6.3</span><br><span class="line">export PATH=$PATH:$MAVEN_HAOM/bin</span><br><span class="line"></span><br><span class="line">source /etc/profile</span><br></pre></td></tr></table></figure>
+
+<h3 id="安装-RocketMQ"><a href="#安装-RocketMQ" class="headerlink" title="安装 RocketMQ"></a>安装 RocketMQ</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget https://mirrors.tuna.tsinghua.edu.cn/apache/rocketmq/4.8.0/rocketmq-all-4.8.0-source-release.zip</span><br><span class="line"></span><br><span class="line">unzip rocketmq-all-4.8.0-source-release.zip</span><br><span class="line"></span><br><span class="line">mvn -Prelease-all -DskipTests clean install -U</span><br><span class="line"></span><br><span class="line"># 启动</span><br><span class="line">./mqnamesrv</span><br><span class="line">./mqbroker</span><br><span class="line"></span><br><span class="line"># 测试</span><br><span class="line">./tools.sh org.apache.rocketmq.example.quickstart.Producer</span><br></pre></td></tr></table></figure>
+
+<p>若遇到错误：linux No compiler is provided in this environment. Perhaps you are running on a JRE rather than a JDK，则执行以下命令</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">yum install java-devel</span><br></pre></td></tr></table></figure>
+
+<p>启动报错：Native memory allocation (mmap) failed to map 2147483648 bytes for committing reserved memory</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">vim /usr/local/rocketmq-4.8.0/bin/runserver.sh</span><br><span class="line">vim /usr/local/rocketmq-4.8.0/bin/runbroker.sh</span><br><span class="line"></span><br><span class="line">JAVA_OPT=&quot;$&#123;JAVA_OPT&#125; -server -Xms4g -Xmx4g -Xmn2g -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m&quot;</span><br><span class="line"><span class="meta">#</span><span class="bash"> 改为</span></span><br><span class="line">JAVA_OPT=&quot;$&#123;JAVA_OPT&#125; -server -Xms256m -Xmx256m -Xmn128m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m&quot;</span><br></pre></td></tr></table></figure>
+
+<p>测试报错：connect to null failed</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">vim tools.sh</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 放在 JVM Configuration 之前</span></span><br><span class="line">export NAMESRV_ADDR=localhost:9876</span><br></pre></td></tr></table></figure>
+
+<p>测试报错：org.apache.rocketmq.client.exception.MQClientException: No route info of this topic: TopicTest</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 启动broker指定连接的ip：port</span></span><br><span class="line">./mqbroker -n localhost:9876</span><br></pre></td></tr></table></figure>
+
+<h3 id="控制台rocketmq-console编译安装"><a href="#控制台rocketmq-console编译安装" class="headerlink" title="控制台rocketmq-console编译安装"></a>控制台rocketmq-console编译安装</h3><h4 id="下载"><a href="#下载" class="headerlink" title="下载"></a>下载</h4><p><a href="https://github.com/apache/rocketmq-externals">github仓库</a></p>
+<h4 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h4><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">mvn clean package -Dmaven.test.skip=true</span><br></pre></td></tr></table></figure>
+
+<h4 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h4><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">java -jar rocketmq-console-ng-2.0.0.jar --rocketmq.config.namesrvAddr=172.17.0.2:9876</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>algorithm</category>
+      </categories>
+      <tags>
+        <tag>RocketMQ</tag>
       </tags>
   </entry>
   <entry>
@@ -532,6 +532,33 @@
       </tags>
   </entry>
   <entry>
+    <title>Spring中bean的几种注入方式</title>
+    <url>/2021/06/30/Spring%E4%B8%ADbean%E7%9A%84%E5%87%A0%E7%A7%8D%E6%B3%A8%E5%85%A5%E6%96%B9%E5%BC%8F/</url>
+    <content><![CDATA[<h3 id="声明式注入"><a href="#声明式注入" class="headerlink" title="声明式注入"></a>声明式注入</h3><h4 id="Configuration-Bean"><a href="#Configuration-Bean" class="headerlink" title="@Configuration + @Bean"></a>@Configuration + @Bean</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">QuickstartConfiguration</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Person <span class="title">person</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Person();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Component-ComponentScan"><a href="#Component-ComponentScan" class="headerlink" title="@Component + @ComponentScan"></a>@Component + @ComponentScan</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="meta">@ComponentScan(&quot;com.linkedbear.spring.annotation.c_scan&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ComponentScanConfiguration</span></span></span><br></pre></td></tr></table></figure>
+
+<h4 id="Import"><a href="#Import" class="headerlink" title="@Import"></a>@Import</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Import(&#123;Boss.class, BartenderConfiguration.class&#125;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> EnableTavern</span><br></pre></td></tr></table></figure>
+
+<span id="more"></span>
+
+<h3 id="配置式注入"><a href="#配置式注入" class="headerlink" title="配置式注入"></a>配置式注入</h3><h4 id="lt-bean-gt-标签声明"><a href="#lt-bean-gt-标签声明" class="headerlink" title="&lt;bean&gt;标签声明"></a>&lt;bean&gt;标签声明</h4><figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">&quot;person&quot;</span> <span class="attr">class</span>=<span class="string">&quot;com.linkedbear.spring.basic_dl.a_quickstart_byname.bean.Person&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="编程式注入-BeanDefinition"><a href="#编程式注入-BeanDefinition" class="headerlink" title="编程式注入 BeanDefinition"></a>编程式注入 <em>BeanDefinition</em></h3><h4 id="ImportBeanDefinitionRegistrar"><a href="#ImportBeanDefinitionRegistrar" class="headerlink" title="ImportBeanDefinitionRegistrar"></a>ImportBeanDefinitionRegistrar</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WaiterRegistrar</span> <span class="keyword">implements</span> <span class="title">ImportBeanDefinitionRegistrar</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitions</span><span class="params">(AnnotationMetadata metadata, BeanDefinitionRegistry registry)</span> </span>&#123;</span><br><span class="line">        registry.registerBeanDefinition(<span class="string">&quot;waiter&quot;</span>, <span class="keyword">new</span> RootBeanDefinition(Waiter.class));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="手动构造-BeanDefinition-注入"><a href="#手动构造-BeanDefinition-注入" class="headerlink" title="手动构造 BeanDefinition 注入"></a>手动构造 <em>BeanDefinition</em> 注入</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line">AnnotationConfigApplicationContext ctx = <span class="keyword">new</span> AnnotationConfigApplicationContext();</span><br><span class="line"></span><br><span class="line">BeanDefinition personDefinition = BeanDefinitionBuilder.rootBeanDefinition(Person.class)</span><br><span class="line">        .addPropertyValue(<span class="string">&quot;name&quot;</span>, <span class="string">&quot;zhangsan&quot;</span>).getBeanDefinition();</span><br><span class="line">ctx.registerBeanDefinition(<span class="string">&quot;person&quot;</span>, personDefinition);</span><br><span class="line"></span><br><span class="line">ctx.refresh();</span><br></pre></td></tr></table></figure>
+
+<h4 id="借助-BeanDefinitionRegistryPostProcessor-注入"><a href="#借助-BeanDefinitionRegistryPostProcessor-注入" class="headerlink" title="借助 BeanDefinitionRegistryPostProcessor 注入"></a>借助 BeanDefinitionRegistryPostProcessor 注入</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">postProcessBeanDefinitionRegistry</span><span class="params">(BeanDefinitionRegistry registry)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">    registry.registerBeanDefinition(<span class="string">&quot;animalNameSetterPostProcessor&quot;</span>, </span><br><span class="line">            <span class="keyword">new</span> RootBeanDefinition(AnimalNameSetterPostProcessor.class));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+      <tags>
+        <tag>spring</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Spring中三种后置处理器对比</title>
     <url>/2021/06/24/Spring%E4%B8%AD%E4%B8%89%E7%A7%8D%E5%90%8E%E7%BD%AE%E5%A4%84%E7%90%86%E5%99%A8%E5%AF%B9%E6%AF%94/</url>
     <content><![CDATA[<table>
@@ -581,33 +608,6 @@
 <blockquote>
 <p>通过 <em>BeanDefinitionRegistry</em> 的 <em>registerBeanDefinition</em> 方法就可以向容器中注入 <em>beanDefinition</em></p>
 </blockquote>
-]]></content>
-      <categories>
-        <category>java</category>
-      </categories>
-      <tags>
-        <tag>spring</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Spring中bean的几种注入方式</title>
-    <url>/2021/06/30/Spring%E4%B8%ADbean%E7%9A%84%E5%87%A0%E7%A7%8D%E6%B3%A8%E5%85%A5%E6%96%B9%E5%BC%8F/</url>
-    <content><![CDATA[<h3 id="声明式注入"><a href="#声明式注入" class="headerlink" title="声明式注入"></a>声明式注入</h3><h4 id="Configuration-Bean"><a href="#Configuration-Bean" class="headerlink" title="@Configuration + @Bean"></a>@Configuration + @Bean</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">QuickstartConfiguration</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Person <span class="title">person</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Person();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="Component-ComponentScan"><a href="#Component-ComponentScan" class="headerlink" title="@Component + @ComponentScan"></a>@Component + @ComponentScan</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="meta">@ComponentScan(&quot;com.linkedbear.spring.annotation.c_scan&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ComponentScanConfiguration</span></span></span><br></pre></td></tr></table></figure>
-
-<h4 id="Import"><a href="#Import" class="headerlink" title="@Import"></a>@Import</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Import(&#123;Boss.class, BartenderConfiguration.class&#125;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> EnableTavern</span><br></pre></td></tr></table></figure>
-
-<span id="more"></span>
-
-<h3 id="配置式注入"><a href="#配置式注入" class="headerlink" title="配置式注入"></a>配置式注入</h3><h4 id="lt-bean-gt-标签声明"><a href="#lt-bean-gt-标签声明" class="headerlink" title="&lt;bean&gt;标签声明"></a>&lt;bean&gt;标签声明</h4><figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">id</span>=<span class="string">&quot;person&quot;</span> <span class="attr">class</span>=<span class="string">&quot;com.linkedbear.spring.basic_dl.a_quickstart_byname.bean.Person&quot;</span>/&gt;</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="编程式注入-BeanDefinition"><a href="#编程式注入-BeanDefinition" class="headerlink" title="编程式注入 BeanDefinition"></a>编程式注入 <em>BeanDefinition</em></h3><h4 id="ImportBeanDefinitionRegistrar"><a href="#ImportBeanDefinitionRegistrar" class="headerlink" title="ImportBeanDefinitionRegistrar"></a>ImportBeanDefinitionRegistrar</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WaiterRegistrar</span> <span class="keyword">implements</span> <span class="title">ImportBeanDefinitionRegistrar</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitions</span><span class="params">(AnnotationMetadata metadata, BeanDefinitionRegistry registry)</span> </span>&#123;</span><br><span class="line">        registry.registerBeanDefinition(<span class="string">&quot;waiter&quot;</span>, <span class="keyword">new</span> RootBeanDefinition(Waiter.class));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="手动构造-BeanDefinition-注入"><a href="#手动构造-BeanDefinition-注入" class="headerlink" title="手动构造 BeanDefinition 注入"></a>手动构造 <em>BeanDefinition</em> 注入</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line">AnnotationConfigApplicationContext ctx = <span class="keyword">new</span> AnnotationConfigApplicationContext();</span><br><span class="line"></span><br><span class="line">BeanDefinition personDefinition = BeanDefinitionBuilder.rootBeanDefinition(Person.class)</span><br><span class="line">        .addPropertyValue(<span class="string">&quot;name&quot;</span>, <span class="string">&quot;zhangsan&quot;</span>).getBeanDefinition();</span><br><span class="line">ctx.registerBeanDefinition(<span class="string">&quot;person&quot;</span>, personDefinition);</span><br><span class="line"></span><br><span class="line">ctx.refresh();</span><br></pre></td></tr></table></figure>
-
-<h4 id="借助-BeanDefinitionRegistryPostProcessor-注入"><a href="#借助-BeanDefinitionRegistryPostProcessor-注入" class="headerlink" title="借助 BeanDefinitionRegistryPostProcessor 注入"></a>借助 BeanDefinitionRegistryPostProcessor 注入</h4><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">postProcessBeanDefinitionRegistry</span><span class="params">(BeanDefinitionRegistry registry)</span> <span class="keyword">throws</span> BeansException </span>&#123;</span><br><span class="line">    registry.registerBeanDefinition(<span class="string">&quot;animalNameSetterPostProcessor&quot;</span>, </span><br><span class="line">            <span class="keyword">new</span> RootBeanDefinition(AnimalNameSetterPostProcessor.class));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
 ]]></content>
       <categories>
         <category>java</category>
@@ -943,18 +943,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Tags Testing Article</title>
-    <url>/2021/05/11/Tags-Testing-Article/</url>
-    <content><![CDATA[<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;Hello World!&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><img src="https://raw.githubusercontent.com/xyq-material/blog/master/LeetCode/20210512131715.png" alt="逸"></p>
-]]></content>
-      <tags>
-        <tag>Testing</tag>
-        <tag>Another Tag</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Spring自定义标签</title>
     <url>/2021/07/08/Spring%E8%87%AA%E5%AE%9A%E4%B9%89%E6%A0%87%E7%AD%BE/</url>
     <content><![CDATA[<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210708133248.png" alt="image-20210708133243955"></p>
@@ -967,7 +955,7 @@
 <ol>
 <li>xmlns:xsd=”<a href="http://www.w3.org/2001/XMLSchema&quot;%EF%BC%9A%E8%A1%A8%E7%A4%BA%E8%AF%A5%E5%BC%95%E7%94%A8%E8%AF%A5%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%E7%9A%84%E7%BC%96%E5%86%99%E8%A7%84%E8%8C%83">http://www.w3.org/2001/XMLSchema&quot;：表示该引用该命名空间的编写规范</a></li>
 <li>targetNamespace=”<a href="http://eitan-blog.github.io/schema/eitan&quot;%EF%BC%9A%E8%A1%A8%E7%A4%BA%E5%BD%93%E5%89%8D%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%E7%9A%84%E5%9C%B0%E5%9D%80">http://eitan-blog.github.io/schema/eitan&quot;：表示当前命名空间的地址</a></li>
-<li>elementFormDefault=”qualified” attributeFormDefault=”unqualified”：表示使用该命名空间的规范时，元素必须使用前缀短名，而属性可以不用，如 **&lt;eitan:user id=”user1” userName=”eitan” email=”<a href="mailto:&#101;&#x69;&#x74;&#x61;&#x6e;&#95;&#98;&#x6c;&#x6f;&#x67;&#64;&#x31;&#54;&#51;&#46;&#99;&#111;&#109;">&#101;&#x69;&#x74;&#x61;&#x6e;&#95;&#98;&#x6c;&#x6f;&#x67;&#64;&#x31;&#54;&#51;&#46;&#99;&#111;&#109;</a>“ password=”123456”&gt;&lt;/eitan:user&gt;<em><em>中 <em>eitan</em> 就是前缀短名，</em>user* 是元素，*userName</em> 是属性</li>
+<li>elementFormDefault=”qualified” attributeFormDefault=”unqualified”：表示使用该命名空间的规范时，元素必须使用前缀短名，而属性可以不用，如 **&lt;eitan:user id=”user1” userName=”eitan” email=”<a href="mailto:&#101;&#x69;&#x74;&#97;&#110;&#x5f;&#98;&#108;&#x6f;&#x67;&#64;&#49;&#54;&#51;&#46;&#99;&#111;&#x6d;">&#101;&#x69;&#x74;&#97;&#110;&#x5f;&#98;&#108;&#x6f;&#x67;&#64;&#49;&#54;&#51;&#46;&#99;&#111;&#x6d;</a>“ password=”123456”&gt;&lt;/eitan:user&gt;<em><em>中 <em>eitan</em> 就是前缀短名，</em>user* 是元素，*userName</em> 是属性</li>
 </ol>
 </blockquote>
 <h3 id="添加-spring-handlers"><a href="#添加-spring-handlers" class="headerlink" title="添加 spring.handlers"></a>添加 spring.handlers</h3><figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="meta">http\://eitan-blog.github.io/schema/eitan</span>=<span class="string">com.eitan.tag.handler.UserNamespaceHandler</span></span><br></pre></td></tr></table></figure>
@@ -999,14 +987,14 @@
 <li> xsi:schemaLocation=<a href="http://eitan-blog.github.io/schema/eitan">http://eitan-blog.github.io/schema/eitan</a>  <a href="http://eitan-blog.github.io/schema/eitan/user.xsd">http://eitan-blog.github.io/schema/eitan/user.xsd</a></li>
 </ol>
 </li>
-<li>在文件中使用自己的标签：*&lt;eitan:user id=”user1” userName=”eitan” email=”<a href="mailto:&#101;&#x69;&#x74;&#97;&#110;&#x5f;&#x62;&#108;&#x6f;&#x67;&#x40;&#49;&#54;&#x33;&#46;&#99;&#111;&#109;">&#101;&#x69;&#x74;&#97;&#110;&#x5f;&#x62;&#108;&#x6f;&#x67;&#x40;&#49;&#54;&#x33;&#46;&#99;&#111;&#109;</a>“ password=”123456”&gt;&lt;/eitan:user&gt;*</li>
+<li>在文件中使用自己的标签：*&lt;eitan:user id=”user1” userName=”eitan” email=”<a href="mailto:&#x65;&#105;&#x74;&#97;&#x6e;&#x5f;&#x62;&#x6c;&#x6f;&#103;&#64;&#49;&#x36;&#x33;&#x2e;&#x63;&#111;&#x6d;">&#x65;&#105;&#x74;&#97;&#x6e;&#x5f;&#x62;&#x6c;&#x6f;&#103;&#64;&#49;&#x36;&#x33;&#x2e;&#x63;&#111;&#x6d;</a>“ password=”123456”&gt;&lt;/eitan:user&gt;*</li>
 </ol>
 </blockquote>
 <h3 id="效果"><a href="#效果" class="headerlink" title="效果"></a>效果</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyApplicationContext</span> </span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">		ApplicationContext ac = <span class="keyword">new</span> ClassPathXmlApplicationContext(<span class="string">&quot;spring-$&#123;username&#125;.xml&quot;</span>);</span><br><span class="line">		User user = ac.getBean(User.class);</span><br><span class="line">		System.out.println(user);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <blockquote>
 <p>在 <em>MyApplicationContext</em> 中获取并打印 <em>User.class</em>，可以发现写在 <em>xml</em> 中的属性成功注入进 <em>user</em> 中</p>
-<p>Connected to the target VM, address: ‘127.0.0.1:12821’, transport: ‘socket’<br>User{userName=’eitan’, email=’eitan<a href="mailto:&#x5f;&#x62;&#x6c;&#x6f;&#x67;&#64;&#49;&#x36;&#x33;&#x2e;&#99;&#x6f;&#109;">&#x5f;&#x62;&#x6c;&#x6f;&#x67;&#64;&#49;&#x36;&#x33;&#x2e;&#99;&#x6f;&#109;</a>‘, password=’123456’}</p>
+<p>Connected to the target VM, address: ‘127.0.0.1:12821’, transport: ‘socket’<br>User{userName=’eitan’, email=’eitan<a href="mailto:&#x5f;&#x62;&#x6c;&#x6f;&#x67;&#64;&#x31;&#54;&#51;&#x2e;&#x63;&#111;&#109;">&#x5f;&#x62;&#x6c;&#x6f;&#x67;&#64;&#x31;&#54;&#51;&#x2e;&#x63;&#111;&#109;</a>‘, password=’123456’}</p>
 </blockquote>
 <h2 id="源码解析"><a href="#源码解析" class="headerlink" title="源码解析"></a>源码解析</h2><ol>
 <li>该过程发生在 <em>AbstractApplicationContext</em> 的 <em>refresh()</em> 方法中</li>
@@ -1057,6 +1045,18 @@
       </tags>
   </entry>
   <entry>
+    <title>Tags Testing Article</title>
+    <url>/2021/05/11/Tags-Testing-Article/</url>
+    <content><![CDATA[<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;Hello World!&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://raw.githubusercontent.com/xyq-material/blog/master/LeetCode/20210512131715.png" alt="逸"></p>
+]]></content>
+      <tags>
+        <tag>Testing</tag>
+        <tag>Another Tag</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Hello World</title>
     <url>/2021/05/11/hello-world/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
@@ -1087,6 +1087,40 @@
 <h3 id="非递归版本"><a href="#非递归版本" class="headerlink" title="非递归版本"></a>非递归版本</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210920094231.png" alt="image-20210920094229297"></p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">int</span>[] sortArray(<span class="keyword">int</span>[] nums) &#123;</span><br><span class="line">        <span class="keyword">if</span> (nums.length &lt; <span class="number">2</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> nums;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">int</span> stepSize = <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span> (nums.length &gt; stepSize) &#123;</span><br><span class="line">            process(nums, stepSize);</span><br><span class="line">            stepSize &lt;&lt;= <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> nums;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">process</span><span class="params">(<span class="keyword">int</span>[] nums, <span class="keyword">int</span> stepSize)</span></span>&#123;</span><br><span class="line">        <span class="keyword">int</span> left = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">while</span> (left &lt; nums.length - <span class="number">1</span>) &#123;</span><br><span class="line">            <span class="keyword">int</span> mid = left + stepSize - <span class="number">1</span>;</span><br><span class="line">            <span class="keyword">if</span> (mid &gt;= nums.length -<span class="number">1</span>) &#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">int</span> right = Math.min(mid + stepSize, nums.length - <span class="number">1</span>);</span><br><span class="line">            merge(nums, left, right, mid);</span><br><span class="line">            left += stepSize &lt;&lt; <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">merge</span><span class="params">(<span class="keyword">int</span>[] nums, <span class="keyword">int</span> left, <span class="keyword">int</span> right, <span class="keyword">int</span> mid)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">int</span>[] help = <span class="keyword">new</span> <span class="keyword">int</span>[right - left + <span class="number">1</span>];</span><br><span class="line">            <span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">int</span> leftPoint = left;</span><br><span class="line">            <span class="keyword">int</span> rightPoint = mid + <span class="number">1</span>;</span><br><span class="line">            <span class="keyword">while</span> (leftPoint &lt;= mid &amp;&amp; rightPoint &lt;= right) &#123;</span><br><span class="line">                help[i++] = nums[leftPoint] &lt; nums[rightPoint] ? nums[leftPoint++] : nums[rightPoint++];</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">while</span> (leftPoint &lt;= mid) &#123;</span><br><span class="line">                help[i++] = nums[leftPoint++];</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">while</span> (rightPoint &lt;= right) &#123;</span><br><span class="line">                help[i++] = nums[rightPoint++];</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; help.length; j++) &#123;</span><br><span class="line">                nums[left + j] = help[j];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
+]]></content>
+      <categories>
+        <category>algorithm</category>
+      </categories>
+      <tags>
+        <tag>algorithm</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>算法题-二维数组中的查找</title>
+    <url>/2021/07/01/%E7%AE%97%E6%B3%95%E9%A2%98-%E4%BA%8C%E7%BB%B4%E6%95%B0%E7%BB%84%E4%B8%AD%E7%9A%84%E6%9F%A5%E6%89%BE/</url>
+    <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><p>在一个 n * m 的二维数组中，每一行都按照从左到右递增的顺序排序，每一列都按照从上到下递增的顺序排序。请完成一个高效的函数，输入这样的一个二维数组和一个整数，判断数组中是否含有该整数。</p>
+<p>示例:</p>
+<figure class="highlight angelscript"><table><tr><td class="code"><pre><span class="line">现有矩阵 matrix 如下：</span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[</span></span><br><span class="line"><span class="string">  [1,   4,  7, 11, 15]</span>,</span><br><span class="line"><span class="string">  [2,   5,  8, 12, 19]</span>,</span><br><span class="line"><span class="string">  [3,   6,  9, 16, 22]</span>,</span><br><span class="line"><span class="string">  [10, 13, 14, 17, 24]</span>,</span><br><span class="line"><span class="string">  [18, 21, 23, 26, 30]</span></span><br><span class="line">]</span><br><span class="line">给定 target = <span class="number">5</span>，返回 <span class="literal">true</span>。</span><br><span class="line">给定 target = <span class="number">20</span>，返回 <span class="literal">false</span>。</span><br><span class="line"></span><br><span class="line">限制：</span><br><span class="line"><span class="number">0</span> &lt;= n &lt;= <span class="number">1000</span></span><br><span class="line"><span class="number">0</span> &lt;= m &lt;= <span class="number">1000</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>来源：力扣（LeetCode）<br>链接：<a href="https://leetcode-cn.com/problems/er-wei-shu-zu-zhong-de-cha-zhao-lcof">https://leetcode-cn.com/problems/er-wei-shu-zu-zhong-de-cha-zhao-lcof</a><br>著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
+<span id="more"></span>
+
+
+
+<h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><ol>
+<li>由题可知：每一行都按照从左到右递增的顺序排序，每一列都按照从上到下递增的顺序排序</li>
+<li>因此可以关注左上和右下两点，以左上顶点为例，若 <em>target</em> 小于 *matrix[i][j]*，则 <em>target</em> 所在区域必在其 <em>左侧（即 i–）</em>，若 <em>target</em> 大于 *matrix[i][j]*，则 <em>target</em> 所在区域必在其 <em>下方（即j++）</em>;</li>
+<li>若 <em>索引越界</em> 则表示在 <em>matrix</em> 中找不到对应的 <em>target</em>，返回 <em>false</em></li>
+</ol>
+<h2 id="题解"><a href="#题解" class="headerlink" title="题解"></a>题解</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">findNumberIn2DArray</span><span class="params">(<span class="keyword">int</span>[][] matrix, <span class="keyword">int</span> target)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (matrix.length == <span class="number">0</span> || matrix[<span class="number">0</span>].length == <span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> j = matrix[<span class="number">0</span>].length - <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (i &gt;= matrix.length || j &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (matrix[i][j] == target) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (matrix[i][j] &lt; target) &#123;</span><br><span class="line">                i++;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                j--;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li>对于从左到右递增且从上到下递增的二维数组的遍历可以考虑从左上或者右下开始</li>
+</ul>
 ]]></content>
       <categories>
         <category>algorithm</category>
@@ -1134,31 +1168,22 @@
       </tags>
   </entry>
   <entry>
-    <title>算法题-二维数组中的查找</title>
-    <url>/2021/07/01/%E7%AE%97%E6%B3%95%E9%A2%98-%E4%BA%8C%E7%BB%B4%E6%95%B0%E7%BB%84%E4%B8%AD%E7%9A%84%E6%9F%A5%E6%89%BE/</url>
-    <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><p>在一个 n * m 的二维数组中，每一行都按照从左到右递增的顺序排序，每一列都按照从上到下递增的顺序排序。请完成一个高效的函数，输入这样的一个二维数组和一个整数，判断数组中是否含有该整数。</p>
-<p>示例:</p>
-<figure class="highlight angelscript"><table><tr><td class="code"><pre><span class="line">现有矩阵 matrix 如下：</span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[</span></span><br><span class="line"><span class="string">  [1,   4,  7, 11, 15]</span>,</span><br><span class="line"><span class="string">  [2,   5,  8, 12, 19]</span>,</span><br><span class="line"><span class="string">  [3,   6,  9, 16, 22]</span>,</span><br><span class="line"><span class="string">  [10, 13, 14, 17, 24]</span>,</span><br><span class="line"><span class="string">  [18, 21, 23, 26, 30]</span></span><br><span class="line">]</span><br><span class="line">给定 target = <span class="number">5</span>，返回 <span class="literal">true</span>。</span><br><span class="line">给定 target = <span class="number">20</span>，返回 <span class="literal">false</span>。</span><br><span class="line"></span><br><span class="line">限制：</span><br><span class="line"><span class="number">0</span> &lt;= n &lt;= <span class="number">1000</span></span><br><span class="line"><span class="number">0</span> &lt;= m &lt;= <span class="number">1000</span></span><br></pre></td></tr></table></figure>
-
-
-
-<p>来源：力扣（LeetCode）<br>链接：<a href="https://leetcode-cn.com/problems/er-wei-shu-zu-zhong-de-cha-zhao-lcof">https://leetcode-cn.com/problems/er-wei-shu-zu-zhong-de-cha-zhao-lcof</a><br>著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
+    <title>算法题-线段点最多覆盖</title>
+    <url>/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E7%BA%BF%E6%AE%B5%E7%82%B9%E6%9C%80%E5%A4%9A%E8%A6%86%E7%9B%96/</url>
+    <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><ol>
+<li>给定一个有序数组 arr ，代表坐落在 X 轴上的点</li>
+<li>给定一个正数K，代表绳子的长度</li>
+<li>返回绳子最多压中几个点，即使绳子边缘处被盖住了也算盖住</li>
+</ol>
 <span id="more"></span>
 
-
-
 <h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><ol>
-<li>由题可知：每一行都按照从左到右递增的顺序排序，每一列都按照从上到下递增的顺序排序</li>
-<li>因此可以关注左上和右下两点，以左上顶点为例，若 <em>target</em> 小于 *matrix[i][j]*，则 <em>target</em> 所在区域必在其 <em>左侧（即 i–）</em>，若 <em>target</em> 大于 *matrix[i][j]*，则 <em>target</em> 所在区域必在其 <em>下方（即j++）</em>;</li>
-<li>若 <em>索引越界</em> 则表示在 <em>matrix</em> 中找不到对应的 <em>target</em>，返回 <em>false</em></li>
+<li>采用左右指针，指针为数组下标</li>
+<li>右指针 - 左指针 = 当前覆盖点数</li>
+<li>右指针指向的值 - 左指针指向的值代表坐落在 X 轴上的点的跨度，要小于对于绳子长度</li>
 </ol>
-<h2 id="题解"><a href="#题解" class="headerlink" title="题解"></a>题解</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">findNumberIn2DArray</span><span class="params">(<span class="keyword">int</span>[][] matrix, <span class="keyword">int</span> target)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (matrix.length == <span class="number">0</span> || matrix[<span class="number">0</span>].length == <span class="number">0</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> j = matrix[<span class="number">0</span>].length - <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (i &gt;= matrix.length || j &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (matrix[i][j] == target) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (matrix[i][j] &lt; target) &#123;</span><br><span class="line">                i++;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                j--;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="解"><a href="#解" class="headerlink" title="解"></a>解</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">mySolution</span><span class="params">(<span class="keyword">int</span>[] arr, <span class="keyword">int</span> l)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> left = <span class="number">0</span>, right = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">int</span> max = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (left &lt; arr.length) &#123;</span><br><span class="line">        <span class="keyword">while</span> (right &lt; arr.length &amp;&amp; arr[right] - arr[left] &lt;= l) &#123;</span><br><span class="line">            right++;</span><br><span class="line">        &#125;</span><br><span class="line">        max = Math.max(max, right - left++);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> max;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-
-
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
-<li>对于从左到右递增且从上到下递增的二维数组的遍历可以考虑从左上或者右下开始</li>
-</ul>
 ]]></content>
       <categories>
         <category>algorithm</category>
@@ -1179,31 +1204,6 @@
 <h2 id="解答"><a href="#解答" class="headerlink" title="解答"></a>解答</h2><h3 id="栈"><a href="#栈" class="headerlink" title="栈"></a>栈</h3><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">getFileNumber</span><span class="params">(String folderPath)</span> </span>&#123;</span><br><span class="line">    File root = <span class="keyword">new</span> File(folderPath);</span><br><span class="line">    <span class="keyword">if</span> (!root.isDirectory() &amp;&amp; !root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (root.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    Stack&lt;File&gt; stack = <span class="keyword">new</span> Stack&lt;&gt;();</span><br><span class="line">    stack.add(root);</span><br><span class="line">    <span class="keyword">int</span> files = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (!stack.isEmpty()) &#123;</span><br><span class="line">        File folder = stack.pop();</span><br><span class="line">        <span class="keyword">for</span> (File next : folder.listFiles()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (next.isFile()) &#123;</span><br><span class="line">                files++;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (next.isDirectory()) &#123;</span><br><span class="line">                stack.push(next);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> files;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <h3 id="递归"><a href="#递归" class="headerlink" title="递归"></a>递归</h3><figure class="highlight gradle"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> mySolution(String path) &#123;</span><br><span class="line">    <span class="keyword">int</span> fileNumber = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">File</span> <span class="keyword">file</span> = <span class="keyword">new</span> <span class="keyword">File</span>(path);</span><br><span class="line">    <span class="keyword">if</span> (!<span class="keyword">file</span>.exists()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isFile()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">file</span>.isDirectory()) &#123;</span><br><span class="line">        <span class="keyword">File</span>[] files = <span class="keyword">file</span>.listFiles();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">File</span> f : files) &#123;</span><br><span class="line">            fileNumber = fileNumber + mySolution(f.getPath());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fileNumber;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-]]></content>
-      <categories>
-        <category>algorithm</category>
-      </categories>
-      <tags>
-        <tag>algorithm</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>算法题-线段点最多覆盖</title>
-    <url>/2021/05/19/%E7%AE%97%E6%B3%95%E9%A2%98-%E7%BA%BF%E6%AE%B5%E7%82%B9%E6%9C%80%E5%A4%9A%E8%A6%86%E7%9B%96/</url>
-    <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><ol>
-<li>给定一个有序数组 arr ，代表坐落在 X 轴上的点</li>
-<li>给定一个正数K，代表绳子的长度</li>
-<li>返回绳子最多压中几个点，即使绳子边缘处被盖住了也算盖住</li>
-</ol>
-<span id="more"></span>
-
-<h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><ol>
-<li>采用左右指针，指针为数组下标</li>
-<li>右指针 - 左指针 = 当前覆盖点数</li>
-<li>右指针指向的值 - 左指针指向的值代表坐落在 X 轴上的点的跨度，要小于对于绳子长度</li>
-</ol>
-<h2 id="解"><a href="#解" class="headerlink" title="解"></a>解</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">mySolution</span><span class="params">(<span class="keyword">int</span>[] arr, <span class="keyword">int</span> l)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> left = <span class="number">0</span>, right = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">int</span> max = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (left &lt; arr.length) &#123;</span><br><span class="line">        <span class="keyword">while</span> (right &lt; arr.length &amp;&amp; arr[right] - arr[left] &lt;= l) &#123;</span><br><span class="line">            right++;</span><br><span class="line">        &#125;</span><br><span class="line">        max = Math.max(max, right - left++);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> max;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 ]]></content>
       <categories>
