@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;example.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Muse&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;right&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:true,&quot;bookmark&quot;:{&quot;enable&quot;:true,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:true,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;搜索...&quot;,&quot;empty&quot;:&quot;没有找到任何搜索结果：${query}&quot;,&quot;hits_time&quot;:&quot;找到 ${hits} 个搜索结果（用时 ${time} 毫秒）&quot;,&quot;hits&quot;:&quot;找到 ${hits} 个搜索结果&quot;},&quot;path&quot;:&quot;&#x2F;search.xml&quot;,&quot;localsearch&quot;:{&quot;enable&quot;:true,&quot;trigger&quot;:&quot;auto&quot;,&quot;top_n_per_article&quot;:1,&quot;unescape&quot;:false,&quot;preload&quot;:false}}</script>
+<meta name="description" content="本文为学习笔记，对应视频教程来自尚硅谷大数据Spark教程从入门到精通 SparkStreaming 概述Spark Streaming 是什么Spark Streaming 用于流式数据的处理，是准实时（秒，分钟），微批次的数据处理框架。Spark Streaming 支持的数据输入源很多，例如：Kafka、Flume、Twitter、ZeroMQ 和简单的 TCP 套接字等等。数据输入后可以用">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark（四）：SparkStreaming">
+<meta property="og:url" content="http://example.com/2022/05/29/Spark%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9ASparkStreaming/index.html">
+<meta property="og:site_name" content="Eitan&#39;s Blog">
+<meta property="og:description" content="本文为学习笔记，对应视频教程来自尚硅谷大数据Spark教程从入门到精通 SparkStreaming 概述Spark Streaming 是什么Spark Streaming 用于流式数据的处理，是准实时（秒，分钟），微批次的数据处理框架。Spark Streaming 支持的数据输入源很多，例如：Kafka、Flume、Twitter、ZeroMQ 和简单的 TCP 套接字等等。数据输入后可以用">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220530002411.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220530002445.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220530100505.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220530100537.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220530100555.png">
+<meta property="article:published_time" content="2022-05-29T15:54:39.104Z">
+<meta property="article:modified_time" content="2022-05-30T12:58:54.990Z">
+<meta property="article:author" content="Eitan">
+<meta property="article:tag" content="spark">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220530002411.png">
+
+
+<link rel="canonical" href="http://example.com/2022/05/29/Spark%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9ASparkStreaming/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;zh-CN&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;example.com&#x2F;2022&#x2F;05&#x2F;29&#x2F;Spark%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9ASparkStreaming&#x2F;&quot;,&quot;path&quot;:&quot;2022&#x2F;05&#x2F;29&#x2F;Spark（四）：SparkStreaming&#x2F;&quot;,&quot;title&quot;:&quot;Spark（四）：SparkStreaming&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>Spark（四）：SparkStreaming | Eitan's Blog</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Eitan's Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#SparkStreaming-%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">SparkStreaming 概述</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Spark-Streaming-%E6%98%AF%E4%BB%80%E4%B9%88"><span class="nav-number">1.1.</span> <span class="nav-text">Spark Streaming 是什么</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Spark-Streaming-%E6%9E%B6%E6%9E%84"><span class="nav-number">1.2.</span> <span class="nav-text">Spark Streaming 架构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%83%8C%E5%8E%8B%E6%9C%BA%E5%88%B6"><span class="nav-number">1.3.</span> <span class="nav-text">背压机制</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Dstream-%E5%BF%AB%E9%80%9F%E5%85%A5%E9%97%A8"><span class="nav-number">2.</span> <span class="nav-text">Dstream 快速入门</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#WordCount-%E6%A1%88%E4%BE%8B%E5%AE%9E%E6%93%8D"><span class="nav-number">2.1.</span> <span class="nav-text">WordCount 案例实操</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#WordCount-%E8%A7%A3%E6%9E%90"><span class="nav-number">2.2.</span> <span class="nav-text">WordCount 解析</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DStream-%E5%88%9B%E5%BB%BA"><span class="nav-number">3.</span> <span class="nav-text">DStream 创建</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#RDD-%E9%98%9F%E5%88%97"><span class="nav-number">3.1.</span> <span class="nav-text">RDD 队列</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E6%95%B0%E6%8D%AE%E6%BA%90"><span class="nav-number">3.2.</span> <span class="nav-text">自定义数据源</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Kafka-%E6%95%B0%E6%8D%AE%E6%BA%90"><span class="nav-number">3.3.</span> <span class="nav-text">Kafka 数据源</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DStream-%E8%BD%AC%E6%8D%A2"><span class="nav-number">4.</span> <span class="nav-text">DStream 转换</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%97%A0%E7%8A%B6%E6%80%81%E8%BD%AC%E5%8C%96%E6%93%8D%E4%BD%9C"><span class="nav-number">4.1.</span> <span class="nav-text">无状态转化操作</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Transform"><span class="nav-number">4.1.1.</span> <span class="nav-text">Transform</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#join"><span class="nav-number">4.1.2.</span> <span class="nav-text">join</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9C%89%E7%8A%B6%E6%80%81%E8%BD%AC%E5%8C%96%E6%93%8D%E4%BD%9C"><span class="nav-number">4.2.</span> <span class="nav-text">有状态转化操作</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#UpdateStateByKey"><span class="nav-number">4.2.1.</span> <span class="nav-text">UpdateStateByKey</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#WindowOperations"><span class="nav-number">4.2.2.</span> <span class="nav-text">WindowOperations</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DStream-%E8%BE%93%E5%87%BA"><span class="nav-number">5.</span> <span class="nav-text">DStream 输出</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%98%E9%9B%85%E5%85%B3%E9%97%AD%E4%B8%8E%E6%81%A2%E5%A4%8D"><span class="nav-number">6.</span> <span class="nav-text">优雅关闭与恢复</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Eitan"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Eitan</p>
+  <div class="site-description" itemprop="description">blog用于记忆，大脑擅长思考</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">42</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/eitan-blog" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;eitan-blog" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:eitan_blog@163.com" title="E-Mail → mailto:eitan_blog@163.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/yourname" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/05/29/Spark%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9ASparkStreaming/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Eitan">
+      <meta itemprop="description" content="blog用于记忆，大脑擅长思考">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Eitan's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Spark（四）：SparkStreaming
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-05-29 23:54:39" itemprop="dateCreated datePublished" datetime="2022-05-29T23:54:39+08:00">2022-05-29</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2022-05-30 20:58:54" itemprop="dateModified" datetime="2022-05-30T20:58:54+08:00">2022-05-30</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Big-Data/" itemprop="url" rel="index"><span itemprop="name">Big Data</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>12k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>11 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>本文为学习笔记，对应视频教程来自<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV11A411L7CK">尚硅谷大数据Spark教程从入门到精通</a></p>
+<h3 id="SparkStreaming-概述"><a href="#SparkStreaming-概述" class="headerlink" title="SparkStreaming 概述"></a>SparkStreaming 概述</h3><h4 id="Spark-Streaming-是什么"><a href="#Spark-Streaming-是什么" class="headerlink" title="Spark Streaming 是什么"></a>Spark Streaming 是什么</h4><p>Spark Streaming 用于流式数据的处理，是准实时（秒，分钟），微批次的数据处理框架。Spark Streaming 支持的数据输入源很多，例如：Kafka、Flume、Twitter、ZeroMQ 和简单的 TCP 套接字等等。数据输入后可以用 Spark 的高度抽象原语，如：map、reduce、join、window 等进行运算。而结果也能保存在很多地方，如 HDFS，数据库等。</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220530002411.png" alt="image-20220530002409739"></p>
+<p>和 Spark 基于 RDD 的概念很相似，Spark Streaming 使用离散化流(discretized stream)作为抽象表示，叫作 DStream。DStream 是随时间推移而收到的数据的序列。在内部，每个时间区间收到的数据都作为 RDD 存在，而 DStream 是由这些 RDD 所组成的序列(因此得名“离散化”)。所以简单来讲，DStream 就是对 RDD 在实时数据处理场景的一种封装。</p>
+<span id="more"></span>
+
+<h4 id="Spark-Streaming-架构"><a href="#Spark-Streaming-架构" class="headerlink" title="Spark Streaming 架构"></a>Spark Streaming 架构</h4><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220530002445.png" alt="image-20220530002443200"></p>
+<h4 id="背压机制"><a href="#背压机制" class="headerlink" title="背压机制"></a>背压机制</h4><p>Spark 1.5 以前版本，用户如果要限制 Receiver 的数据接收速率，可以通过设置静态配制参数“spark.streaming.receiver.maxRate”的值来实现，此举虽然可以通过限制接收速率，来适配当前处理能力，防止内存溢出，但也会引入其它问题。比如：producer 数据生产高于 maxRate，当前集群处理能力也高于 maxRate，这就会造成资源利用率下降等问题。</p>
+<p>为了更好的协调数据接收速率与资源处理能力，1.5 版本开始 Spark Streaming 可以动态控制数据接收速率来适配集群数据处理能力。背压机制（即 Spark Streaming Backpressure）: 根据 JobScheduler 反馈作业的执行信息来动态调整 Receiver 数据接收率。通过性“spark.streaming.backpressure.enabled”来控制是否启用 backpressure 机制，默认值 false，即不启用。</p>
+<h3 id="Dstream-快速入门"><a href="#Dstream-快速入门" class="headerlink" title="Dstream 快速入门"></a>Dstream 快速入门</h3><h4 id="WordCount-案例实操"><a href="#WordCount-案例实操" class="headerlink" title="WordCount 案例实操"></a>WordCount 案例实操</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- 添加依赖 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.spark<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spark-streaming_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.2.1<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">object</span> <span class="title">SparkStreaming01_WordCount</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">main</span></span>(args: <span class="type">Array</span>[<span class="type">String</span>]): <span class="type">Unit</span> = &#123;</span><br><span class="line">    <span class="comment">// TODO 创建环境对象</span></span><br><span class="line">    <span class="keyword">val</span> sparkConf: <span class="type">SparkConf</span> = <span class="keyword">new</span> <span class="type">SparkConf</span>().setMaster(<span class="string">&quot;local[*]&quot;</span>).setAppName(<span class="string">&quot;SparkStreaming&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> ssc = <span class="keyword">new</span> <span class="type">StreamingContext</span>(sparkConf, <span class="type">Seconds</span>(<span class="number">3</span>))</span><br><span class="line"></span><br><span class="line">    <span class="comment">// TODO 逻辑处理</span></span><br><span class="line">    <span class="comment">// 获取端口数据</span></span><br><span class="line">    <span class="keyword">val</span> lines: <span class="type">ReceiverInputDStream</span>[<span class="type">String</span>] = ssc.socketTextStream(<span class="string">&quot;localhost&quot;</span>, <span class="number">9999</span>)</span><br><span class="line">    <span class="keyword">val</span> words: <span class="type">DStream</span>[<span class="type">String</span>] = lines.flatMap(_.split(<span class="string">&quot; &quot;</span>))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> wordToOne: <span class="type">DStream</span>[(<span class="type">String</span>, <span class="type">Int</span>)] = words.map((_, <span class="number">1</span>))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> wordToCount: <span class="type">DStream</span>[(<span class="type">String</span>, <span class="type">Int</span>)] = wordToOne.reduceByKey(_ + _)</span><br><span class="line"></span><br><span class="line">    wordToCount.print()</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 由于 SparkStreaming 是长期执行的的任务，所以不能直接关闭</span></span><br><span class="line">    <span class="comment">// 1.启动采集器</span></span><br><span class="line">    ssc.start()</span><br><span class="line">    <span class="comment">// 2.等待采集器的关闭</span></span><br><span class="line">    ssc.awaitTermination()</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 启动程序并通过 netcat 发送数据</span></span><br><span class="line">C:\Users\xxx&gt;nc -lp 9999</span><br><span class="line">Hello World</span><br><span class="line">Hello Spark</span><br></pre></td></tr></table></figure>
+
+<h4 id="WordCount-解析"><a href="#WordCount-解析" class="headerlink" title="WordCount 解析"></a>WordCount 解析</h4><p>在内部实现上，DStream 是一系列连续的 RDD 来表示。每个 RDD 含有一段时间间隔内的数据</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220530100505.png" alt="image-20220530100504036"></p>
+<p>对数据的操作也是按照 RDD 为单位来进行的</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220530100537.png" alt="image-20220530100535991"></p>
+<p>计算过程由 Spark Engine 来完成</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220530100555.png" alt="image-20220530100553497"></p>
+<h3 id="DStream-创建"><a href="#DStream-创建" class="headerlink" title="DStream 创建"></a>DStream 创建</h3><p>测试过程中，可以通过使用 ssc.queueStream(queueOfRDDs)来创建 DStream，每一个推送到这个队列中的 RDD，都会作为一个 DStream 处理。</p>
+<h4 id="RDD-队列"><a href="#RDD-队列" class="headerlink" title="RDD 队列"></a>RDD 队列</h4><figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">object</span> <span class="title">SparkStreaming02_Queue</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">main</span></span>(args: <span class="type">Array</span>[<span class="type">String</span>]): <span class="type">Unit</span> = &#123;</span><br><span class="line">    <span class="comment">//1.初始化 Spark 配置信息</span></span><br><span class="line">    <span class="keyword">val</span> conf = <span class="keyword">new</span> <span class="type">SparkConf</span>().setMaster(<span class="string">&quot;local[*]&quot;</span>).setAppName(<span class="string">&quot;RDDStream&quot;</span>)</span><br><span class="line">    <span class="comment">//2.初始化 SparkStreamingContext</span></span><br><span class="line">    <span class="keyword">val</span> ssc = <span class="keyword">new</span> <span class="type">StreamingContext</span>(conf, <span class="type">Seconds</span>(<span class="number">4</span>))</span><br><span class="line">    <span class="comment">//3.创建 RDD 队列</span></span><br><span class="line">    <span class="keyword">val</span> rddQueue = <span class="keyword">new</span> mutable.<span class="type">Queue</span>[<span class="type">RDD</span>[<span class="type">Int</span>]]()</span><br><span class="line">    <span class="comment">//4.创建 QueueInputDStream</span></span><br><span class="line">    <span class="keyword">val</span> inputStream = ssc.queueStream(rddQueue, oneAtATime = <span class="literal">false</span>)</span><br><span class="line">    <span class="comment">//5.处理队列中的 RDD 数据</span></span><br><span class="line">    <span class="keyword">val</span> mappedStream = inputStream.map((_, <span class="number">1</span>))</span><br><span class="line">    <span class="keyword">val</span> reducedStream = mappedStream.reduceByKey(_ + _)</span><br><span class="line">    <span class="comment">//6.打印结果</span></span><br><span class="line">    reducedStream.print()</span><br><span class="line">    <span class="comment">//7.启动任务</span></span><br><span class="line">    ssc.start()</span><br><span class="line">    <span class="comment">//8.循环创建并向 RDD 队列中放入 RDD</span></span><br><span class="line">    <span class="keyword">for</span> (i &lt;- <span class="number">1</span> to <span class="number">5</span>) &#123;</span><br><span class="line">      rddQueue += ssc.sparkContext.makeRDD(<span class="number">1</span> to <span class="number">300</span>, <span class="number">10</span>)</span><br><span class="line">      <span class="type">Thread</span>.sleep(<span class="number">2000</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    ssc.awaitTermination()</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="自定义数据源"><a href="#自定义数据源" class="headerlink" title="自定义数据源"></a>自定义数据源</h4><figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 自定义数据源，实现监控某个端口号，获取该端口号内容</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">object</span> <span class="title">SparkStreaming03_CustomerReceiver</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">main</span></span>(args: <span class="type">Array</span>[<span class="type">String</span>]): <span class="type">Unit</span> = &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> conf = <span class="keyword">new</span> <span class="type">SparkConf</span>().setMaster(<span class="string">&quot;local[*]&quot;</span>).setAppName(<span class="string">&quot;RDDStream&quot;</span>)</span><br><span class="line">    <span class="keyword">val</span> ssc = <span class="keyword">new</span> <span class="type">StreamingContext</span>(conf, <span class="type">Seconds</span>(<span class="number">4</span>))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> lineStream: <span class="type">ReceiverInputDStream</span>[<span class="type">String</span>] = ssc.receiverStream(<span class="keyword">new</span> <span class="type">CustomerReceiver</span>(<span class="string">&quot;localhost&quot;</span>, <span class="number">9999</span>))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> wordStream: <span class="type">DStream</span>[<span class="type">String</span>] = lineStream.flatMap(_.split(<span class="string">&quot; &quot;</span>))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> wordToOne: <span class="type">DStream</span>[(<span class="type">String</span>, <span class="type">Int</span>)] = wordStream.map((_, <span class="number">1</span>))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> wordCount: <span class="type">DStream</span>[(<span class="type">String</span>, <span class="type">Int</span>)] = wordToOne.reduceByKey(_ + _)</span><br><span class="line"></span><br><span class="line">    wordCount.print()</span><br><span class="line"></span><br><span class="line">    ssc.start()</span><br><span class="line">    ssc.awaitTermination()</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">//最初启动的时候，调用该方法，作用为：读数据并将数据发送给 Spark</span></span><br><span class="line">  <span class="class"><span class="keyword">class</span> <span class="title">CustomerReceiver</span>(<span class="params">host: <span class="type">String</span>, port: <span class="type">Int</span></span>) <span class="keyword">extends</span> <span class="title">Receiver</span>[<span class="type">String</span>](<span class="params"><span class="type">StorageLevel</span>.<span class="type">MEMORY_ONLY</span></span>) </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@volatile</span> <span class="keyword">private</span> <span class="keyword">var</span> flag = <span class="literal">true</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">def</span> <span class="title">onStart</span></span>(): <span class="type">Unit</span> = &#123;</span><br><span class="line">      <span class="keyword">new</span> <span class="type">Thread</span>(<span class="string">&quot;Socket Receiver&quot;</span>) &#123;</span><br><span class="line">        <span class="keyword">override</span> <span class="function"><span class="keyword">def</span> <span class="title">run</span></span>() &#123;</span><br><span class="line">          receive()</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;.start()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//读数据并将数据发送给 Spark</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">receive</span></span>(): <span class="type">Unit</span> = &#123;</span><br><span class="line">      <span class="comment">//创建一个 Socket</span></span><br><span class="line">      <span class="keyword">var</span> socket: <span class="type">Socket</span> = <span class="keyword">new</span> <span class="type">Socket</span>(host, port)</span><br><span class="line">      <span class="comment">//定义一个变量，用来接收端口传过来的数据</span></span><br><span class="line">      <span class="keyword">var</span> input: <span class="type">String</span> = <span class="literal">null</span></span><br><span class="line">      <span class="comment">//创建一个 BufferedReader 用于读取端口传来的数据</span></span><br><span class="line">      <span class="keyword">val</span> reader = <span class="keyword">new</span> <span class="type">BufferedReader</span>(<span class="keyword">new</span> <span class="type">InputStreamReader</span>(socket.getInputStream, <span class="type">StandardCharsets</span>.<span class="type">UTF_8</span>))</span><br><span class="line">      <span class="comment">//读取数据</span></span><br><span class="line">      input = reader.readLine()</span><br><span class="line">      <span class="comment">//当 receiver 没有关闭并且输入数据不为空，则循环发送数据给 Spark</span></span><br><span class="line">      <span class="keyword">while</span> (flag &amp;&amp; input != <span class="literal">null</span>) &#123;</span><br><span class="line">        store(input)</span><br><span class="line">        input = reader.readLine()</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">//跳出循环则关闭资源</span></span><br><span class="line">      reader.close()</span><br><span class="line">      socket.close()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">def</span> <span class="title">onStop</span></span>(): <span class="type">Unit</span> = &#123;</span><br><span class="line">      flag = <span class="literal">false</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Kafka-数据源"><a href="#Kafka-数据源" class="headerlink" title="Kafka 数据源"></a>Kafka 数据源</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- 导入依赖 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.spark<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spark-streaming-kafka-0-10_2.12<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>3.2.1<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.fasterxml.jackson.core<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>jackson-core<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.10.1<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 通过 SparkStreaming 从 Kafka 读取数据，并将读取过来的数据做简单计算，最终打印到控制台</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">object</span> <span class="title">SparkStreaming04_DirectKafka</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">main</span></span>(args: <span class="type">Array</span>[<span class="type">String</span>]): <span class="type">Unit</span> = &#123;</span><br><span class="line">    <span class="comment">//1.创建 SparkConf</span></span><br><span class="line">    <span class="keyword">val</span> sparkConf: <span class="type">SparkConf</span> = <span class="keyword">new</span> <span class="type">SparkConf</span>().setAppName(<span class="string">&quot;ReceiverWordCount&quot;</span>).setMaster(<span class="string">&quot;local[*]&quot;</span>)</span><br><span class="line">    <span class="comment">//2.创建 StreamingContext</span></span><br><span class="line">    <span class="keyword">val</span> ssc = <span class="keyword">new</span> <span class="type">StreamingContext</span>(sparkConf, <span class="type">Seconds</span>(<span class="number">3</span>))</span><br><span class="line">    <span class="comment">//3.定义 Kafka 参数</span></span><br><span class="line">    <span class="keyword">val</span> kafkaPara: <span class="type">Map</span>[<span class="type">String</span>, <span class="type">Object</span>] = <span class="type">Map</span>[<span class="type">String</span>, <span class="type">Object</span>](</span><br><span class="line">      <span class="type">ConsumerConfig</span>.<span class="type">BOOTSTRAP_SERVERS_CONFIG</span> -&gt; <span class="string">&quot;spark151:9092,spark152:9092,spark153:9092&quot;</span>,</span><br><span class="line">      <span class="type">ConsumerConfig</span>.<span class="type">GROUP_ID_CONFIG</span> -&gt; <span class="string">&quot;atguigu&quot;</span>,</span><br><span class="line">      <span class="string">&quot;key.deserializer&quot;</span> -&gt; <span class="string">&quot;org.apache.kafka.common.serialization.StringDeserializer&quot;</span>,</span><br><span class="line">      <span class="string">&quot;value.deserializer&quot;</span> -&gt; <span class="string">&quot;org.apache.kafka.common.serialization.StringDeserializer&quot;</span></span><br><span class="line">    )</span><br><span class="line">    <span class="comment">//4.读取 Kafka 数据创建 DStream</span></span><br><span class="line">    <span class="keyword">val</span> kafkaDStream: <span class="type">InputDStream</span>[<span class="type">ConsumerRecord</span>[<span class="type">String</span>, <span class="type">String</span>]] =</span><br><span class="line">      <span class="type">KafkaUtils</span>.createDirectStream[<span class="type">String</span>, <span class="type">String</span>](ssc,</span><br><span class="line">        <span class="type">LocationStrategies</span>.<span class="type">PreferConsistent</span>,</span><br><span class="line">        <span class="type">ConsumerStrategies</span>.<span class="type">Subscribe</span>[<span class="type">String</span>, <span class="type">String</span>](<span class="type">Set</span>(<span class="string">&quot;atguigu&quot;</span>), kafkaPara))</span><br><span class="line">    <span class="comment">//5.将每条消息的 KV 取出</span></span><br><span class="line">    <span class="keyword">val</span> valueDStream: <span class="type">DStream</span>[<span class="type">String</span>] = kafkaDStream.map(record =&gt; record.value())</span><br><span class="line">    <span class="comment">//6.计算 WordCount</span></span><br><span class="line">    valueDStream.flatMap(_.split(<span class="string">&quot; &quot;</span>))</span><br><span class="line">      .map((_, <span class="number">1</span>))</span><br><span class="line">      .reduceByKey(_ + _)</span><br><span class="line">      .print()</span><br><span class="line">    <span class="comment">//7.开启任务</span></span><br><span class="line">    ssc.start()</span><br><span class="line">    ssc.awaitTermination()</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="DStream-转换"><a href="#DStream-转换" class="headerlink" title="DStream 转换"></a>DStream 转换</h3><h4 id="无状态转化操作"><a href="#无状态转化操作" class="headerlink" title="无状态转化操作"></a>无状态转化操作</h4><p>无状态转化操作就是把简单的 RDD 转化操作应用到每个批次上，也就是转化 DStream 中的每一个 RDD。例如：reduceByKey() 会归约每个时间区间中的数据，但不会归约不同区间之间的数据。</p>
+<p>部分无状态转化操作列在了下表中。注意，针对键值对的 DStream 转化操作(比如 reduceByKey())要添加 import StreamingContext._才能在 Scala 中使用。</p>
+<table>
+<thead>
+<tr>
+<th>函数名称</th>
+<th>目的</th>
+<th>Scala示例</th>
+<th>用来操作DStream[T]的用户自定义函数的函数签名</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>map()</td>
+<td>对 DStream 中的每个元素应用给定函数，返回由各个元素输出的元素组成的 DStream</td>
+<td>ds.map(x =&gt; x +1)</td>
+<td>f: T -&gt; U</td>
+</tr>
+<tr>
+<td>flatMap()</td>
+<td>对 DStream 中的每个元素应用给定函数，返回由各个元素输出的迭代器组成的 DStream</td>
+<td>ds.flatMap(x =&gt; x.split(“ “))</td>
+<td>f: T -&gt; Iterable[U]</td>
+</tr>
+<tr>
+<td>filter()</td>
+<td>返回由给定 DStream 中通过筛选的元素组成的 DStream</td>
+<td>ds.filter(x =&gt; x != 1)</td>
+<td>f: T -&gt; Boolean</td>
+</tr>
+<tr>
+<td>repartition()</td>
+<td>改变 DStream 的分区数</td>
+<td>ds.repartition(10)</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>reduceByKey()</td>
+<td>将每个批次中键相同的记录归约</td>
+<td>ds.reduceByKey((x, y) =&gt; x + y)</td>
+<td>f: (T, T) -&gt; T</td>
+</tr>
+<tr>
+<td>groupByKey()</td>
+<td>将每个批次中的记录根据键分组</td>
+<td>ds.groupByKey</td>
+<td>N/A</td>
+</tr>
+</tbody></table>
+<h5 id="Transform"><a href="#Transform" class="headerlink" title="Transform"></a>Transform</h5><figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">object</span> <span class="title">SparkStreaming06_Transform</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">main</span></span>(args: <span class="type">Array</span>[<span class="type">String</span>]): <span class="type">Unit</span> = &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> sparkConf: <span class="type">SparkConf</span> = <span class="keyword">new</span> <span class="type">SparkConf</span>().setAppName(<span class="string">&quot;ReceiverWordCount&quot;</span>).setMaster(<span class="string">&quot;local[*]&quot;</span>)</span><br><span class="line">    <span class="keyword">val</span> ssc = <span class="keyword">new</span> <span class="type">StreamingContext</span>(sparkConf, <span class="type">Seconds</span>(<span class="number">3</span>))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> lines: <span class="type">ReceiverInputDStream</span>[<span class="type">String</span>] = ssc.socketTextStream(<span class="string">&quot;localhost&quot;</span>, <span class="number">9999</span>)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// transform 将底层的 RDD 获取后进行操作</span></span><br><span class="line">    <span class="comment">// 使用场景：</span></span><br><span class="line">    <span class="comment">// 1.DStream功能不完善</span></span><br><span class="line">    <span class="comment">// 2.需要代码周期性执行</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Code：Driver端执行</span></span><br><span class="line">    <span class="keyword">val</span> newDS: <span class="type">DStream</span>[<span class="type">String</span>] = lines.transform(</span><br><span class="line">      rdd =&gt; &#123;</span><br><span class="line">        <span class="comment">// Code：Driver端周期性执行</span></span><br><span class="line">        rdd.map(</span><br><span class="line">          str =&gt; &#123;</span><br><span class="line">            <span class="comment">// Code：Executor端</span></span><br><span class="line">            str</span><br><span class="line">          &#125;</span><br><span class="line">        )</span><br><span class="line">      &#125;</span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Code：Driver端</span></span><br><span class="line">    <span class="keyword">val</span> newDStream: <span class="type">DStream</span>[<span class="type">String</span>] = lines.map(</span><br><span class="line">      data =&gt; &#123;</span><br><span class="line">        <span class="comment">// Code：Executor端</span></span><br><span class="line">        data</span><br><span class="line">      &#125;</span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line">    ssc.start()</span><br><span class="line">    ssc.awaitTermination()</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="join"><a href="#join" class="headerlink" title="join"></a>join</h5><figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 两个流之间的 join 需要两个流的批次大小一致，这样才能做到同时触发计算。</span></span><br><span class="line"><span class="comment"> * 计算过程就是对当前批次的两个流中各自的 RDD 进行 join，与两个 RDD 的 join 效果相同</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">object</span> <span class="title">SparkStreaming07_Join</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">main</span></span>(args: <span class="type">Array</span>[<span class="type">String</span>]): <span class="type">Unit</span> = &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> sparkConf: <span class="type">SparkConf</span> = <span class="keyword">new</span> <span class="type">SparkConf</span>().setAppName(<span class="string">&quot;ReceiverWordCount&quot;</span>).setMaster(<span class="string">&quot;local[*]&quot;</span>)</span><br><span class="line">    <span class="keyword">val</span> ssc = <span class="keyword">new</span> <span class="type">StreamingContext</span>(sparkConf, <span class="type">Seconds</span>(<span class="number">5</span>))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> data9999: <span class="type">ReceiverInputDStream</span>[<span class="type">String</span>] = ssc.socketTextStream(<span class="string">&quot;localhost&quot;</span>, <span class="number">9999</span>)</span><br><span class="line">    <span class="keyword">val</span> data8888: <span class="type">ReceiverInputDStream</span>[<span class="type">String</span>] = ssc.socketTextStream(<span class="string">&quot;localhost&quot;</span>, <span class="number">8888</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> map9999: <span class="type">DStream</span>[(<span class="type">String</span>, <span class="type">Int</span>)] = data9999.map((_, <span class="number">9</span>))</span><br><span class="line">    <span class="keyword">val</span> map8888: <span class="type">DStream</span>[(<span class="type">String</span>, <span class="type">Int</span>)] = data8888.map((_, <span class="number">8</span>))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> joinDS: <span class="type">DStream</span>[(<span class="type">String</span>, (<span class="type">Int</span>, <span class="type">Int</span>))] = map9999.join(map8888)</span><br><span class="line"></span><br><span class="line">    joinDS.print()</span><br><span class="line"></span><br><span class="line">    ssc.start()</span><br><span class="line">    ssc.awaitTermination()</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="有状态转化操作"><a href="#有状态转化操作" class="headerlink" title="有状态转化操作"></a>有状态转化操作</h4><h5 id="UpdateStateByKey"><a href="#UpdateStateByKey" class="headerlink" title="UpdateStateByKey"></a>UpdateStateByKey</h5><figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 跨批次累加版 WordCount</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">object</span> <span class="title">SparkStreaming05_UpdateStateByKey</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">main</span></span>(args: <span class="type">Array</span>[<span class="type">String</span>]): <span class="type">Unit</span> = &#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> sparkConf: <span class="type">SparkConf</span> = <span class="keyword">new</span> <span class="type">SparkConf</span>().setAppName(<span class="string">&quot;ReceiverWordCount&quot;</span>).setMaster(<span class="string">&quot;local[*]&quot;</span>)</span><br><span class="line">    <span class="keyword">val</span> ssc = <span class="keyword">new</span> <span class="type">StreamingContext</span>(sparkConf, <span class="type">Seconds</span>(<span class="number">3</span>))</span><br><span class="line">    ssc.checkpoint(<span class="string">&quot;checkpoint&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> lines: <span class="type">ReceiverInputDStream</span>[<span class="type">String</span>] = ssc.socketTextStream(<span class="string">&quot;localhost&quot;</span>, <span class="number">9999</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> words: <span class="type">DStream</span>[<span class="type">String</span>] = lines.flatMap(_.split(<span class="string">&quot; &quot;</span>))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> wordToOne: <span class="type">DStream</span>[(<span class="type">String</span>, <span class="type">Int</span>)] = words.map((_, <span class="number">1</span>))</span><br><span class="line"></span><br><span class="line">    <span class="comment">// updateStateByKey：根据 key 对数据状态进行更新</span></span><br><span class="line">    <span class="comment">// 第一个参数表示相同的 key 对应的 value 数据</span></span><br><span class="line">    <span class="comment">// 第二个参数表示缓存区相同 key 的 value 数据</span></span><br><span class="line">    <span class="keyword">val</span> wordToCount: <span class="type">DStream</span>[(<span class="type">String</span>, <span class="type">Int</span>)] = wordToOne.updateStateByKey(</span><br><span class="line">      (seq: <span class="type">Seq</span>[<span class="type">Int</span>], buff: <span class="type">Option</span>[<span class="type">Int</span>]) =&gt; &#123;</span><br><span class="line">        <span class="keyword">val</span> newCnt: <span class="type">Int</span> = buff.getOrElse(<span class="number">0</span>) + seq.sum</span><br><span class="line">        <span class="type">Option</span>(newCnt)</span><br><span class="line">      &#125;</span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line">    wordToCount.print()</span><br><span class="line"></span><br><span class="line">    ssc.start()</span><br><span class="line">    ssc.awaitTermination()</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="WindowOperations"><a href="#WindowOperations" class="headerlink" title="WindowOperations"></a>WindowOperations</h5><figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 窗口时长：计算内容的时间范围；</span></span><br><span class="line"><span class="comment"> * 滑动步长：隔多久触发一次计算。</span></span><br><span class="line"><span class="comment"> * 注意：这两者都必须为采集周期大小的整数倍</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">object</span> <span class="title">SparkStreaming08_Window</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">main</span></span>(args: <span class="type">Array</span>[<span class="type">String</span>]): <span class="type">Unit</span> = &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> sparkConf: <span class="type">SparkConf</span> = <span class="keyword">new</span> <span class="type">SparkConf</span>().setAppName(<span class="string">&quot;WordCount&quot;</span>).setMaster(<span class="string">&quot;local[*]&quot;</span>)</span><br><span class="line">    <span class="keyword">val</span> ssc = <span class="keyword">new</span> <span class="type">StreamingContext</span>(sparkConf, <span class="type">Seconds</span>(<span class="number">3</span>))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> lines: <span class="type">ReceiverInputDStream</span>[<span class="type">String</span>] = ssc.socketTextStream(<span class="string">&quot;localhost&quot;</span>, <span class="number">9999</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> words: <span class="type">DStream</span>[<span class="type">String</span>] = lines.window(<span class="type">Seconds</span>(<span class="number">6</span>)).flatMap(_.split(<span class="string">&quot; &quot;</span>))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> wordToOne: <span class="type">DStream</span>[(<span class="type">String</span>, <span class="type">Int</span>)] = words.map((_, <span class="number">1</span>))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> wordToCount: <span class="type">DStream</span>[(<span class="type">String</span>, <span class="type">Int</span>)] = wordToOne.reduceByKey(_ + _)</span><br><span class="line"></span><br><span class="line">    wordToCount.print()</span><br><span class="line"></span><br><span class="line">    ssc.start()</span><br><span class="line">    ssc.awaitTermination()</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>关于 Window 的操作有如下方法：</p>
+<ol>
+<li>window(windowLength, slideInterval): 基于对源 DStream 窗化的批次进行计算返回一个新的 Dstream；</li>
+<li>countByWindow(windowLength, slideInterval): 返回一个滑动窗口计数流中的元素个数；</li>
+<li>reduceByWindow(func, windowLength, slideInterval): 通过使用自定义函数整合滑动区间流元素来创建一个新的单元素流；</li>
+<li>reduceByKeyAndWindow(func, windowLength, slideInterval, [numTasks]): 当在一个(K,V)对的 DStream 上调用此函数，会返回一个新(K,V)对的 DStream，此处通过对滑动窗口中批次数据使用 reduce 函数来整合每个 key 的 value 值。</li>
+</ol>
+</blockquote>
+<h3 id="DStream-输出"><a href="#DStream-输出" class="headerlink" title="DStream 输出"></a>DStream 输出</h3><ol>
+<li>print()：在运行流程序的驱动结点上打印 DStream 中每一批次数据的最开始 10 个元素。这用于开发和调试。在 Python API 中，同样的操作叫 print()；</li>
+<li>saveAsTextFiles(prefix, [suffix])：以 text 文件形式存储这个 DStream 的内容。每一批次的存储文件名基于参数中的 prefix 和 suffix。”prefix-Time_IN_MS[.suffix]”；</li>
+<li>saveAsObjectFiles(prefix, [suffix])：以 Java 对象序列化的方式将 Stream 中的数据保存为SequenceFiles . 每一批次的存储文件名基于参数中的为”prefix-TIME_IN_MS[.suffix]”；</li>
+<li>saveAsHadoopFiles(prefix, [suffix])：将 Stream 中的数据保存为 Hadoop files. 每一批次的存储文件名基于参数中的为”prefix-TIME_IN_MS[.suffix]”；</li>
+<li>foreachRDD(func)：这是最通用的输出操作，即将函数 func 用于产生于 stream 的每一个RDD。其中参数传入的函数 func 应该实现将每一个 RDD 中数据推送到外部系统，如将 RDD 存入文件或者通过网络将其写入数据库。</li>
+</ol>
+<h3 id="优雅关闭与恢复"><a href="#优雅关闭与恢复" class="headerlink" title="优雅关闭与恢复"></a>优雅关闭与恢复</h3><p>流式任务需要 7*24 小时执行，但是有时涉及到升级代码需要主动停止程序，但是分布式程序，没办法做到一个个进程去杀死，所有配置优雅的关闭就显得至关重要了。使用外部文件系统来控制内部程序关闭。</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">object</span> <span class="title">SparkStreaming09_StopAndResume</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">createSSC</span></span>(): () =&gt; <span class="type">StreamingContext</span> = &#123;</span><br><span class="line">    () =&gt; &#123;</span><br><span class="line">      <span class="keyword">val</span> sparkConf: <span class="type">SparkConf</span> = <span class="keyword">new</span> <span class="type">SparkConf</span>().setMaster(<span class="string">&quot;local[*]&quot;</span>).setAppName(<span class="string">&quot;WordCount&quot;</span>)</span><br><span class="line">      <span class="keyword">val</span> ssc = <span class="keyword">new</span> <span class="type">StreamingContext</span>(sparkConf, <span class="type">Seconds</span>(<span class="number">3</span>))</span><br><span class="line">      ssc.checkpoint(<span class="string">&quot;checkpoint&quot;</span>)</span><br><span class="line"></span><br><span class="line">      ssc</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">main</span></span>(args: <span class="type">Array</span>[<span class="type">String</span>]): <span class="type">Unit</span> = &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> ssc: <span class="type">StreamingContext</span> = <span class="type">StreamingContext</span>.getActiveOrCreate(<span class="string">&quot;checkpoint&quot;</span>, createSSC())</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> wordToCount: <span class="type">DStream</span>[(<span class="type">String</span>, <span class="type">Int</span>)] = ssc.socketTextStream(<span class="string">&quot;localhost&quot;</span>, <span class="number">9999</span>)</span><br><span class="line">      .flatMap(_.split(<span class="string">&quot; &quot;</span>))</span><br><span class="line">      .map((_, <span class="number">1</span>))</span><br><span class="line">      .reduceByKey(_ + _) |</span><br><span class="line"></span><br><span class="line">    wordToCount.print()</span><br><span class="line"></span><br><span class="line">    ssc.start()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">new</span> <span class="type">Thread</span>(<span class="keyword">new</span> <span class="type">MonitorStop</span>(ssc)).start()</span><br><span class="line"></span><br><span class="line">    ssc.awaitTermination()</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="class"><span class="keyword">class</span> <span class="title">MonitorStop</span>(<span class="params">ssc: <span class="type">StreamingContext</span></span>) <span class="keyword">extends</span> <span class="title">Runnable</span> </span>&#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">def</span> <span class="title">run</span></span>(): <span class="type">Unit</span> = &#123;</span><br><span class="line">      <span class="keyword">val</span> fs: <span class="type">FileSystem</span> = <span class="type">FileSystem</span>.get(<span class="keyword">new</span> <span class="type">URI</span>(<span class="string">&quot;hdfs://spark152:9000&quot;</span>), <span class="keyword">new</span> <span class="type">Configuration</span>(), <span class="string">&quot;eitan&quot;</span>)</span><br><span class="line"></span><br><span class="line">      <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">          <span class="type">Thread</span>.sleep(<span class="number">5000</span>)</span><br><span class="line">        &#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">          <span class="keyword">case</span> e: <span class="type">Exception</span> =&gt; e.printStackTrace()</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">val</span> state: <span class="type">StreamingContextState</span> = ssc.getState()</span><br><span class="line"></span><br><span class="line">        <span class="keyword">val</span> bool: <span class="type">Boolean</span> = fs.exists(<span class="keyword">new</span> <span class="type">Path</span>(<span class="string">&quot;hdfs://spark152:9000/stopSpark&quot;</span>))</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (bool &amp;&amp; state == <span class="type">StreamingContextState</span>.<span class="type">ACTIVE</span>) &#123;</span><br><span class="line">          ssc.stop(<span class="literal">true</span>, <span class="literal">true</span>)</span><br><span class="line">          <span class="type">System</span>.exit(<span class="number">0</span>)</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Eitan
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="http://example.com/2022/05/29/Spark%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9ASparkStreaming/" title="Spark（四）：SparkStreaming">http://example.com/2022/05/29/Spark（四）：SparkStreaming/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/spark/" rel="tag"><i class="fa fa-tag"></i> spark</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/05/28/Spark%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9ASparkSQL/" rel="prev" title="Spark（三）：SparkSQL">
+                  <i class="fa fa-chevron-left"></i> Spark（三）：SparkSQL
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Eitan</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script><script src="/js/bookmark.js"></script>
+
+  
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
