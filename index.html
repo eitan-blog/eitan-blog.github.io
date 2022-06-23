@@ -158,7 +158,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">44</span>
+          <span class="site-state-item-count">46</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -215,6 +215,220 @@
 
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/06/07/%E7%94%B5%E5%95%86%E6%95%B0%E4%BB%93%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9A%E7%94%B5%E5%95%86%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93%E5%AE%9E%E6%88%98/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Eitan">
+      <meta itemprop="description" content="blog用于记忆，大脑擅长思考">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Eitan's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/06/07/%E7%94%B5%E5%95%86%E6%95%B0%E4%BB%93%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9A%E7%94%B5%E5%95%86%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93%E5%AE%9E%E6%88%98/" class="post-title-link" itemprop="url">电商数仓（四）：电商数据仓库实战</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-06-07 08:54:37" itemprop="dateCreated datePublished" datetime="2022-06-07T08:54:37+08:00">2022-06-07</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2022-06-10 16:40:55" itemprop="dateModified" datetime="2022-06-10T16:40:55+08:00">2022-06-10</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Big-Data/" itemprop="url" rel="index"><span itemprop="name">Big Data</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>30k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>28 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>本文为学习笔记，对应视频教程来自<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1yY411b72x/">【尚硅谷】电商数仓V5.0</a></p>
+<h3 id="数据仓库环境准备"><a href="#数据仓库环境准备" class="headerlink" title="数据仓库环境准备"></a>数据仓库环境准备</h3><h4 id="数据仓库运行环境"><a href="#数据仓库运行环境" class="headerlink" title="数据仓库运行环境"></a>数据仓库运行环境</h4><h5 id="Hive环境搭建"><a href="#Hive环境搭建" class="headerlink" title="Hive环境搭建"></a>Hive环境搭建</h5><h6 id="Hive引擎简介"><a href="#Hive引擎简介" class="headerlink" title="Hive引擎简介"></a>Hive引擎简介</h6><p>Hive引擎包括：默认MR、tez、spark</p>
+<p>Hive on Spark：Hive既作为存储元数据又负责SQL的解析优化，语法是HQL语法，执行引擎变成了Spark，Spark负责采用RDD执行。</p>
+<p>Spark on Hive : Hive只作为存储元数据，Spark负责SQL解析优化，语法是Spark SQL语法，Spark负责采用RDD执行。</p>
+<h6 id="Hive-on-Spark配置"><a href="#Hive-on-Spark配置" class="headerlink" title="Hive on Spark配置"></a>Hive on Spark配置</h6><p>官网下载的Hive3.1.2和Spark3.0.0默认是不兼容的。因为Hive3.1.2支持的Spark版本是2.4.5，所以需要我们重新编译Hive3.1.2版本。</p>
+<p>编译步骤：官网下载Hive3.1.2源码，修改pom文件中引用的Spark版本为3.0.0，如果编译通过，直接打包获取jar包。如果报错，就根据提示，修改相关方法，直到不报错，打包获取jar包。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 1.在Hive所在节点部署Spark</span></span><br><span class="line">[eitan@hadoop102 ~]$ tar -zxf /opt/software/spark-3.0.0-bin-hadoop3.2.tgz -C /opt/module/</span><br><span class="line">[eitan@hadoop102 ~]$ mv /opt/module/spark-3.0.0-bin-hadoop3.2/ /opt/module/spark</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 2.配置SPARK_HOME环境变量</span></span><br><span class="line">[eitan@hadoop102 ~]$ sudo vim /etc/profile.d/my_env.sh </span><br><span class="line"><span class="meta">#</span><span class="bash"> SPARK_HOME</span></span><br><span class="line">export SPARK_HOME=/opt/module/spark</span><br><span class="line">export PATH=$PATH:$SPARK_HOME/bin</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 3.在hive中创建spark配置文件</span></span><br><span class="line">[eitan@hadoop102 ~]$ vim /opt/module/hive/conf/spark-defaults.conf</span><br><span class="line">spark.master                             yarn</span><br><span class="line">spark.eventLog.enabled                   true</span><br><span class="line">spark.eventLog.dir                       hdfs://hadoop102:8020/spark-history</span><br><span class="line">spark.executor.memory                    1g</span><br><span class="line">spark.driver.memory                      1g</span><br><span class="line"></span><br><span class="line">[eitan@hadoop102 ~]$ hadoop fs -mkdir /spark-history</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 4.向HDFS上传Spark纯净版jar包</span></span><br><span class="line">[eitan@hadoop102 ~]$ tar -zxf /opt/software/spark-3.0.0-bin-without-hadoop.tgz</span><br><span class="line">[eitan@hadoop102 ~]$ hadoop fs -mkdir /spark-jars</span><br><span class="line">[eitan@hadoop102 ~]$ hadoop fs -put ./spark-3.0.0-bin-without-hadoop/jars/* /spark-jars</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 5.修改hive-site.xml文件</span></span><br><span class="line">[eitan@hadoop102 ~]$ vim /opt/module/hive/conf/hive-site.xml </span><br><span class="line">    &lt;!-- Spark依赖位置（注意：端口号8020必须和namenode的端口号一致）--&gt;</span><br><span class="line">    &lt;property&gt;</span><br><span class="line">        &lt;name&gt;spark.yarn.jars&lt;/name&gt;</span><br><span class="line">        &lt;value&gt;hdfs://hadoop102:8020/spark-jars/*&lt;/value&gt;</span><br><span class="line">    &lt;/property&gt;</span><br><span class="line"></span><br><span class="line">    &lt;!-- Hive执行引擎 --&gt;</span><br><span class="line">    &lt;property&gt;</span><br><span class="line">        &lt;name&gt;hive.execution.engine&lt;/name&gt;</span><br><span class="line">        &lt;value&gt;spark&lt;/value&gt;</span><br><span class="line">    &lt;/property&gt;</span><br><span class="line">    </span><br><span class="line"><span class="meta">#</span><span class="bash"> 6.Hive on Spark测试</span></span><br><span class="line">hive (default)&gt; create table student(id int, name string);</span><br><span class="line">hive (default)&gt; insert into table student values(1,&#x27;abc&#x27;);</span><br><span class="line">--------------------------------------------------------------------------------------</span><br><span class="line">          STAGES   ATTEMPT        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  </span><br><span class="line">--------------------------------------------------------------------------------------</span><br><span class="line">Stage-0 ........         0      FINISHED      1          1        0        0       0  </span><br><span class="line">Stage-1 ........         0      FINISHED      1          1        0        0       0  </span><br><span class="line">--------------------------------------------------------------------------------------</span><br><span class="line">STAGES: 02/02    [==========================&gt;&gt;] 100%  ELAPSED TIME: 21.24 s    </span><br><span class="line">--------------------------------------------------------------------------------------</span><br><span class="line"></span><br><span class="line">hive (default)&gt; insert into table student values(2,&#x27;def&#x27;);</span><br><span class="line">--------------------------------------------------------------------------------------</span><br><span class="line">          STAGES   ATTEMPT        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  </span><br><span class="line">--------------------------------------------------------------------------------------</span><br><span class="line">Stage-2 ........         0      FINISHED      1          1        0        0       0  </span><br><span class="line">Stage-3 ........         0      FINISHED      1          1        0        0       0  </span><br><span class="line">--------------------------------------------------------------------------------------</span><br><span class="line">STAGES: 02/02    [==========================&gt;&gt;] 100%  ELAPSED TIME: 12.07 s    </span><br><span class="line">--------------------------------------------------------------------------------------</span><br></pre></td></tr></table></figure>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/06/07/%E7%94%B5%E5%95%86%E6%95%B0%E4%BB%93%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9A%E7%94%B5%E5%95%86%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93%E5%AE%9E%E6%88%98/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/06/06/%E7%94%B5%E5%95%86%E6%95%B0%E4%BB%93%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E7%94%B5%E5%95%86%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93%E8%AE%BE%E8%AE%A1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Eitan">
+      <meta itemprop="description" content="blog用于记忆，大脑擅长思考">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Eitan's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/06/06/%E7%94%B5%E5%95%86%E6%95%B0%E4%BB%93%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E7%94%B5%E5%95%86%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93%E8%AE%BE%E8%AE%A1/" class="post-title-link" itemprop="url">电商数仓（三）：电商数据仓库设计</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-06-06 18:41:07" itemprop="dateCreated datePublished" datetime="2022-06-06T18:41:07+08:00">2022-06-06</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2022-06-07 08:52:42" itemprop="dateModified" datetime="2022-06-07T08:52:42+08:00">2022-06-07</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Big-Data/" itemprop="url" rel="index"><span itemprop="name">Big Data</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>6.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>6 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>本文为学习笔记，对应视频教程来自<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1yY411b72x/">【尚硅谷】电商数仓V5.0</a></p>
+<h3 id="数据仓库概述"><a href="#数据仓库概述" class="headerlink" title="数据仓库概述"></a>数据仓库概述</h3><h4 id="数据仓库概念"><a href="#数据仓库概念" class="headerlink" title="数据仓库概念"></a>数据仓库概念</h4><p>数据仓库是一个为数据分析而设计的企业级数据管理系统。数据仓库可集中、整合多个信息源的大量数据，借助数据仓库的分析能力，企业可从数据中获得宝贵的信息进而改进决策。同时，随着时间的推移，数据仓库中积累的大量历史数据对于数据科学家和业务分析师也是十分宝贵的。</p>
+<h4 id="数据仓库核心架构"><a href="#数据仓库核心架构" class="headerlink" title="数据仓库核心架构"></a>数据仓库核心架构</h4><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220606200025.png" alt="image-20220606200020291"></p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/06/06/%E7%94%B5%E5%95%86%E6%95%B0%E4%BB%93%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9A%E7%94%B5%E5%95%86%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93%E8%AE%BE%E8%AE%A1/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
@@ -1054,209 +1268,6 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/05/11/Hadoop%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9AHive/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/05/09/Hadoop%EF%BC%88%E4%BA%8C%EF%BC%89%EF%BC%9AHDFS/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Eitan">
-      <meta itemprop="description" content="blog用于记忆，大脑擅长思考">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Eitan's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/05/09/Hadoop%EF%BC%88%E4%BA%8C%EF%BC%89%EF%BC%9AHDFS/" class="post-title-link" itemprop="url">Hadoop（二）：HDFS</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2022-05-09 19:18:12 / 修改时间：21:33:00" itemprop="dateCreated datePublished" datetime="2022-05-09T19:18:12+08:00">2022-05-09</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Big-Data/" itemprop="url" rel="index"><span itemprop="name">Big Data</span></a>
-        </span>
-    </span>
-
-  
-      </div>
-      <div class="post-meta">
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>6k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>5 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>本文为学习笔记，对应视频教程来自<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1Qp4y1n7EN">尚硅谷大数据Hadoop 3.x</a></p>
-<h3 id="HDFS概述"><a href="#HDFS概述" class="headerlink" title="HDFS概述"></a>HDFS概述</h3><h4 id="HDFS产出背景及定义"><a href="#HDFS产出背景及定义" class="headerlink" title="HDFS产出背景及定义"></a>HDFS产出背景及定义</h4><h4 id="HDFS优缺点"><a href="#HDFS优缺点" class="headerlink" title="HDFS优缺点"></a>HDFS优缺点</h4><h4 id="HDFS组成架构"><a href="#HDFS组成架构" class="headerlink" title="HDFS组成架构"></a>HDFS组成架构</h4><h4 id="HDFS文件块大小（面试重点）"><a href="#HDFS文件块大小（面试重点）" class="headerlink" title="HDFS文件块大小（面试重点）"></a>HDFS文件块大小（面试重点）</h4>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/05/09/Hadoop%EF%BC%88%E4%BA%8C%EF%BC%89%EF%BC%9AHDFS/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/05/08/Hadoop%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9A%E9%9B%86%E7%BE%A4%E6%90%AD%E5%BB%BA/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Eitan">
-      <meta itemprop="description" content="blog用于记忆，大脑擅长思考">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Eitan's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2022/05/08/Hadoop%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9A%E9%9B%86%E7%BE%A4%E6%90%AD%E5%BB%BA/" class="post-title-link" itemprop="url">Hadoop（一）：集群搭建</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2022-05-08 20:47:24" itemprop="dateCreated datePublished" datetime="2022-05-08T20:47:24+08:00">2022-05-08</time>
-    </span>
-      <span class="post-meta-item">
-        <span class="post-meta-item-icon">
-          <i class="far fa-calendar-check"></i>
-        </span>
-        <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2022-05-20 22:47:41" itemprop="dateModified" datetime="2022-05-20T22:47:41+08:00">2022-05-20</time>
-      </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/Big-Data/" itemprop="url" rel="index"><span itemprop="name">Big Data</span></a>
-        </span>
-    </span>
-
-  
-      </div>
-      <div class="post-meta">
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>16k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>14 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>本文为学习笔记，对应视频教程来自<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1Qp4y1n7EN">尚硅谷大数据Hadoop 3.x</a></p>
-<h3 id="模板虚拟机环境准备"><a href="#模板虚拟机环境准备" class="headerlink" title="模板虚拟机环境准备"></a>模板虚拟机环境准备</h3><h4 id="安装虚拟机"><a href="#安装虚拟机" class="headerlink" title="安装虚拟机"></a>安装虚拟机</h4><p>IP地址192.168.203.100、主机名称hadoop100、内存4G、硬盘50G</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 一、编辑静态 ip 地址</span></span><br><span class="line">vi /etc/sysconfig/network-scripts/ifcfg-ens33</span><br><span class="line"><span class="meta">#</span><span class="bash"> 修改</span></span><br><span class="line">BOOTPROTO=&quot;static&quot;</span><br><span class="line"><span class="meta">#</span><span class="bash"> 添加</span></span><br><span class="line">IPADDR=&quot;192.168.203.100&quot;</span><br><span class="line">NETMASK=&quot;255.255.255.0&quot;</span><br><span class="line">GATEWAY=&quot;192.168.203.2&quot;</span><br><span class="line">DNS1=&quot;114.114.114.114&quot;</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/05/08/Hadoop%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9A%E9%9B%86%E7%BE%A4%E6%90%AD%E5%BB%BA/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
