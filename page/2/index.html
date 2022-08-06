@@ -158,7 +158,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">47</span>
+          <span class="site-state-item-count">49</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -215,6 +215,211 @@
 
 
     <div class="main-inner index posts-expand">
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/05/20/Hadoop%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9AHive/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Eitan">
+      <meta itemprop="description" content="blog用于记忆，大脑擅长思考">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Eitan's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/05/20/Hadoop%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9AHive/" class="post-title-link" itemprop="url">Hadoop（四）：Hive</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-05-20 19:54:56 / 修改时间：20:04:17" itemprop="dateCreated datePublished" datetime="2022-05-20T19:54:56+08:00">2022-05-20</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Big-Data/" itemprop="url" rel="index"><span itemprop="name">Big Data</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>54k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>49 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>本文为学习笔记，对应视频教程来自<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1L5411u7ae">黑马程序员Hive教程</a></p>
+<h3 id="Hive函数入门"><a href="#Hive函数入门" class="headerlink" title="Hive函数入门"></a>Hive函数入门</h3><h4 id="函数概述"><a href="#函数概述" class="headerlink" title="函数概述"></a>函数概述</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 显示所有的函数和运算符</span></span><br><span class="line"><span class="keyword">SHOW</span> FUNCTIONS;</span><br><span class="line"><span class="comment">-- 查看运算符或者函数的使用说明</span></span><br><span class="line"><span class="keyword">DESCRIBE</span> <span class="keyword">FUNCTION</span> avg;</span><br><span class="line"><span class="comment">-- 使用extended 可以查看更加详细的使用说明</span></span><br><span class="line"><span class="keyword">DESCRIBE</span> <span class="keyword">FUNCTION</span> EXTENDED avg;</span><br></pre></td></tr></table></figure>
+
+<h4 id="内置函数"><a href="#内置函数" class="headerlink" title="内置函数"></a>内置函数</h4><h5 id="String-Functions-字符串函数"><a href="#String-Functions-字符串函数" class="headerlink" title="String Functions 字符串函数"></a>String Functions 字符串函数</h5><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 字符串长度函数：length(str | binary)</span></span><br><span class="line"><span class="keyword">SELECT</span> length(&quot;Facebook&quot;);</span><br><span class="line"><span class="comment">-- 字符串反转函数：reverse</span></span><br><span class="line"><span class="keyword">SELECT</span> reverse(&quot;Facebook&quot;);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 字符串连接函数：concat(str1, str2, ... strN)</span></span><br><span class="line"><span class="keyword">SELECT</span> concat(&quot;abc&quot;,&quot;def&quot;);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 带分隔符字符串连接函数：concat_ws(separator, [string | array(string)]+)</span></span><br><span class="line"><span class="keyword">SELECT</span> concat_ws(<span class="string">&#x27;.&#x27;</span>, <span class="string">&#x27;www&#x27;</span>, <span class="keyword">array</span>(<span class="string">&#x27;facebook&#x27;</span>, <span class="string">&#x27;com&#x27;</span>));</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 字符串截取函数：substr(str, pos[, len]) 或者  substring(str, pos[, len])</span></span><br><span class="line"><span class="comment">-- pos是从1开始的索引，如果为负数则倒着数</span></span><br><span class="line"><span class="keyword">SELECT</span> substr(&quot;Facebook&quot;,<span class="number">-2</span>);</span><br><span class="line"><span class="keyword">SELECT</span> substr(&quot;Facebook&quot;,<span class="number">2</span>,<span class="number">2</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 字符串转大写函数：upper,ucase</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="built_in">upper</span>(&quot;Facebook&quot;);</span><br><span class="line"><span class="keyword">SELECT</span> ucase(&quot;Facebook&quot;);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 字符串转小写函数：lower,lcase</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="built_in">lower</span>(&quot;Facebook&quot;);</span><br><span class="line"><span class="keyword">SELECT</span> lcase(&quot;Facebook&quot;);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 去空格函数：trim 去除左右两边的空格</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="built_in">trim</span>(&quot; facebook &quot;);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 左边去空格函数：ltrim</span></span><br><span class="line"><span class="keyword">SELECT</span> ltrim(&quot; facebook &quot;);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 右边去空格函数：rtrim</span></span><br><span class="line"><span class="keyword">SELECT</span> rtrim(&quot; facebook &quot;);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 正则表达式替换函数：regexp_replace(str, regexp, rep)</span></span><br><span class="line"><span class="keyword">SELECT</span> regexp_replace(<span class="string">&#x27;100-200&#x27;</span>, <span class="string">&#x27;(\\d+)&#x27;</span>, <span class="string">&#x27;num&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 正则表达式解析函数：regexp_extract(str, regexp[, idx]) 提取正则匹配到的指定组内容</span></span><br><span class="line"><span class="keyword">SELECT</span> regexp_extract(<span class="string">&#x27;100-200&#x27;</span>, <span class="string">&#x27;(\\d+)-(\\d+)&#x27;</span>, <span class="number">2</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- URL解析函数：parse_url 注意要想一次解析出多个 可以使用parse_url_tuple这个UDTF函数</span></span><br><span class="line"><span class="keyword">SELECT</span> parse_url(<span class="string">&#x27;http://www.facebook.cn/path/p1.php?query=1&#x27;</span>, <span class="string">&#x27;HOST&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- json解析函数：get_json_object</span></span><br><span class="line"><span class="comment">-- $代表当前JSON对象</span></span><br><span class="line"><span class="keyword">SELECT</span> get_json_object(</span><br><span class="line">               <span class="string">&#x27;[&#123;&quot;website&quot;:&quot;www.itcast.cn&quot;,&quot;name&quot;:&quot;allenwoon&quot;&#125;, &#123;&quot;website&quot;:&quot;cloud.itcast.com&quot;,&quot;name&quot;:&quot;carbondata 中文文档&quot;&#125;]&#x27;</span>,</span><br><span class="line">               <span class="string">&#x27;$.[1].website&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 空格字符串函数：space(n) 返回指定个数空格</span></span><br><span class="line"><span class="keyword">SELECT</span> space(<span class="number">2</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 重复字符串函数：repeat(str, n) 重复str字符串n次</span></span><br><span class="line"><span class="keyword">SELECT</span> repeat(&quot;123&quot;, <span class="number">2</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 返回首字符ascii函数：ascii</span></span><br><span class="line"><span class="comment">-- a对应ASCII 97</span></span><br><span class="line"><span class="keyword">SELECT</span> ascii(&quot;apple&quot;);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 左补足函数：lpad</span></span><br><span class="line"><span class="comment">-- ???hi</span></span><br><span class="line"><span class="keyword">SELECT</span> lpad(<span class="string">&#x27;hi&#x27;</span>, <span class="number">5</span>, <span class="string">&#x27;??&#x27;</span>);</span><br><span class="line"><span class="comment">-- h</span></span><br><span class="line"><span class="keyword">SELECT</span> lpad(<span class="string">&#x27;hi&#x27;</span>, <span class="number">1</span>, <span class="string">&#x27;??&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 右补足函数：rpad</span></span><br><span class="line"><span class="keyword">SELECT</span> rpad(<span class="string">&#x27;hi&#x27;</span>, <span class="number">5</span>, <span class="string">&#x27;??&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 分割字符串函数: split(str, regex)</span></span><br><span class="line"><span class="keyword">SELECT</span> split(<span class="string">&#x27;oneAtwoBthreeC&#x27;</span>, <span class="string">&#x27;[ABC]&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">-- 集合查找函数: find_in_set(str,str_array)</span></span><br><span class="line"><span class="keyword">SELECT</span> find_in_set(<span class="string">&#x27;ab&#x27;</span>, <span class="string">&#x27;abc,b,ab,c,def&#x27;</span>);</span><br></pre></td></tr></table></figure>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/05/20/Hadoop%EF%BC%88%E5%9B%9B%EF%BC%89%EF%BC%9AHive/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/05/20/Spark%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9A%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Eitan">
+      <meta itemprop="description" content="blog用于记忆，大脑擅长思考">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Eitan's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/2022/05/20/Spark%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9A%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" class="post-title-link" itemprop="url">Spark（一）：环境搭建</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-05-20 09:44:41" itemprop="dateCreated datePublished" datetime="2022-05-20T09:44:41+08:00">2022-05-20</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2022-05-22 01:52:20" itemprop="dateModified" datetime="2022-05-22T01:52:20+08:00">2022-05-22</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Big-Data/" itemprop="url" rel="index"><span itemprop="name">Big Data</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>18k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>16 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>本文为学习笔记，对应视频教程来自<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV11A411L7CK">尚硅谷大数据Spark教程从入门到精通</a></p>
+<h3 id="Spark快速上手"><a href="#Spark快速上手" class="headerlink" title="Spark快速上手"></a>Spark快速上手</h3><h4 id="创建Maven项目"><a href="#创建Maven项目" class="headerlink" title="创建Maven项目"></a>创建Maven项目</h4><h5 id="增加Scala插件"><a href="#增加Scala插件" class="headerlink" title="增加Scala插件"></a>增加Scala插件</h5><p>Spark 由 Scala 语言开发的，我这里使用的 Scala 编译版本为 2.12.15。请通过官网查看 Spark 和 Scala 对应的版本关系<a target="_blank" rel="noopener" href="https://spark.apache.org/docs/latest/">Spark Documentation</a>。</p>
+<h5 id="WordCount"><a href="#WordCount" class="headerlink" title="WordCount"></a>WordCount</h5><figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.eitan.bigdata.spark.core.wordcount</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.apache.spark.rdd.<span class="type">RDD</span></span><br><span class="line"><span class="keyword">import</span> org.apache.spark.&#123;<span class="type">SparkConf</span>, <span class="type">SparkContext</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">object</span> <span class="title">Spark03_WordCount</span> </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">def</span> <span class="title">main</span></span>(args: <span class="type">Array</span>[<span class="type">String</span>]): <span class="type">Unit</span> = &#123;</span><br><span class="line">    <span class="comment">// 创建 Spark 运行配置对象</span></span><br><span class="line">    <span class="keyword">val</span> sparkConf = <span class="keyword">new</span> <span class="type">SparkConf</span>().setMaster(<span class="string">&quot;local&quot;</span>).setAppName(<span class="string">&quot;WordCount&quot;</span>)</span><br><span class="line">    <span class="comment">// 创建 Spark 上下文环境对象（连接对象）</span></span><br><span class="line">    <span class="keyword">val</span> sparkContext = <span class="keyword">new</span> <span class="type">SparkContext</span>(sparkConf)</span><br><span class="line">    <span class="comment">// 读取文件数据</span></span><br><span class="line">    <span class="keyword">val</span> lines: <span class="type">RDD</span>[<span class="type">String</span>] = sparkContext.textFile(<span class="string">&quot;data\\1.txt,data\\2.txt&quot;</span>)</span><br><span class="line">    <span class="comment">// 将文件中的数据进行分词</span></span><br><span class="line">    <span class="keyword">val</span> words: <span class="type">RDD</span>[<span class="type">String</span>] = lines.flatMap(_.split(<span class="string">&quot; &quot;</span>))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> wordToOne: <span class="type">RDD</span>[(<span class="type">String</span>, <span class="type">Int</span>)] = words.map(</span><br><span class="line">      word =&gt; (word, <span class="number">1</span>)</span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Spark 框架提供了更多功能，可以将分组和聚合使用一个方法实现</span></span><br><span class="line">    <span class="comment">// reduceByKey: 相同Key的数据，可以对value进行reduce聚合</span></span><br><span class="line">    <span class="keyword">val</span> wordToCount: <span class="type">RDD</span>[(<span class="type">String</span>, <span class="type">Int</span>)] = wordToOne.reduceByKey(_ + _)</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将转换结果采集到控制台打印出来</span></span><br><span class="line">    <span class="keyword">val</span> array: <span class="type">Array</span>[(<span class="type">String</span>, <span class="type">Int</span>)] = wordToCount.collect()</span><br><span class="line">    array.foreach(println)</span><br><span class="line">    <span class="comment">//关闭 Spark 连接</span></span><br><span class="line">    sparkContext.stop()</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/05/20/Spark%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9A%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
 
     
 
@@ -1092,208 +1297,6 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2021/09/29/JDK%E5%88%86%E6%9E%90%E5%B7%A5%E5%85%B7%E5%AD%A6%E4%B9%A0/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2021/09/21/%E7%BA%BF%E7%A8%8B%E5%AF%B9%E8%B1%A1%E9%94%81%E8%A2%AB%E6%9A%82%E7%94%A8%EF%BC%8C%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%97%A0%E6%B3%95%E6%AD%A3%E5%B8%B8%E7%BB%93%E6%9D%9F%E9%97%AE%E9%A2%98/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Eitan">
-      <meta itemprop="description" content="blog用于记忆，大脑擅长思考">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Eitan's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2021/09/21/%E7%BA%BF%E7%A8%8B%E5%AF%B9%E8%B1%A1%E9%94%81%E8%A2%AB%E6%9A%82%E7%94%A8%EF%BC%8C%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%97%A0%E6%B3%95%E6%AD%A3%E5%B8%B8%E7%BB%93%E6%9D%9F%E9%97%AE%E9%A2%98/" class="post-title-link" itemprop="url">线程对象锁被暂用，导致线程无法正常结束问题</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-      
-
-      <time title="创建时间：2021-09-21 22:19:42 / 修改时间：22:53:35" itemprop="dateCreated datePublished" datetime="2021-09-21T22:19:42+08:00">2021-09-21</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/java/" itemprop="url" rel="index"><span itemprop="name">java</span></a>
-        </span>
-    </span>
-
-  
-      </div>
-      <div class="post-meta">
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>2.5k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>2 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>案例出自 <a target="_blank" rel="noopener" href="https://ke.qq.com/webcourse/3583073/103725980#taid=11648638505102433&vid=3701925920872990005">马士兵MAC课程</a></p>
-<h2 id="案例代码"><a href="#案例代码" class="headerlink" title="案例代码"></a>案例代码</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test01</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Thread t1 = <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;t1 start&quot;</span>);</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                Thread.sleep(<span class="number">2000</span>);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">            &#125;</span><br><span class="line">            System.out.println(<span class="string">&quot;t1 end&quot;</span>);</span><br><span class="line">        &#125;, <span class="string">&quot;thread-0&quot;</span>);</span><br><span class="line">        t1.start();</span><br><span class="line"></span><br><span class="line">        Thread t2 = <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">            <span class="keyword">synchronized</span> (t1) &#123;</span><br><span class="line">                System.out.println(<span class="string">&quot;t2 start&quot;</span>);</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    Thread.sleep(<span class="number">5000</span>);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">                System.out.println(<span class="string">&quot;t1 isAlive: &quot;</span> + t1.isAlive());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;, <span class="string">&quot;thread-1&quot;</span>);</span><br><span class="line">        t2.start();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/09/21/%E7%BA%BF%E7%A8%8B%E5%AF%B9%E8%B1%A1%E9%94%81%E8%A2%AB%E6%9A%82%E7%94%A8%EF%BC%8C%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E6%97%A0%E6%B3%95%E6%AD%A3%E5%B8%B8%E7%BB%93%E6%9D%9F%E9%97%AE%E9%A2%98/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2021/09/20/JVM%E5%8F%91%E7%94%9FGC%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E5%8D%A1%E6%AD%BB%E9%97%AE%E9%A2%98/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="Eitan">
-      <meta itemprop="description" content="blog用于记忆，大脑擅长思考">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Eitan's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2021/09/20/JVM%E5%8F%91%E7%94%9FGC%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E5%8D%A1%E6%AD%BB%E9%97%AE%E9%A2%98/" class="post-title-link" itemprop="url">JVM 发生 GC 导致线程卡死问题</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2021-09-20 16:35:20" itemprop="dateCreated datePublished" datetime="2021-09-20T16:35:20+08:00">2021-09-20</time>
-    </span>
-      <span class="post-meta-item">
-        <span class="post-meta-item-icon">
-          <i class="far fa-calendar-check"></i>
-        </span>
-        <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-09-21 22:12:13" itemprop="dateModified" datetime="2021-09-21T22:12:13+08:00">2021-09-21</time>
-      </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/java/" itemprop="url" rel="index"><span itemprop="name">java</span></a>
-        </span>
-    </span>
-
-  
-      </div>
-      <div class="post-meta">
-    <span class="post-meta-item" title="本文字数">
-      <span class="post-meta-item-icon">
-        <i class="far fa-file-word"></i>
-      </span>
-      <span class="post-meta-item-text">本文字数：</span>
-      <span>1.5k</span>
-    </span>
-    <span class="post-meta-item" title="阅读时长">
-      <span class="post-meta-item-icon">
-        <i class="far fa-clock"></i>
-      </span>
-      <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>1 分钟</span>
-    </span>
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>案例出自 <a target="_blank" rel="noopener" href="https://ke.qq.com/webcourse/3583073/103725980#taid=11648638505102433&vid=3701925920872990005">马士兵MAC课程</a></p>
-<h2 id="案例代码"><a href="#案例代码" class="headerlink" title="案例代码"></a>案例代码</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">OSRDemo</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">long</span> counter;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;main start&quot;</span>);</span><br><span class="line">        startBusinessThread();</span><br><span class="line">        startProblemThread();</span><br><span class="line">        <span class="comment">// 等待线程启动执行</span></span><br><span class="line">        Thread.sleep(<span class="number">500</span>);</span><br><span class="line">        <span class="comment">// 执行GC</span></span><br><span class="line">        System.gc();</span><br><span class="line">        System.out.println(<span class="string">&quot;main end&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">startProblemThread</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;Problem start&quot;</span>);</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">1000000</span>; i++) &#123;</span><br><span class="line">                <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; <span class="number">100000</span>; j++) &#123;</span><br><span class="line">                    counter += i % <span class="number">33</span>;</span><br><span class="line">                    counter += i % <span class="number">333</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;).start();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">startBusinessThread</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">            System.out.println(Thread.currentThread().getName() + <span class="string">&quot; start&quot;</span>);</span><br><span class="line">            <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">                System.out.println(<span class="string">&quot;执行业务一&quot;</span>);</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    Thread.sleep(<span class="number">1000</span>);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;, <span class="string">&quot;thread-01&quot;</span>).start();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/09/20/JVM%E5%8F%91%E7%94%9FGC%E5%AF%BC%E8%87%B4%E7%BA%BF%E7%A8%8B%E5%8D%A1%E6%AD%BB%E9%97%AE%E9%A2%98/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>

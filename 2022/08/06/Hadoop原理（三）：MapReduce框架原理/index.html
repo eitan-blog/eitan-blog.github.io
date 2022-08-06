@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;example.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Muse&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;right&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:true,&quot;bookmark&quot;:{&quot;enable&quot;:true,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:true,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;搜索...&quot;,&quot;empty&quot;:&quot;没有找到任何搜索结果：${query}&quot;,&quot;hits_time&quot;:&quot;找到 ${hits} 个搜索结果（用时 ${time} 毫秒）&quot;,&quot;hits&quot;:&quot;找到 ${hits} 个搜索结果&quot;},&quot;path&quot;:&quot;&#x2F;search.xml&quot;,&quot;localsearch&quot;:{&quot;enable&quot;:true,&quot;trigger&quot;:&quot;auto&quot;,&quot;top_n_per_article&quot;:1,&quot;unescape&quot;:false,&quot;preload&quot;:false}}</script>
+<meta name="description" content="本文为学习笔记，对应视频教程来自尚硅谷大数据Hadoop教程（Hadoop 3.x安装搭建到集群调优  切片与 MapTask 并行度决定机制问题引出 对于一个大文件，Hadoop会将其拆成若干个MapTask进行并发处理。但是具体拆成多少个任务是通过什么决定的呢？ HDFS中存储的block块是严格安装字节数进行拆分的，那么MapReduce时是如何保证读取文件的逻辑完整性呢？  名词解释数据块">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hadoop原理（三）：MapReduce框架原理">
+<meta property="og:url" content="http://example.com/2022/08/06/Hadoop%E5%8E%9F%E7%90%86%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9AMapReduce%E6%A1%86%E6%9E%B6%E5%8E%9F%E7%90%86/index.html">
+<meta property="og:site_name" content="Eitan&#39;s Blog">
+<meta property="og:description" content="本文为学习笔记，对应视频教程来自尚硅谷大数据Hadoop教程（Hadoop 3.x安装搭建到集群调优  切片与 MapTask 并行度决定机制问题引出 对于一个大文件，Hadoop会将其拆成若干个MapTask进行并发处理。但是具体拆成多少个任务是通过什么决定的呢？ HDFS中存储的block块是严格安装字节数进行拆分的，那么MapReduce时是如何保证读取文件的逻辑完整性呢？  名词解释数据块">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220806123850.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220806151617.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220806152820.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220806152917.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220806160249.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220806160713.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220806161542.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220806170045.png">
+<meta property="article:published_time" content="2022-08-06T03:07:13.967Z">
+<meta property="article:modified_time" content="2022-08-06T10:18:59.927Z">
+<meta property="article:author" content="Eitan">
+<meta property="article:tag" content="Hadoop">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220806123850.png">
+
+
+<link rel="canonical" href="http://example.com/2022/08/06/Hadoop%E5%8E%9F%E7%90%86%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9AMapReduce%E6%A1%86%E6%9E%B6%E5%8E%9F%E7%90%86/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;zh-CN&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;example.com&#x2F;2022&#x2F;08&#x2F;06&#x2F;Hadoop%E5%8E%9F%E7%90%86%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9AMapReduce%E6%A1%86%E6%9E%B6%E5%8E%9F%E7%90%86&#x2F;&quot;,&quot;path&quot;:&quot;2022&#x2F;08&#x2F;06&#x2F;Hadoop原理（三）：MapReduce框架原理&#x2F;&quot;,&quot;title&quot;:&quot;Hadoop原理（三）：MapReduce框架原理&quot;}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
+<title>Hadoop原理（三）：MapReduce框架原理 | Eitan's Blog</title><script src="/js/config.js"></script>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Eitan's Blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%87%E7%89%87%E4%B8%8E-MapTask-%E5%B9%B6%E8%A1%8C%E5%BA%A6%E5%86%B3%E5%AE%9A%E6%9C%BA%E5%88%B6"><span class="nav-number">1.</span> <span class="nav-text">切片与 MapTask 并行度决定机制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E5%BC%95%E5%87%BA"><span class="nav-number">1.1.</span> <span class="nav-text">问题引出</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%8D%E8%AF%8D%E8%A7%A3%E9%87%8A"><span class="nav-number">1.2.</span> <span class="nav-text">名词解释</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Job-%E6%8F%90%E4%BA%A4%E6%B5%81%E7%A8%8B%E6%BA%90%E7%A0%81"><span class="nav-number">1.3.</span> <span class="nav-text">Job 提交流程源码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%87%E7%89%87%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90"><span class="nav-number">1.4.</span> <span class="nav-text">切片源码解析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#MapReduce%E4%B8%AD%E5%A6%82%E4%BD%95%E5%A4%84%E7%90%86%E5%8D%95%E8%A1%8C%E6%95%B0%E6%8D%AE%E5%88%86%E5%B8%83%E4%BA%8E%E4%B8%8D%E5%90%8C%E5%88%87%E7%89%87%E7%9A%84%E6%83%85%E5%86%B5"><span class="nav-number">1.5.</span> <span class="nav-text">MapReduce中如何处理单行数据分布于不同切片的情况</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Eitan"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Eitan</p>
+  <div class="site-description" itemprop="description">blog用于记忆，大脑擅长思考</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">49</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">19</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/eitan-blog" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;eitan-blog" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:eitan_blog@163.com" title="E-Mail → mailto:eitan_blog@163.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license site-overview-item animated" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+  <a href="https://github.com/yourname" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/08/06/Hadoop%E5%8E%9F%E7%90%86%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9AMapReduce%E6%A1%86%E6%9E%B6%E5%8E%9F%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Eitan">
+      <meta itemprop="description" content="blog用于记忆，大脑擅长思考">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Eitan's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Hadoop原理（三）：MapReduce框架原理
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-08-06 11:07:13 / 修改时间：18:18:59" itemprop="dateCreated datePublished" datetime="2022-08-06T11:07:13+08:00">2022-08-06</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Big-Data/" itemprop="url" rel="index"><span itemprop="name">Big Data</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>11k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>10 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>本文为学习笔记，对应视频教程来自<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1Qp4y1n7EN">尚硅谷大数据Hadoop教程（Hadoop 3.x安装搭建到集群调优</a></p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220806123850.png" alt="image-20220806123843410"></p>
+<h3 id="切片与-MapTask-并行度决定机制"><a href="#切片与-MapTask-并行度决定机制" class="headerlink" title="切片与 MapTask 并行度决定机制"></a><strong>切片与</strong> MapTask 并行度决定机制</h3><h4 id="问题引出"><a href="#问题引出" class="headerlink" title="问题引出"></a>问题引出</h4><ol>
+<li>对于一个大文件，Hadoop会将其拆成若干个MapTask进行并发处理。但是具体拆成多少个任务是通过什么决定的呢？</li>
+<li>HDFS中存储的block块是严格安装字节数进行拆分的，那么MapReduce时是如何保证读取文件的逻辑完整性呢？</li>
+</ol>
+<h4 id="名词解释"><a href="#名词解释" class="headerlink" title="名词解释"></a>名词解释</h4><p><strong>数据块：</strong>Block 是 HDFS 物理上把数据分成一块一块。数据块是 HDFS 存储数据单位。</p>
+<p><strong>数据切片：</strong>数据切片只是在逻辑上对输入进行分片，并不会在磁盘上将其切分成片进行存储。数据切片是 MapReduce 程序计算输入数据的单位，一个切片会对应启动一个 MapTask。</p>
+<span id="more"></span>
+
+<h4 id="Job-提交流程源码"><a href="#Job-提交流程源码" class="headerlink" title="Job 提交流程源码"></a><strong>Job</strong> 提交流程源码</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Submit the job to the cluster and wait for it to finish.</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> verbose print the progress to the user</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span> true if the job succeeded</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@throws</span> IOException thrown if the communication with the </span></span><br><span class="line"><span class="comment"> *         &lt;code&gt;JobTracker&lt;/code&gt; is lost</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">waitForCompletion</span><span class="params">(<span class="keyword">boolean</span> verbose</span></span></span><br><span class="line"><span class="params"><span class="function">                                 )</span> <span class="keyword">throws</span> IOException, InterruptedException,</span></span><br><span class="line"><span class="function">                                          ClassNotFoundException </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (state == JobState.DEFINE) &#123;</span><br><span class="line">    submit();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (verbose) &#123;</span><br><span class="line">    monitorAndPrintJob();</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// get the completion poll interval from the client.</span></span><br><span class="line">    <span class="keyword">int</span> completionPollIntervalMillis = </span><br><span class="line">      Job.getCompletionPollInterval(cluster.getConf());</span><br><span class="line">    <span class="keyword">while</span> (!isComplete()) &#123;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        Thread.sleep(completionPollIntervalMillis);</span><br><span class="line">      &#125; <span class="keyword">catch</span> (InterruptedException ie) &#123;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> isSuccessful();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<ol>
+<li>只有当 JobState 为 DEFINE 时提交任务，否则直接执行后续代码；</li>
+<li>通过 verbose 字段判断是否打印运行时的详细信息，如果为 false 则循环判断是否完成并返回结果。</li>
+</ol>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Submit the job to the cluster and return immediately.</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@throws</span> IOException</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">submit</span><span class="params">()</span> </span></span><br><span class="line"><span class="function">       <span class="keyword">throws</span> IOException, InterruptedException, ClassNotFoundException </span>&#123;</span><br><span class="line">  <span class="comment">// 判断状态</span></span><br><span class="line">  ensureState(JobState.DEFINE);</span><br><span class="line">  <span class="comment">// 兼容新旧API</span></span><br><span class="line">  setUseNewAPI();</span><br><span class="line">  <span class="comment">// 建立连接</span></span><br><span class="line">  connect();</span><br><span class="line">  <span class="keyword">final</span> JobSubmitter submitter = </span><br><span class="line">      getJobSubmitter(cluster.getFileSystem(), cluster.getClient());</span><br><span class="line">  status = ugi.doAs(<span class="keyword">new</span> PrivilegedExceptionAction&lt;JobStatus&gt;() &#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> JobStatus <span class="title">run</span><span class="params">()</span> <span class="keyword">throws</span> IOException, InterruptedException, </span></span><br><span class="line"><span class="function">    ClassNotFoundException </span>&#123;</span><br><span class="line">      <span class="comment">// 提交Job</span></span><br><span class="line">      <span class="keyword">return</span> submitter.submitJobInternal(Job.<span class="keyword">this</span>, cluster);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">  state = JobState.RUNNING;</span><br><span class="line">  LOG.info(<span class="string">&quot;The url to track the job: &quot;</span> + getTrackingURL());</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<ol>
+<li><p>ensureState(JobState.DEFINE)检验了任务提交之前的状态；</p>
+</li>
+<li><p>setUseNewAPI()是为了兼容新旧AIP</p>
+</li>
+<li><p>connect()方法会创建一个Cluster，该Cluster类的initialize方法会通过以下两个provider尝试初始化客户端，当YarnClientProvider无法创建出Cluster时则使用LocalClientProtocolProvider；</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220806151617.png" alt="image-20220806151610084"></p>
+</li>
+<li><p>submitter.submitJobInternal(Job.this, cluster)用于提交Job</p>
+</li>
+</ol>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">JobStatus <span class="title">submitJobInternal</span><span class="params">(Job job, Cluster cluster)</span> </span></span><br><span class="line"><span class="function"><span class="keyword">throws</span> ClassNotFoundException, InterruptedException, IOException </span>&#123;</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 1.初始化暂存目录并返回路径，该路径下存放的是提交任务的相关信息。</span></span><br><span class="line">  Path jobStagingArea = JobSubmissionFiles.getStagingDir(cluster, conf);</span><br><span class="line">  ...</span><br><span class="line">      </span><br><span class="line">  <span class="comment">// 2.获取jobid</span></span><br><span class="line">  JobID jobId = submitClient.getNewJobID();</span><br><span class="line">  job.setJobID(jobId);</span><br><span class="line">  Path submitJobDir = <span class="keyword">new</span> Path(jobStagingArea, jobId.toString());</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// 3.configure the jobconf of the user with the command line options of -libjars, -files, -archives.</span></span><br><span class="line">    copyAndConfigureFiles(job, submitJobDir);</span><br><span class="line"></span><br><span class="line">    Path submitJobFile = JobSubmissionFiles.getJobConfPath(submitJobDir);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 4.计算切片，生成切片规划文件</span></span><br><span class="line">    <span class="keyword">int</span> maps = writeSplits(job, submitJobDir);</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 5.Write job file to submit dir</span></span><br><span class="line">    writeConf(conf, submitJobFile);</span><br><span class="line">    ...</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 6.提交Job</span></span><br><span class="line">    status = submitClient.submitJob(</span><br><span class="line">        jobId, submitJobDir.toString(), job.getCredentials());</span><br><span class="line">    ...</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<ol>
+<li><p>JobSubmissionFiles.getStagingDir(cluster, conf)方法运行完后将会在文件系统下创建一个目录用于暂存任务提交的基本信息。</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220806152820.png" alt="image-20220806152815997"></p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220806152917.png" alt="image-20220806152913860"></p>
+</li>
+<li><p>submitClient.getNewJobID()用于生成JobID，每个Job的JobID均不相同，且该Job的基本信息将存储在 jobStagingArea+’/‘+jobID下</p>
+</li>
+<li><p>copyAndConfigureFiles(job, submitJobDir) 将会上传与Job有关的文件，如 libjars, jobjars, and archives</p>
+</li>
+<li><p> writeSplits(job, submitJobDir)计算切片，生成切片规划文件，具体细节后续分析</p>
+</li>
+</ol>
+<p>   <img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220806160249.png" alt="image-20220806160243782"></p>
+<ol start="5">
+<li><p>writeConf(conf, submitJobFile)，将yarn-default.xml、mapred-default.xml、core-default.xml等配置文件内容整合成Job.xml并上传</p>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220806160713.png" alt="image-20220806160709853"></p>
+</li>
+<li><p>submitClient.submitJob(…)，提交Job</p>
+</li>
+</ol>
+</blockquote>
+<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220806161542.png" alt="image-20220806161537929"></p>
+<h4 id="切片源码解析"><a href="#切片源码解析" class="headerlink" title="切片源码解析"></a>切片源码解析</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">writeSplits</span><span class="params">(org.apache.hadoop.mapreduce.JobContext job,</span></span></span><br><span class="line"><span class="params"><span class="function">    Path jobSubmitDir)</span> <span class="keyword">throws</span> IOException,</span></span><br><span class="line"><span class="function">    InterruptedException, ClassNotFoundException </span>&#123;</span><br><span class="line">  JobConf jConf = (JobConf)job.getConfiguration();</span><br><span class="line">  <span class="keyword">int</span> maps;</span><br><span class="line">  <span class="keyword">if</span> (jConf.getUseNewMapper()) &#123;</span><br><span class="line">    maps = writeNewSplits(job, jobSubmitDir);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    maps = writeOldSplits(jConf, jobSubmitDir);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> maps;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> &lt;T extends InputSplit&gt;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">writeNewSplits</span><span class="params">(JobContext job, Path jobSubmitDir)</span> <span class="keyword">throws</span> IOException,</span></span><br><span class="line"><span class="function">    InterruptedException, ClassNotFoundException </span>&#123;</span><br><span class="line">  Configuration conf = job.getConfiguration();</span><br><span class="line">  InputFormat&lt;?, ?&gt; input =</span><br><span class="line">    ReflectionUtils.newInstance(job.getInputFormatClass(), conf);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 最终将调用InputFormat类的getSplits方法进行切片</span></span><br><span class="line">  List&lt;InputSplit&gt; splits = input.getSplits(job);</span><br><span class="line">  T[] array = (T[]) splits.toArray(<span class="keyword">new</span> InputSplit[splits.size()]);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// sort the splits into order based on size, so that the biggest</span></span><br><span class="line">  <span class="comment">// go first</span></span><br><span class="line">  Arrays.sort(array, <span class="keyword">new</span> SplitComparator());</span><br><span class="line">  JobSplitWriter.createSplitFiles(jobSubmitDir, conf, </span><br><span class="line">      jobSubmitDir.getFileSystem(conf), array);</span><br><span class="line">  <span class="keyword">return</span> array.length;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>观看上诉源代码，我们可以发现，切片的划分最终将调用InputFormat类的getSplits方法，因此不同的InputFormat将使用不同的划分规则，这边我们使用FileInputFormat类进行学习。</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> List&lt;InputSplit&gt; <span class="title">getSplits</span><span class="params">(JobContext job)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  StopWatch sw = <span class="keyword">new</span> StopWatch().start();</span><br><span class="line">  <span class="keyword">long</span> minSize = Math.max(getFormatMinSplitSize(), getMinSplitSize(job));</span><br><span class="line">  <span class="keyword">long</span> maxSize = getMaxSplitSize(job);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// generate splits</span></span><br><span class="line">  List&lt;InputSplit&gt; splits = <span class="keyword">new</span> ArrayList&lt;InputSplit&gt;();</span><br><span class="line">  <span class="comment">// 获取需要处理的文件信息，包括文件所在位置</span></span><br><span class="line">  List&lt;FileStatus&gt; files = listStatus(job);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">boolean</span> ignoreDirs = !getInputDirRecursive(job)</span><br><span class="line">    &amp;&amp; job.getConfiguration().getBoolean(INPUT_DIR_NONRECURSIVE_IGNORE_SUBDIRS, <span class="keyword">false</span>);</span><br><span class="line">  <span class="comment">// 遍历文件，这里可以判断出切片不是考虑数据集整体，而是针对每一个文件单独切片</span></span><br><span class="line">  <span class="keyword">for</span> (FileStatus file: files) &#123;</span><br><span class="line">    <span class="keyword">if</span> (ignoreDirs &amp;&amp; file.isDirectory()) &#123;</span><br><span class="line">      <span class="keyword">continue</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    Path path = file.getPath();</span><br><span class="line">    <span class="comment">// 获取文件长度</span></span><br><span class="line">    <span class="keyword">long</span> length = file.getLen();</span><br><span class="line">    <span class="keyword">if</span> (length != <span class="number">0</span>) &#123;</span><br><span class="line">      BlockLocation[] blkLocations;</span><br><span class="line">      <span class="keyword">if</span> (file <span class="keyword">instanceof</span> LocatedFileStatus) &#123;</span><br><span class="line">        blkLocations = ((LocatedFileStatus) file).getBlockLocations();</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        FileSystem fs = path.getFileSystem(job.getConfiguration());</span><br><span class="line">        blkLocations = fs.getFileBlockLocations(file, <span class="number">0</span>, length);</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">// 判断该文件是否可以切片，有些压缩过的文件不支持切片</span></span><br><span class="line">      <span class="keyword">if</span> (isSplitable(job, path)) &#123;</span><br><span class="line">        <span class="keyword">long</span> blockSize = file.getBlockSize();</span><br><span class="line">        <span class="comment">// 计算切片大小，默认等于blockSize</span></span><br><span class="line">        <span class="keyword">long</span> splitSize = computeSplitSize(blockSize, minSize, maxSize);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">long</span> bytesRemaining = length;</span><br><span class="line">        <span class="comment">// SPLIT_SLOP为1.1，即当文件剩余大小小于块文件的1.1倍时，不进行切片避免产生小文件</span></span><br><span class="line">        <span class="keyword">while</span> (((<span class="keyword">double</span>) bytesRemaining)/splitSize &gt; SPLIT_SLOP) &#123;</span><br><span class="line">          <span class="keyword">int</span> blkIndex = getBlockIndex(blkLocations, length-bytesRemaining);</span><br><span class="line">          <span class="comment">// 将切片信息记入在splits数组中</span></span><br><span class="line">          splits.add(makeSplit(path, length-bytesRemaining, splitSize,</span><br><span class="line">                      blkLocations[blkIndex].getHosts(),</span><br><span class="line">                      blkLocations[blkIndex].getCachedHosts()));</span><br><span class="line">          bytesRemaining -= splitSize;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (bytesRemaining != <span class="number">0</span>) &#123;</span><br><span class="line">          <span class="keyword">int</span> blkIndex = getBlockIndex(blkLocations, length-bytesRemaining);</span><br><span class="line">          splits.add(makeSplit(path, length-bytesRemaining, bytesRemaining,</span><br><span class="line">                     blkLocations[blkIndex].getHosts(),</span><br><span class="line">                     blkLocations[blkIndex].getCachedHosts()));</span><br><span class="line">        &#125;</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123; <span class="comment">// not splitable</span></span><br><span class="line">        <span class="keyword">if</span> (LOG.isDebugEnabled()) &#123;</span><br><span class="line">          <span class="comment">// Log only if the file is big enough to be splitted</span></span><br><span class="line">          <span class="keyword">if</span> (length &gt; Math.min(file.getBlockSize(), minSize)) &#123;</span><br><span class="line">            LOG.debug(<span class="string">&quot;File is not splittable so no parallelization &quot;</span></span><br><span class="line">                + <span class="string">&quot;is possible: &quot;</span> + file.getPath());</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        splits.add(makeSplit(path, <span class="number">0</span>, length, blkLocations[<span class="number">0</span>].getHosts(),</span><br><span class="line">                    blkLocations[<span class="number">0</span>].getCachedHosts()));</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123; </span><br><span class="line">      <span class="comment">//Create empty hosts array for zero length files</span></span><br><span class="line">      splits.add(makeSplit(path, <span class="number">0</span>, length, <span class="keyword">new</span> String[<span class="number">0</span>]));</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// Save the number of input files for metrics/loadgen</span></span><br><span class="line">  job.getConfiguration().setLong(NUM_INPUT_FILES, files.size());</span><br><span class="line">  sw.stop();</span><br><span class="line">  <span class="keyword">if</span> (LOG.isDebugEnabled()) &#123;</span><br><span class="line">    LOG.debug(<span class="string">&quot;Total # of splits generated by getSplits: &quot;</span> + splits.size()</span><br><span class="line">        + <span class="string">&quot;, TimeTaken: &quot;</span> + sw.now(TimeUnit.MILLISECONDS));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> splits;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<ol>
+<li>maxsize（切片最大值）：参数如果调得比blockSize小，则会让切片变小，而且就等于配置的这个参数的值;</li>
+<li>minsize（切片最小值）：参数调的比blockSize大，则可以让切片变得比blockSize还大;</li>
+<li>当文件剩余大小小于单个切片大小的1.1倍时，为了防止参数小文件切片将不再进行划分；</li>
+<li><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220806170045.png" alt="image-20220806170040853"></li>
+</ol>
+</blockquote>
+<h4 id="MapReduce中如何处理单行数据分布于不同切片的情况"><a href="#MapReduce中如何处理单行数据分布于不同切片的情况" class="headerlink" title="MapReduce中如何处理单行数据分布于不同切片的情况"></a>MapReduce中如何处理单行数据分布于不同切片的情况</h4><p>FileInputFormat对文件的切分是严格按照偏移量来的，因此一行记录比较长的话，其可能被切分到不同的InputSplit。但这并不会对Map造成影响，尽管一行记录可能被拆分到不同的InputSplit，但是与FileInputFormat关联的RecordReader被设计的足够健壮，当一行记录跨InputSplit时，其能够到读取不同的InputSplit，直到把这一行记录读取完成，在Hadoop里，记录行形式的文本，通常采用默认的TextInputFormat，TextInputFormat关联的是LineRecordReader，下面我们来看看LineRecordReader的的nextKeyValue方法里读取文件的代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">readDefaultLine</span><span class="params">(Text str, <span class="keyword">int</span> maxLineLength, <span class="keyword">int</span> maxBytesToConsume)</span></span></span><br><span class="line"><span class="function"><span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  <span class="comment">/* We&#x27;re reading data from in, but the head of the stream may be</span></span><br><span class="line"><span class="comment">   * already buffered in buffer, so we have several cases:</span></span><br><span class="line"><span class="comment">   * 1. No newline characters are in the buffer, so we need to copy</span></span><br><span class="line"><span class="comment">   *    everything and read another buffer from the stream.</span></span><br><span class="line"><span class="comment">   * 2. An unambiguously terminated line is in buffer, so we just</span></span><br><span class="line"><span class="comment">   *    copy to str.</span></span><br><span class="line"><span class="comment">   * 3. Ambiguously terminated line is in buffer, i.e. buffer ends</span></span><br><span class="line"><span class="comment">   *    in CR.  In this case we copy everything up to CR to str, but</span></span><br><span class="line"><span class="comment">   *    we also need to see what follows CR: if it&#x27;s LF, then we</span></span><br><span class="line"><span class="comment">   *    need consume LF as well, so next call to readLine will read</span></span><br><span class="line"><span class="comment">   *    from after that.</span></span><br><span class="line"><span class="comment">   * We use a flag prevCharCR to signal if previous character was CR</span></span><br><span class="line"><span class="comment">   * and, if it happens to be at the end of the buffer, delay</span></span><br><span class="line"><span class="comment">   * consuming it until we have a chance to look at the char that</span></span><br><span class="line"><span class="comment">   * follows.</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  str.clear();</span><br><span class="line">  <span class="keyword">int</span> txtLength = <span class="number">0</span>; <span class="comment">//tracks str.getLength(), as an optimization</span></span><br><span class="line">  <span class="keyword">int</span> newlineLength = <span class="number">0</span>; <span class="comment">//length of terminating newline</span></span><br><span class="line">  <span class="keyword">boolean</span> prevCharCR = <span class="keyword">false</span>; <span class="comment">//true of prev char was CR</span></span><br><span class="line">  <span class="keyword">long</span> bytesConsumed = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">do</span> &#123;</span><br><span class="line">    <span class="keyword">int</span> startPosn = bufferPosn; <span class="comment">//starting from where we left off the last time</span></span><br><span class="line">    <span class="keyword">if</span> (bufferPosn &gt;= bufferLength) &#123;</span><br><span class="line">      startPosn = bufferPosn = <span class="number">0</span>;</span><br><span class="line">      <span class="keyword">if</span> (prevCharCR) &#123;</span><br><span class="line">        ++bytesConsumed; <span class="comment">//account for CR from previous read</span></span><br><span class="line">      &#125;</span><br><span class="line">      bufferLength = fillBuffer(in, buffer, prevCharCR);</span><br><span class="line">      <span class="keyword">if</span> (bufferLength &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">break</span>; <span class="comment">// EOF</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (; bufferPosn &lt; bufferLength; ++bufferPosn) &#123; <span class="comment">//search for newline</span></span><br><span class="line">      <span class="keyword">if</span> (buffer[bufferPosn] == LF) &#123;</span><br><span class="line">        newlineLength = (prevCharCR) ? <span class="number">2</span> : <span class="number">1</span>;</span><br><span class="line">        ++bufferPosn; <span class="comment">// at next invocation proceed from following byte</span></span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (prevCharCR) &#123; <span class="comment">//CR + notLF, we are at notLF</span></span><br><span class="line">        newlineLength = <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      prevCharCR = (buffer[bufferPosn] == CR);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">int</span> readLength = bufferPosn - startPosn;</span><br><span class="line">    <span class="keyword">if</span> (prevCharCR &amp;&amp; newlineLength == <span class="number">0</span>) &#123;</span><br><span class="line">      --readLength; <span class="comment">//CR at the end of the buffer</span></span><br><span class="line">    &#125;</span><br><span class="line">    bytesConsumed += readLength;</span><br><span class="line">    <span class="keyword">int</span> appendLength = readLength - newlineLength;</span><br><span class="line">    <span class="keyword">if</span> (appendLength &gt; maxLineLength - txtLength) &#123;</span><br><span class="line">      appendLength = maxLineLength - txtLength;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (appendLength &gt; <span class="number">0</span>) &#123;</span><br><span class="line">      str.append(buffer, startPosn, appendLength);</span><br><span class="line">      txtLength += appendLength;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">while</span> (newlineLength == <span class="number">0</span> &amp;&amp; bytesConsumed &lt; maxBytesToConsume);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (bytesConsumed &gt; Integer.MAX_VALUE) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> IOException(<span class="string">&quot;Too many bytes before newline: &quot;</span> + bytesConsumed);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> (<span class="keyword">int</span>)bytesConsumed;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>newlineLength==0则以为一次do-while循环中读取的内容中没有遇到换行符，因maxBytesToConsume的默认值为Integer.MAX_VALUE，所以如果读取的内容没有遇到换行符，则会一直读取下去，知道读取的内容超过maxBytesToConsume。这样的出来方式，解决了一行记录跨InputSplit的读取问题，同样也会造成下面两个疑问：</p>
+<p>​    1.既然在LineReader读取方法里面没有对考虑InputSplit的end进行处理，难道读取一个InputSplit的时候，会这样无限的读取下去么？</p>
+<p>​    2.如果一行记录L跨越了A,B两个InputSplit，读A的时候已经读取了跨越A，B的这条记录L，那么对B这个InputSplit读取的时候，如果做到不读取L这条记录在B中的部分呢？</p>
+<p>​    为了解决这两个问题，Hadoop通过下面的代码来做到：LineRecordReader的nextKeyValue方法。</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">nextKeyValue</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (key == <span class="keyword">null</span>) &#123;</span><br><span class="line">    key = <span class="keyword">new</span> LongWritable();</span><br><span class="line">  &#125;</span><br><span class="line">  key.set(pos);</span><br><span class="line">  <span class="keyword">if</span> (value == <span class="keyword">null</span>) &#123;</span><br><span class="line">    value = <span class="keyword">new</span> Text();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">int</span> newSize = <span class="number">0</span>;</span><br><span class="line">  <span class="comment">// We always read one extra line, which lies outside the upper</span></span><br><span class="line">  <span class="comment">// split limit i.e. (end - 1)</span></span><br><span class="line">  <span class="keyword">while</span> (getFilePosition() &lt;= end || in.needAdditionalRecordAfterSplit()) &#123;</span><br><span class="line">    <span class="keyword">if</span> (pos == <span class="number">0</span>) &#123;</span><br><span class="line">      newSize = skipUtfByteOrderMark();</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      newSize = in.readLine(value, maxLineLength, maxBytesToConsume(pos));</span><br><span class="line">      pos += newSize;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((newSize == <span class="number">0</span>) || (newSize &lt; maxLineLength)) &#123;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// line too long. try again</span></span><br><span class="line">    LOG.info(<span class="string">&quot;Skipped line of size &quot;</span> + newSize + <span class="string">&quot; at pos &quot;</span> + </span><br><span class="line">             (pos - newSize));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (newSize == <span class="number">0</span>) &#123;</span><br><span class="line">    key = <span class="keyword">null</span>;</span><br><span class="line">    value = <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果不是第一InputSplit，则在读取的时候，LineRecordReader会自动忽略掉第一个换行符之前的所有内容，这样就不存在重读读取的问题。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// If this is not the first split, we always throw away first record  </span></span><br><span class="line"><span class="comment">// because we always (except the last split) read one extra line in  </span></span><br><span class="line"><span class="comment">// next() method.  </span></span><br><span class="line"><span class="keyword">if</span> (start != <span class="number">0</span>) &#123;  </span><br><span class="line">  start += in.readLine(<span class="keyword">new</span> Text(), <span class="number">0</span>, maxBytesToConsume(start));  </span><br><span class="line">&#125;  </span><br><span class="line"><span class="keyword">this</span>.pos = start; </span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Eitan
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="http://example.com/2022/08/06/Hadoop%E5%8E%9F%E7%90%86%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9AMapReduce%E6%A1%86%E6%9E%B6%E5%8E%9F%E7%90%86/" title="Hadoop原理（三）：MapReduce框架原理">http://example.com/2022/08/06/Hadoop原理（三）：MapReduce框架原理/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Hadoop/" rel="tag"><i class="fa fa-tag"></i> Hadoop</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/08/03/Hadoop%E5%8E%9F%E7%90%86%EF%BC%88%E4%BA%8C%EF%BC%89%EF%BC%9AHDFS%E7%9A%84%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B/" rel="prev" title="Hadoop原理（二）：HDFS的读写流程">
+                  <i class="fa fa-chevron-left"></i> Hadoop原理（二）：HDFS的读写流程
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+<script src="/js/comments.js"></script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Eitan</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script><script src="/js/bookmark.js"></script>
+
+  
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

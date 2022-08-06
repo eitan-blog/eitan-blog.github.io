@@ -21,32 +21,32 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{&quot;hostname&quot;:&quot;example.com&quot;,&quot;root&quot;:&quot;&#x2F;&quot;,&quot;images&quot;:&quot;&#x2F;images&quot;,&quot;scheme&quot;:&quot;Muse&quot;,&quot;version&quot;:&quot;8.4.0&quot;,&quot;exturl&quot;:false,&quot;sidebar&quot;:{&quot;position&quot;:&quot;right&quot;,&quot;display&quot;:&quot;post&quot;,&quot;padding&quot;:18,&quot;offset&quot;:12},&quot;copycode&quot;:true,&quot;bookmark&quot;:{&quot;enable&quot;:true,&quot;color&quot;:&quot;#222&quot;,&quot;save&quot;:&quot;auto&quot;},&quot;fancybox&quot;:true,&quot;mediumzoom&quot;:false,&quot;lazyload&quot;:false,&quot;pangu&quot;:false,&quot;comments&quot;:{&quot;style&quot;:&quot;tabs&quot;,&quot;active&quot;:null,&quot;storage&quot;:true,&quot;lazyload&quot;:false,&quot;nav&quot;:null},&quot;motion&quot;:{&quot;enable&quot;:true,&quot;async&quot;:false,&quot;transition&quot;:{&quot;post_block&quot;:&quot;fadeIn&quot;,&quot;post_header&quot;:&quot;fadeInDown&quot;,&quot;post_body&quot;:&quot;fadeInDown&quot;,&quot;coll_header&quot;:&quot;fadeInLeft&quot;,&quot;sidebar&quot;:&quot;fadeInUp&quot;}},&quot;prism&quot;:false,&quot;i18n&quot;:{&quot;placeholder&quot;:&quot;搜索...&quot;,&quot;empty&quot;:&quot;没有找到任何搜索结果：${query}&quot;,&quot;hits_time&quot;:&quot;找到 ${hits} 个搜索结果（用时 ${time} 毫秒）&quot;,&quot;hits&quot;:&quot;找到 ${hits} 个搜索结果&quot;},&quot;path&quot;:&quot;&#x2F;search.xml&quot;,&quot;localsearch&quot;:{&quot;enable&quot;:true,&quot;trigger&quot;:&quot;auto&quot;,&quot;top_n_per_article&quot;:1,&quot;unescape&quot;:false,&quot;preload&quot;:false}}</script>
-<meta name="description" content="项目中 Redis 中的引用常见 五大数据类型：String、List、Hash、Set、Zset  基本上就是缓存~！  为的是服务无状态，延申思考，看你的项目有哪些数据结果或对象，在单机里需要单机锁，在多机里需要分布式锁，抽出来放入 redis 中。   Redis 是单线程还是多线程 无论是什么版本，工作线程就是一个  6.x 高版本出现了 IO 多线程  redis 的 IO 模型  6.">
-<meta property="og:type" content="website">
-<meta property="og:title" content="resid常见面试题">
-<meta property="og:url" content="http://example.com/resid%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98.html">
+<meta name="description" content="本文为学习笔记，对应视频教程来自尚硅谷大数据Hadoop教程（Hadoop 3.x安装搭建到集群调优）P55-P58 HDFS写数据流程  客户端通过 Distributed FileSystem 模块向 NameNode 请求上传文件，NameNode 检查目标文件是否已存在，父目录是否存在。 NameNode 返回是否可以上传。 客户端请求第一个 Block 上传到哪几个 DataNode 服">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hadoop原理（二）：HDFS的读写流程">
+<meta property="og:url" content="http://example.com/2022/08/03/Hadoop%E5%8E%9F%E7%90%86%EF%BC%88%E4%BA%8C%EF%BC%89%EF%BC%9AHDFS%E7%9A%84%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B/index.html">
 <meta property="og:site_name" content="Eitan&#39;s Blog">
-<meta property="og:description" content="项目中 Redis 中的引用常见 五大数据类型：String、List、Hash、Set、Zset  基本上就是缓存~！  为的是服务无状态，延申思考，看你的项目有哪些数据结果或对象，在单机里需要单机锁，在多机里需要分布式锁，抽出来放入 redis 中。   Redis 是单线程还是多线程 无论是什么版本，工作线程就是一个  6.x 高版本出现了 IO 多线程  redis 的 IO 模型  6.">
+<meta property="og:description" content="本文为学习笔记，对应视频教程来自尚硅谷大数据Hadoop教程（Hadoop 3.x安装搭建到集群调优）P55-P58 HDFS写数据流程  客户端通过 Distributed FileSystem 模块向 NameNode 请求上传文件，NameNode 检查目标文件是否已存在，父目录是否存在。 NameNode 返回是否可以上传。 客户端请求第一个 Block 上传到哪几个 DataNode 服">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210621154535.png">
-<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210621160207.png">
-<meta property="article:published_time" content="2021-06-22T01:13:01.963Z">
-<meta property="article:modified_time" content="2021-06-21T10:48:10.049Z">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220803222600.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220803224019.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220803224802.png">
+<meta property="article:published_time" content="2022-08-03T14:17:32.014Z">
+<meta property="article:modified_time" content="2022-08-03T14:52:19.029Z">
 <meta property="article:author" content="Eitan">
-<meta property="article:tag" content="redis">
+<meta property="article:tag" content="Hadoop">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210621154535.png">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220803222600.png">
 
 
-<link rel="canonical" href="http://example.com/resid%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98">
+<link rel="canonical" href="http://example.com/2022/08/03/Hadoop%E5%8E%9F%E7%90%86%EF%BC%88%E4%BA%8C%EF%BC%89%EF%BC%9AHDFS%E7%9A%84%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:false,&quot;lang&quot;:&quot;zh-CN&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;example.com&#x2F;resid%E5%B8%B8%E8%A7%81%E9%9D%A2%E8%AF%95%E9%A2%98.html&quot;,&quot;path&quot;:&quot;resid常见面试题.html&quot;,&quot;title&quot;:&quot;resid常见面试题&quot;}</script>
+<script class="next-config" data-name="page" type="application/json">{&quot;sidebar&quot;:&quot;&quot;,&quot;isHome&quot;:false,&quot;isPost&quot;:true,&quot;lang&quot;:&quot;zh-CN&quot;,&quot;comments&quot;:true,&quot;permalink&quot;:&quot;http:&#x2F;&#x2F;example.com&#x2F;2022&#x2F;08&#x2F;03&#x2F;Hadoop%E5%8E%9F%E7%90%86%EF%BC%88%E4%BA%8C%EF%BC%89%EF%BC%9AHDFS%E7%9A%84%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B&#x2F;&quot;,&quot;path&quot;:&quot;2022&#x2F;08&#x2F;03&#x2F;Hadoop原理（二）：HDFS的读写流程&#x2F;&quot;,&quot;title&quot;:&quot;Hadoop原理（二）：HDFS的读写流程&quot;}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">&quot;&quot;</script>
-<title>resid常见面试题 | Eitan's Blog
-</title><script src="/js/config.js"></script>
+<title>Hadoop原理（二）：HDFS的读写流程 | Eitan's Blog</title><script src="/js/config.js"></script>
   
 
 
@@ -150,7 +150,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%A1%B9%E7%9B%AE%E4%B8%AD-Redis-%E4%B8%AD%E7%9A%84%E5%BC%95%E7%94%A8%E5%B8%B8%E8%A7%81"><span class="nav-number">1.</span> <span class="nav-text">项目中 Redis 中的引用常见</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis-%E6%98%AF%E5%8D%95%E7%BA%BF%E7%A8%8B%E8%BF%98%E6%98%AF%E5%A4%9A%E7%BA%BF%E7%A8%8B"><span class="nav-number">2.</span> <span class="nav-text">Redis 是单线程还是多线程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%81%8A%E8%81%8A-Redis-%E7%BC%93%E5%AD%98%E7%9A%84%E5%87%BB%E7%A9%BF%E3%80%81%E7%A9%BF%E9%80%8F%E5%92%8C%E9%9B%AA%E5%B4%A9"><span class="nav-number">3.</span> <span class="nav-text">聊聊 Redis 缓存的击穿、穿透和雪崩</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A9%BF%E9%80%8F-%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%AD%E6%A0%B9%E6%9C%AC%E6%B2%A1%E6%9C%89%E8%BF%99%E4%B8%AA%E6%95%B0%E6%8D%AE"><span class="nav-number">3.1.</span> <span class="nav-text">穿透 - 数据库中根本没有这个数据</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%BB%E7%A9%BF-%E6%95%B0%E6%8D%AE%E5%BA%93%E4%B8%AD%E6%9C%89%EF%BC%8C%E4%BD%86%E6%98%AF-redis-%E6%B2%A1%E6%9C%89%E7%BC%93%E5%AD%98"><span class="nav-number">3.2.</span> <span class="nav-text">击穿 - 数据库中有，但是 redis 没有缓存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9B%AA%E5%B4%A9-%E5%90%8C%E4%B8%80%E6%97%B6%E5%88%BB%E5%A4%A7%E9%87%8F-key-%E8%BF%87%E6%9C%9F"><span class="nav-number">3.3.</span> <span class="nav-text">雪崩 - 同一时刻大量 key 过期</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis-%E6%98%AF%E6%80%8E%E4%B9%88%E5%9B%9E%E6%94%B6%E8%BF%87%E6%9C%9F%E7%9A%84-key-%E7%9A%84"><span class="nav-number">4.</span> <span class="nav-text">Redis 是怎么回收过期的 key 的</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis-%E7%BC%93%E5%AD%98%E6%B7%98%E6%B1%B0"><span class="nav-number">5.</span> <span class="nav-text">Redis 缓存淘汰</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8F%8F%E8%BF%B0%E4%B8%80%E4%B8%8B-Redis-%E6%8C%81%E4%B9%85%E5%8C%96%E6%96%B9%E5%BC%8F"><span class="nav-number">6.</span> <span class="nav-text">描述一下 Redis 持久化方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8F%8F%E8%BF%B0%E4%B8%80%E4%B8%8B-Redis-%E6%8C%81%E4%B9%85%E5%8C%96%E5%8E%9F%E7%90%86"><span class="nav-number">7.</span> <span class="nav-text">描述一下 Redis 持久化原理</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#HDFS%E5%86%99%E6%95%B0%E6%8D%AE%E6%B5%81%E7%A8%8B"><span class="nav-number">1.</span> <span class="nav-text">HDFS写数据流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HDFS%E8%AF%BB%E6%95%B0%E6%8D%AE%E6%B5%81%E7%A8%8B"><span class="nav-number">2.</span> <span class="nav-text">HDFS读数据流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%8A%82%E7%82%B9%E8%B7%9D%E7%A6%BB%E8%AE%A1%E7%AE%97"><span class="nav-number">3.</span> <span class="nav-text">节点距离计算</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -222,112 +222,152 @@
 </noscript>
 
 
-    <div class="main-inner page posts-expand">
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
   
   
 
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/08/03/Hadoop%E5%8E%9F%E7%90%86%EF%BC%88%E4%BA%8C%EF%BC%89%EF%BC%9AHDFS%E7%9A%84%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B/">
 
-    
-    
-    
-    <div class="post-block" lang="zh-CN"><header class="post-header">
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Eitan">
+      <meta itemprop="description" content="blog用于记忆，大脑擅长思考">
+    </span>
 
-<h1 class="post-title" itemprop="name headline">resid常见面试题
-</h1>
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Eitan's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Hadoop原理（二）：HDFS的读写流程
+        </h1>
 
-<div class="post-meta-container">
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2022-08-03 22:17:32 / 修改时间：22:52:19" itemprop="dateCreated datePublished" datetime="2022-08-03T22:17:32+08:00">2022-08-03</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Big-Data/" itemprop="url" rel="index"><span itemprop="name">Big Data</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>688</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>1 分钟</span>
+    </span>
 </div>
 
-</header>
+        </div>
+      </header>
 
-      
-      
-      <div class="post-body">
-          <h2 id="项目中-Redis-中的引用常见"><a href="#项目中-Redis-中的引用常见" class="headerlink" title="项目中 Redis 中的引用常见"></a>项目中 <em>Redis</em> 中的引用常见</h2><ol>
-<li><p>五大数据类型：String、List、Hash、Set、Zset</p>
-</li>
-<li><p>基本上就是缓存~！</p>
-</li>
-<li><p>为的是服务无状态，延申思考，看你的项目有哪些数据结果或对象，在单机里需要单机锁，在多机里需要分布式锁，抽出来放入 redis 中。</p>
-</li>
-</ol>
-<h2 id="Redis-是单线程还是多线程"><a href="#Redis-是单线程还是多线程" class="headerlink" title="Redis 是单线程还是多线程"></a><em>Redis</em> 是单线程还是多线程</h2><ol>
-<li><p>无论是什么版本，工作线程就是一个</p>
-</li>
-<li><p>6.x 高版本出现了 IO 多线程</p>
-</li>
-<li><p><em>redis</em> 的 IO 模型</p>
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>本文为学习笔记，对应视频教程来自<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1Qp4y1n7EN?p=59&spm_id_from=333.1007.top_right_bar_window_history.content.click&vd_source=c4d3402b7e4d23cf5a0df975c6c85b2e">尚硅谷大数据Hadoop教程（Hadoop 3.x安装搭建到集群调优）P55-P58</a></p>
+<h3 id="HDFS写数据流程"><a href="#HDFS写数据流程" class="headerlink" title="HDFS写数据流程"></a>HDFS写数据流程</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220803222600.png" alt="image-20220803222555238"></p>
 <ol>
-<li>6.x 之前</li>
+<li>客户端通过 Distributed FileSystem 模块向 NameNode 请求上传文件，NameNode 检查目标文件是否已存在，父目录是否存在。</li>
+<li>NameNode 返回是否可以上传。</li>
+<li>客户端请求第一个 Block 上传到哪几个 DataNode 服务器上。</li>
+<li>NameNode 返回 3 个 DataNode 节点，分别为 dn1、dn2、dn3。</li>
+<li>客户端通过 FSDataOutputStream 模块请求 dn1 上传数据，dn1 收到请求会继续调用dn2，然后 dn2 调用 dn3，将这个通信管道建立完成。</li>
+<li>dn1、dn2、dn3 逐级应答客户端。</li>
+<li>客户端开始往 dn1 上传第一个 Block（先从磁盘读取数据放到一个本地内存缓存），以 Packet 为单位，dn1 收到一个 Packet 就会传给 dn2，dn2 传给 dn3；dn1 每传一个 packet 会放入一个应答队列等待应答。</li>
+<li>当一个 Block 传输完成之后，客户端再次请求 NameNode 上传第二个 Block 的服务器。（重复执行 3-7 步）。</li>
 </ol>
-<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210621154535.png" alt="image-20210621154530755"></p>
-<pre><code>&gt;Redis 的操作是原子的，包括 单指令、pipeline、lua 脚本
-&gt;事务 VS pipeline：
-&gt;
-&gt;1. 事务是先发送给 redis，攒着后执行。而 pipeline 是先攒着，攒完后再发送给 redis
-&gt;2. 事务在执行时期是原子的
-</code></pre>
-</li>
-<li><p>6.x 之后</p>
-<p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20210621160207.png" alt="image-20210621160204017"></p>
-<blockquote>
-<p>好处：</p>
-<ol>
-<li>多个线程、CPU并行负责数据的输入/输出，提高了吞吐量</li>
-<li>更好的压榨 CPU 资源，网卡也能得到更高效的使用</li>
-<li>指令的执行复杂度降低</li>
-</ol>
-</blockquote>
-</li>
-</ol>
-<h2 id="聊聊-Redis-缓存的击穿、穿透和雪崩"><a href="#聊聊-Redis-缓存的击穿、穿透和雪崩" class="headerlink" title="聊聊 Redis 缓存的击穿、穿透和雪崩"></a>聊聊 Redis 缓存的击穿、穿透和雪崩</h2><h3 id="穿透-数据库中根本没有这个数据"><a href="#穿透-数据库中根本没有这个数据" class="headerlink" title="穿透 - 数据库中根本没有这个数据"></a>穿透 - 数据库中根本没有这个数据</h3><ol>
-<li><p>前提：数据库查询是架构设计的瓶颈，为使到达数据库的都是有效请求，运行放大前置环节的复杂度和成本</p>
-</li>
-<li><p>解决措施：</p>
-<ol>
-<li><p>如果查询结果为空，可以往 <em>redis</em> 中缓存一个 <em>KEY NULL</em> 的数据</p>
-<blockquote>
-<p>此做法的缺点：由于 redis 是串行的，查询数据库结果为 NULL 后更新到 redis 的操作会在已经到达的命令之后执行，之前的命令还是会穿透。可以通过加锁的方式来解决</p>
-</blockquote>
-</li>
-<li><p>使用布隆过滤器</p>
-</li>
-</ol>
-</li>
-</ol>
-<h3 id="击穿-数据库中有，但是-redis-没有缓存"><a href="#击穿-数据库中有，但是-redis-没有缓存" class="headerlink" title="击穿 - 数据库中有，但是 redis 没有缓存"></a>击穿 - 数据库中有，但是 redis 没有缓存</h3><p>同一时刻大量请求访问同一 <em>redis</em> 中未缓存数据 - 加锁</p>
-<ol>
-<li>请求 <em>redis</em>，肯定没有数据</li>
-<li>大家抢锁，抢到的去查询数据库没抢到的 sleep</li>
-<li>从数据库中查询数据，存入 reids</li>
-<li>sleep 的线程重新执行第一步查询 <em>redis</em></li>
-</ol>
-<h3 id="雪崩-同一时刻大量-key-过期"><a href="#雪崩-同一时刻大量-key-过期" class="headerlink" title="雪崩 - 同一时刻大量 key 过期"></a>雪崩 - 同一时刻大量 key 过期</h3><p>延迟过期时间、错开过期时刻</p>
-<h2 id="Redis-是怎么回收过期的-key-的"><a href="#Redis-是怎么回收过期的-key-的" class="headerlink" title="Redis 是怎么回收过期的 key 的"></a>Redis 是怎么回收过期的 key 的</h2><ol>
-<li>后台轮询，分段分批的删除那些过期的key</li>
-<li>在请求的时候判断是否已经过期，这样内存会占用无用空间</li>
-</ol>
-<h2 id="Redis-缓存淘汰"><a href="#Redis-缓存淘汰" class="headerlink" title="Redis 缓存淘汰"></a>Redis 缓存淘汰</h2><p>淘汰发生在内存不足的时候：</p>
-<ol>
-<li>淘汰机制有设置不允许淘汰</li>
-<li>lru/lfu/rantom/ttl</li>
-<li>优先淘汰设置过期时间的 key</li>
-</ol>
-<h2 id="描述一下-Redis-持久化方式"><a href="#描述一下-Redis-持久化方式" class="headerlink" title="描述一下 Redis 持久化方式"></a>描述一下 Redis 持久化方式</h2><ol>
-<li>RDB，AOF；主从同步也是持久化</li>
-<li>重写：体积变大，重复无效执行。后台用线程吧内存的 <em>KV</em> 生成指令写个新的 <em>AOF</em></li>
-<li>4.x 之后重写方式换成了直接把 <em>RDB</em> 放到 <em>AOF</em> 头部在追加日志</li>
-</ol>
-<h2 id="描述一下-Redis-持久化原理"><a href="#描述一下-Redis-持久化原理" class="headerlink" title="描述一下 Redis 持久化原理"></a>描述一下 Redis 持久化原理</h2><p>fork + cow</p>
+<span id="more"></span>
 
-      </div>
-      
-      
-      
+<h3 id="HDFS读数据流程"><a href="#HDFS读数据流程" class="headerlink" title="HDFS读数据流程"></a>HDFS读数据流程</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220803224019.png" alt="image-20220803224012620"></p>
+<ol>
+<li>客户端通过 DistributedFileSystem 向 NameNode 请求下载文件，NameNode 通过查询元数据，找到文件块所在的 DataNode 地址。</li>
+<li>挑选一台 DataNode（就近原则，然后随机）服务器，请求读取数据。 </li>
+<li>DataNode 开始传输数据给客户端（从磁盘里面读取数据输入流，以 Packet 为单位来做校验）。</li>
+<li>客户端以 Packet 为单位接收，先在本地缓存，然后写入目标文件。</li>
+</ol>
+<h3 id="节点距离计算"><a href="#节点距离计算" class="headerlink" title="节点距离计算"></a>节点距离计算</h3><p><img src="https://raw.githubusercontent.com/xyq-material/image/master/blog/20220803224802.png" alt="image-20220803224757126"></p>
+
     </div>
 
     
     
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Eitan
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="http://example.com/2022/08/03/Hadoop%E5%8E%9F%E7%90%86%EF%BC%88%E4%BA%8C%EF%BC%89%EF%BC%9AHDFS%E7%9A%84%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B/" title="Hadoop原理（二）：HDFS的读写流程">http://example.com/2022/08/03/Hadoop原理（二）：HDFS的读写流程/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Hadoop/" rel="tag"><i class="fa fa-tag"></i> Hadoop</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/08/02/Hadoop%E5%8E%9F%E7%90%86%EF%BC%88%E4%B8%80%EF%BC%89%EF%BC%9ANameNode%E4%B8%8ESecondary-NameNode%E5%B7%A5%E4%BD%9C%E6%9C%BA%E5%88%B6/" rel="prev" title="Hadoop原理（一）：NameNode与Secondary NameNode工作机制">
+                  <i class="fa fa-chevron-left"></i> Hadoop原理（一）：NameNode与Secondary NameNode工作机制
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/08/06/Hadoop%E5%8E%9F%E7%90%86%EF%BC%88%E4%B8%89%EF%BC%89%EF%BC%9AMapReduce%E6%A1%86%E6%9E%B6%E5%8E%9F%E7%90%86/" rel="next" title="Hadoop原理（三）：MapReduce框架原理">
+                  Hadoop原理（三）：MapReduce框架原理 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
 
 <script src="/js/comments.js"></script>
 </div>
